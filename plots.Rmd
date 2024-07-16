@@ -6,3 +6,901 @@ output: html_notebook
 My own script for making bubble plots, etc. Also partially borrowed/ modifed from REVAMP's [phyloseq.R](https://github.com/McAllister-NOAA/REVAMP/blob/main/assets/phyloseq.R)
 
 
+<br/>
+
+# Table of Contents
+- [Load packages](#load-packages)
+- [Import and prepare data](#import-and-prepare-data)
+- [QC and filtering](#qc-and-filtering)
+- [Visualizations](#visualizations)
+
+      
+<br/>
+
+
+
+# Load packages
+
+```{r}
+library(tidyverse)
+library(phyloseq)
+library(vegan)
+library(RColorBrewer)
+library(microbiome)
+
+# library(readxl)
+# library(Biostrings)
+# #library(phangorn)
+# library(readr)
+# library(seqinr)
+# #library(decontam)
+# library(ape)
+# #library(philr)
+# #library(DESeq2)
+# library(compositions);
+# #library(cowplot)
+# library(plotly)
+# library(htmlwidgets)
+# library(withr)
+# library(lubridate)
+```
+
+#  Import and prepare data
+
+## using code from REVAMP 
+```{r}
+########################################
+args <- commandArgs(trailingOnly = TRUE)
+
+args[1]<-"results-revamp-2021-Elas02/Figures/" #FIGURE OUT directory
+args[2]<-"/Volumes/easystore/eDNA/shirp-edna" #Working directory
+args[3]<-"results-revamp-2021-Elas02" #outdirectory name
+args[4]<-"TRUE" #control flag
+args[5]<-"FALSE" #filter low quality samples flag
+args[6]<-"FALSE" #replicateFlag
+args[7]<-"TRUE" #sitelabelFlag
+args[8]<-"0" #percent filter for taxa
+args[9]<-"FALSE" #FILTER NAs where appropriate
+args[10]<-"FALSE" #whether taxa of interest file is given
+args[11]<-"TRUE" #groups defined in sample metadata file
+args[12]<-"3" #number of groups defined in sample metadata file
+args[13]<-"Order" #category to filter on for taxa of interest
+args[15]<-"TRUE" #whether chem data has been provided
+args[16]<-"results-revamp-2021-Elas02/chem_headers.txt" #location of chem header file (one per line)
+########################################
+
+theme_set(theme_bw())
+
+controlFlag <- as.logical(args[4])
+filteredLowQualSamples <- as.logical(args[5])
+replicateFlag <- as.logical(args[6])
+sitelabelFlag <- as.logical(args[7])
+NAremoveFlag <- as.logical(args[9])
+taxaofinterestFlag <- as.logical(args[10])
+groupingFlag <- as.logical(args[11])
+numberofGroups <- as.numeric(args[12])
+chemDataFlag <- as.logical(args[15])
+
+filter_percent <- as.numeric(args[8]) #Taxa below this were filtered to zzOther
+
+if (chemDataFlag == TRUE) {
+chem_headers <- read.delim(as.character(args[16]), header=FALSE, stringsAsFactors=FALSE)
+chem_headers <- as.vector(chem_headers)
+}
+
+```
+
+Import
+```{r}
+##################################
+#
+#  Import ASV-based, raw reads, no qual filter (phylo1)
+#
+##################################
+asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+asv_taxonomy <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/ASV2Taxonomy/",as.character(args[3]),"_asvTaxonomyTable_NOUNKNOWNS.txt", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadata <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/sample_metadata_forR.txt", sep = ""), header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata) <- sample_metadata$Sample
+sample_metadata <- sample_metadata %>% select(-Sample)
+
+ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX = tax_table(asv_taxonomy_mat)
+samples = sample_data(sample_metadata)
+
+phylo1 <- phyloseq(ASV, TAX, samples)
+
+##################################
+#
+#  Import ASV-based, raw reads, qual filtered (phylo2)
+#
+##################################
+if (controlFlag == TRUE && filteredLowQualSamples == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_lowEffortSamplesRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo2 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == TRUE && filteredLowQualSamples == FALSE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo2 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == FALSE && filteredLowQualSamples == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_lowEffortSamplesRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo2 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == FALSE && filteredLowQualSamples == FALSE) {
+  phylo2 <- phylo1
+}
+
+##################################
+#
+#  Import ASV-based, relative abund, qual filtered (phylo3)
+#
+##################################
+asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_percentabund.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+phylo3 <- phyloseq(ASV, TAX, samples)
+
+
+##################################
+#
+#  Import Taxonomy-based, raw reads, qual filtered (phylo10)
+#
+##################################
+if (controlFlag == TRUE && filteredLowQualSamples == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_lowEffortSamplesRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo10 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == TRUE && filteredLowQualSamples == FALSE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_controlsRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo10 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == FALSE && filteredLowQualSamples == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_lowEffortSamplesRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo10 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == FALSE && filteredLowQualSamples == FALSE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/ASV2Taxonomy/ASVs_counts_mergedOnTaxonomy_NOUNKNOWNS.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo10 <- phyloseq(ASV, TAX, samples)
+}
+
+##################################
+#
+#  Import Taxonomy-based, relative abund, qual filtered (phylo11)
+#
+##################################
+asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_percentabund.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+phylo11 <- phyloseq(ASV, TAX, samples)
+
+##################################
+#
+#  Import ASV-based, relative abund, qual filtered, grouped on replicates/sites (phylo7a/b)
+#
+##################################
+#ADD GROUPED SAMPLE METADATA
+if (replicateFlag == TRUE) {
+  grouped_sample_metadata <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/sample_metadata_NOUNKNOWNS_percentabund_groupedByReplicates.tsv", sep = ""), header=TRUE, stringsAsFactors=TRUE)
+  grouped_sample_metadata <- grouped_sample_metadata %>% filter(!is.na(Sample))
+  row.names(grouped_sample_metadata) <- grouped_sample_metadata$Sample
+  grouped_sample_metadata <- grouped_sample_metadata %>% select(-Sample)
+  grouped_samplesA = sample_data(grouped_sample_metadata)
+  
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_percentabund_groupedByReplicates.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo7a <- phyloseq(ASV, TAX, grouped_samplesA)
+}
+if (sitelabelFlag == TRUE) {
+  grouped_sample_metadata <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/sample_metadata_NOUNKNOWNS_percentabund_groupedBySites.tsv", sep = ""), header=TRUE, stringsAsFactors=TRUE)
+  grouped_sample_metadata <- grouped_sample_metadata %>% filter(!is.na(Sample))
+  row.names(grouped_sample_metadata) <- grouped_sample_metadata$Sample
+  grouped_sample_metadata <- grouped_sample_metadata %>% select(-Sample)
+  grouped_samplesB = sample_data(grouped_sample_metadata)
+  
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_percentabund_groupedBySites.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo7b <- phyloseq(ASV, TAX, grouped_samplesB)
+}
+
+##################################
+#
+#  Import Taxonomy-based, relative abund, qual filtered, grouped on replicates/sites (phylo15a/b)
+#
+##################################
+if (replicateFlag == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_percentabund_groupedByReplicates.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo15a <- phyloseq(ASV, TAX, grouped_samplesA)
+}
+if (sitelabelFlag == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_percentabund_groupedBySites.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo15b <- phyloseq(ASV, TAX, grouped_samplesB)
+}
+
+##################################
+#
+#  Import ASV-based, raw reads, qual filtered, taxa filtered (phylo4)
+#
+##################################
+#CHANGE TO NEW FILTERED TAXONOMY FILE
+asv_taxonomy <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVTaxonomyTable_NOUNKNOWNS_replaceLowAbund2zzOther.txt", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+TAX = tax_table(asv_taxonomy_mat)
+
+if (controlFlag == TRUE && filteredLowQualSamples == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_lowEffortSamplesRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo4 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == TRUE && filteredLowQualSamples == FALSE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo4 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == FALSE && filteredLowQualSamples == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_lowEffortSamplesRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo4 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == FALSE && filteredLowQualSamples == FALSE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo4 <- phyloseq(ASV, TAX, samples)
+}
+
+##################################
+#
+#  Import ASV-based, relative abund, qual filtered, taxa filtered (phylo5)
+#
+##################################
+asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_percentabund.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+phylo5 <- phyloseq(ASV, TAX, samples)
+
+##################################
+#
+#  Import Taxonomy-based, raw reads, qual filtered, taxa filtered (phylo12)
+#
+##################################
+if (controlFlag == TRUE && filteredLowQualSamples == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_lowEffortSamplesRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo12 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == TRUE && filteredLowQualSamples == FALSE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_controlsRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo12 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == FALSE && filteredLowQualSamples == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_lowEffortSamplesRemoved.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo12 <- phyloseq(ASV, TAX, samples)
+} else if (controlFlag == FALSE && filteredLowQualSamples == FALSE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/ASV2Taxonomy/ASVs_counts_mergedOnTaxonomy_NOUNKNOWNS.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo12 <- phyloseq(ASV, TAX, samples)
+}
+
+##################################
+#
+#  Import Taxonomy-based, relative abund, qual filtered, taxa filtered (phylo13)
+#
+##################################
+asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_percentabund.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+phylo13 <- phyloseq(ASV, TAX, samples)
+
+##################################
+#
+#  Import ASV-based, relative abund, qual filtered, taxa filtered, grouped on replicates/sites (phylo9a/b)
+#
+##################################
+if (replicateFlag == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_percentabund_groupedByReplicates.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo9a <- phyloseq(ASV, TAX, grouped_samplesA)
+}
+if (sitelabelFlag == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_percentabund_groupedBySites.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo9b <- phyloseq(ASV, TAX, grouped_samplesB)
+}
+
+##################################
+#
+#  Import Taxonomy-based, relative abund, qual filtered, taxa filtered, grouped on replicates/sites (phylo17a/b)
+#
+##################################
+if (replicateFlag == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_percentabund_groupedByReplicates.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo17a <- phyloseq(ASV, TAX, grouped_samplesA)
+}
+if (sitelabelFlag == TRUE) {
+  asv_count <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_percentabund_groupedBySites.tsv", sep = ""), header=TRUE, stringsAsFactors=FALSE)
+  row.names(asv_count) <- asv_count$x
+  asv_count <- asv_count %>% select(-x)
+  asv_count_mat <- as.matrix(asv_count)
+  ASV = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+  phylo17b <- phyloseq(ASV, TAX, grouped_samplesB)
+}
+```
+
+**Note on above from REVAMP:**
+Phyloseq objects have been created to work with:
+ASV-based, raw reads, no qual filter (phylo1) ALL
+ASV-based, raw reads, qual filtered (phylo2) ALL
+ASV-based, relative abund, qual filtered (phylo3) ALL
+ASV-based, raw reads, qual filtered, taxa filtered (phylo4) ALL
+ASV-based, relative abund, qual filtered, taxa filtered (phylo5) ALL
+phylo6 depracated
+ASV-based, relative abund, qual filtered, grouped on replicates/sites (phylo7a/b) IF replicates/sites called
+phylo8 depracated
+ASV-based, relative abund, qual filtered, taxa filtered, grouped on replicates/sites (phylo9a/b) IF replicates/sites called
+message("#
+Taxonomy-based, raw reads, qual filtered (phylo10) ALL
+Taxonomy-based, relative abund, qual filtered (phylo11) ALL
+Taxonomy-based, raw reads, qual filtered, taxa filtered (phylo12) ALL
+Taxonomy-based, relative abund, qual filtered, taxa filtered (phylo13) ALL
+phylo14 depracated
+Taxonomy-based, relative abund, qual filtered, grouped on replicates/sites (phylo15a/b) IF replicates/sites called
+phylo16 depracated
+Taxonomy-based, relative abund, qual filtered, taxa filtered, grouped on replicates/sites (phylo17a/b) IF replicates/sites called
+
+**My notes:**
+- "qual filtered" means control samples removed, & low effort samples removed
+- "taxa filtered" means removing low abundance taxa but I set the threshold at zero (so phylo4 should be same as phylo2; and phylo5 should be same as phylo3; yes at first glance they seem to be the same)
+- no replicates so no phylo7a/9a but phylo7b/9b is grouped by site
+- "Taxonomy-based" is group by species name instead of by ASV (ie. "ASV-based")
+- all phylo objects above had the unknown ASVs removed
+
+```{r}
+sample_order <- read.delim(paste0(as.character(args[2]),"/",as.character(args[3]),"/sample_order.txt", sep = ""), header=FALSE, stringsAsFactors=FALSE)
+sample_order <- as.vector(sample_order)
+
+if (replicateFlag == TRUE) {
+  replicateorder <- as.data.frame(sample_metadata$replicates)
+  replicateorder <- distinct(replicateorder)
+  replicateorder <- as.vector(replicateorder)
+}
+if (sitelabelFlag == TRUE) {
+  siteorder <- as.data.frame(sample_metadata$sites)
+  siteorder <- distinct(siteorder)
+  siteorder <- as.vector(siteorder)
+}
+
+```
+
+
+
+
+
+
+# QC and filtering
+The rest is my
+
+## Rarefaction curves
+
+```{r}
+# output from phyloseq needs to be converted to matrix and transposed
+table1 <- otu_table(phylo1)
+class(table1) <- "matrix" 
+table1 <- t(table1) 
+
+rarecurve(table1, step=50, cex=0.5)
+
+```
+A few don't look great (T9S7, T5S6, T3Wessuck, T1Tiana, T7S7) but most are good!
+
+
+## Curating
+**7/16 COME BACK AND CONTINUE HERE. WORK WITH TAXONOMY-MERGED PHYLO OBJECT INSTEAD OF PHYLO1**
+Check some features of the phyloseq object
+```{r}
+ranks <- rank_names(phylo1)
+ranks
+
+unique(tax_table(phylo1)[, ranks[1]])
+unique(tax_table(phylo1)[, ranks[2]])
+unique(tax_table(phylo1)[, ranks[3]])
+```
+
+Removes the birds
+```{r}
+ps <- subset_taxa(phlyo1, !Class == 'Aves')
+nrow(tax_table(ps)) # number of ASVs left
+```
+1317 remain
+
+Also check class Mammalia, to see if they are contamination or real:
+```{r}
+tax_table(subset_taxa(ps, class == 'Mammalia'))
+```
+These are human, wild boar, cattle, dog etc. Remove humans so can see the rest better
+
+```{r}
+ps <- subset_taxa(ps, !order == 'Primates')
+tax_table(subset_taxa(ps, class == 'Mammalia'))
+```
+
+The rest of the mammals are cat, dog, cattle, pig. Delete all Mammalia
+```{r}
+ps <- subset_taxa(ps, !class == 'Mammalia')
+nrow(tax_table(ps)) # number of ASVs left
+```
+1286 ASVs remain
+
+Next check for "Insecta" entries
+```{r}
+tax_table(subset_taxa(ps, class == 'Insecta'))
+```
+There are none!
+
+Remove other eukaryotic phyla: diatoms, green algae, protists..
+```{r}
+ps <- subset_taxa(ps, !phylum == 'Bacillariophyta' & !phylum == 'Chlorophyta' & !phylum == 'Haptista')
+nrow(tax_table(ps)) # number of ASVs left
+
+```
+
+553 ASVs remain
+
+
+Check what remains 
+```{r}
+unique(tax_table(ps)[, "superkingdom"])
+unique(tax_table(ps)[, "phylum"])
+unique(tax_table(ps)[, "class"])
+```
+
+What are the Bivalves and Cephalods?
+```{r}
+tax_table(subset_taxa(ps, phylum == 'Mollusca'))
+```
+Zebra mussel and Atlantic bobtail squid. These are cool, but not targetted by primer set and only one ASV each. Remove these and the ray-finned fishes (Actinopteri)
+
+Note- this is most likely not zebra mussel. Re-checked blast match and very poor query cover to non ribosomal genes from zebra mussel
+
+
+```{r}
+ps <- subset_taxa(ps, !phylum == 'Mollusca' & !class == 'Actinopteri')
+nrow(tax_table(ps)) # number of ASVs left
+
+```
+520 ASVs remain and only include Cartilaginous fishes (Chondrichthyes)  
+
+
+
+## Check sequencing effort- after curating
+
+Check overall how many ASVs there are per sample
+
+```{r}
+# First aglomerate the ASVs at the phylum level using the phyloseq function, tax_glom
+superkingdomGlommed = tax_glom(ps, "superkingdom")
+
+# and plot
+plot_bar(superkingdomGlommed, x = "Sample")
+
+ggsave(filename = "Figures-elasmos/seqdepth-aftercuration.eps", plot = plot_bar(superkingdomGlommed, x = "Sample"), units = c("in"), width = 9, height = 6, dpi = 300, )# and save
+```
+Many of the AC, JS, and SS samples have very low effort after removing all non-targetted spp. T3 and T5 samples look the best
+
+And lastly, manually correct some taxonomy: 
+First look through the annotations:
+```{r}
+unique(tax_table(ps))[,7:8]
+```
+Sequence 20: Squalus suckleyi is the Pacific spiny dogfish, which shouldn't be on Atlantic coast. I manually checked the fasta sequence and it has the same similarity to Spiny dogfish, Squalus acanthias (100% query cover/ 100% PID). This one is also very abundant in OTU table so I think it's important enough to keep. I am confident that this is Squalus acanthias and not Squalus suckleyi.
+--> Change to spiny dogfish
+
+Sequence 90: Rhinoptera brasiliensis is the Brazilian cownose ray. Their geographic range is only up to Florida so this is likely not real. The Blast result has the same exact similarity (100% query/ 99.4 PID) to Rhinoptera marginata (Lusitanian cownose ray, from west coast of Africa) and also very close to Rhinoptera javanica (Flapnose ray, from Indo-Pacific) and Rhinoptera bonasus (Cownose ray- from western Atlantic, from New England to Caribbean). So this is probably a cownose ray. The abundance in the table of this ASV is not very high.
+--> Delete this ASV
+
+Sequence 110: Pteroplatytrygon violacea is the pelagic sting ray. This ASV is very abundant at one site. It is regionally present in the western Atlantic but only supposed to be present in the open ocean. First Blast result (98% query cover/ 96.05% PID) is only slightly better than the secondary one (98% query cover/ 95.48% PID), to Dasyatis say, the bluntnose stingray, which is a coastal species present in western Atlantic and more likely(?).
+--> Keep annotation as is but remember that this is a weird one. Interpret with caution
+
+Sequence 1919 and 2335: Neoraja iberica, the Iberian pygmy skate. This is weird and there are only 20 individual hits to this species (two ASVs) in the table.
+--> Delete these
+
+Sequence 1984: Rostroraja alba, the bottlenose skate, is from the eastern Atlantic. The secondary hit to Raja eglanteria (query 86%/ PID 100%) is a bit worse than the primary hit (query 96%/ PID 97.03%) but ecologically makes more sense; the clearnose skate is from the northwestern Atlantic and migrate on/ off shore. But there ar eonly 9 his to this ASV from one sample. 
+--> Delete this ASV
+
+
+See discussion [here](https://github.com/joey711/phyloseq/issues/652) for removing taxa
+```{r}
+ps <- subset_taxa(ps, !species == 'Rhinoptera brasiliensis' & !species == 'Rostroraja alba' & !species == 'Neoraja iberica')
+ps
+
+```
+514 ASVs remain.
+
+Replace Squalus suckleyi (Pacific spiny dogfish) with Squalus acanthias
+```{r}
+tax_table(ps) <- gsub(tax_table(ps), pattern = "Squalus suckleyi", replacement = "Squalus acanthias") 
+tax_table(ps) <- gsub(tax_table(ps), pattern = "Pacific spiny dogfish", replacement = "Spiny dogfish") 
+```
+
+
+```{r}
+ps
+unique(tax_table(ps))[,7:8]
+```
+
+46 samples remain with 514 unique ASVs.
+
+
+# Visualizations
+
+For plotting, use *relative abundances* (# of ASV sequences/sum total sequences in sample), calculated easily using microbiome::transform
+
+```{r}
+ps_ra <- microbiome::transform(ps, transform = "compositional")
+```
+
+Export the relative abundance matrix so Sara can have it:
+```{r}
+# Extract abundance matrix from the phyloseq object
+RelAbun_matrix = as(otu_table(ps_ra), "matrix")
+
+# Coerce to data.frame
+RelAbun_dataframe = as.data.frame(RelAbun_matrix)
+
+# Export
+write.csv(RelAbun_dataframe,"results-elasmos/otutable_relabun_qualfilt.csv", row.names = TRUE)
+
+## Also export the quality-filtered absolute abundance data
+AbsAbun_matrix = as(otu_table(ps), "matrix")
+AbsAbun_dataframe = as.data.frame(AbsAbun_matrix)
+write.csv(AbsAbun_dataframe,"results-elasmos/otutable_absabun_qualfilt.csv", row.names = TRUE)
+
+
+```
+
+
+
+## Abundance at family level
+Then aglomerate the ASVs at the family level using the phyloseq function, tax_glom
+```{r}
+familyGlommed_RA = tax_glom(ps_ra, "family")
+family_barplot <- plot_bar(familyGlommed_RA, x = "Sample", fill = "family")
+family_barplot
+
+
+ggsave(filename = "Figures-elasmos/familybarplot.eps", plot = family_barplot, units = c("in"), width = 9, height = 6, dpi = 300, )# and save
+
+```
+
+Notice the diff between the clam/ oyster samples (AC/As JC/JS SC/SS) vs the T open water samples!
+
+
+Remove Pos and Neg  Controls 
+```{r}
+ps <- subset_samples(ps, !SampleID == "A.Blank" & !SampleID == "A.Positive" & !SampleID == "J.Blank" & !SampleID == "J.Positive" & !SampleID == "S.Blank" & !SampleID == "S.Positive" & !SampleID == "T2Blank" & !SampleID == "T2Positive" & !SampleID == "T3Blank" & !SampleID == "T3Positive" & !SampleID == "T5Blank" & !SampleID == "T5Positive")
+
+
+ps_ra <- subset_samples(ps_ra, !SampleID == "A.Blank" & !SampleID == "A.Positive" & !SampleID == "J.Blank" & !SampleID == "J.Positive" & !SampleID == "S.Blank" & !SampleID == "S.Positive" & !SampleID == "T2Blank" & !SampleID == "T2Positive" & !SampleID == "T3Blank" & !SampleID == "T3Positive" & !SampleID == "T5Blank" & !SampleID == "T5Positive")
+
+ps
+ps_ra
+```
+62 samples remain
+
+Agglomerate by species to take a look at the unique species
+```{r}
+speciesGlommed_RA = tax_glom(ps_ra, "CommonName")
+speciesGlommed_RA
+tax_table(speciesGlommed_RA)
+```
+
+
+
+## Bubble plots
+Based on my previous [scripts](https://github.com/lizsuter/Cariaco_Euk) with Cariaco Eukaryotic data
+```{r}
+# convert ps object to dataframe using phyloseq's psmelt
+species_df <- psmelt(speciesGlommed_RA)
+
+# replace zeroes in the table with NA
+species_df[species_df == 0] <- NA
+
+# and remove rows with NAs in abundance  (this is so they don't appear as small dots in plot)
+species_df <-  filter(species_df, !is.na(Abundance))
+```
+
+
+
+Plot by species, scientific name
+```{r}
+speciesbubbleplot_eDNA_sciname <- ggplot(species_df, aes(x = Station_ShortName, y = fct_rev(species), color = Station)) + # the fancy stuff around y (species) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size = Abundance, fill = Station), color = "black", pch = 21)+
+  scale_size(range = c(1,15)) +
+  scale_size_area(breaks = c(0,.25,.5,.75,1), max_size = 6)+
+  xlab("")+
+  ylab("")+
+  labs(size="Relative Abundance")+
+  theme_bw() +
+#  scale_fill_brewer(palette="Paired") +
+  theme(axis.title.x=element_blank()) +
+  facet_grid(Month~Bayside, scales = "free", space = "free", drop= TRUE)
+
+speciesbubbleplot_eDNA_sciname
+```
+
+* Note on above that sampling dates were not same for open water stations and bivalve stations (C* and S* stations) although they were a few days apart
+
+Plot by species common name
+```{r}
+speciesbubbleplot_eDNA_comname <- ggplot(species_df, aes(x = Station_ShortName, y = fct_rev(CommonName), color = Station)) + # the fancy stuff around y (CommonName) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = Station), color = "black", pch = 21)+
+  scale_size(range = c(.25,15)) +
+  scale_size_area(breaks = c(.25,.5,.75,1), max_size = 6)+
+  xlab("")+
+  ylab("")+
+  labs(size="Relative Abundance")+
+  theme_bw() +
+#  scale_fill_brewer(palette="Paired") +
+  theme(axis.title.x=element_blank()) +
+  facet_grid(Month~Bayside, scales = "free", space = "free", drop= TRUE)
+
+speciesbubbleplot_eDNA_comname
+```
+
+
+Exportfigures
+```{r}
+ggsave(filename = "Figures-elasmos/speciesbubbleplot_eDNA_sciname.eps", plot = speciesbubbleplot_eDNA_sciname, units = c("in"), width = 8, height = 7, dpi = 300)
+
+ggsave(filename = "Figures-elasmos/speciesbubbleplot_eDNA_comname.eps", plot = speciesbubbleplot_eDNA_comname, units = c("in"), width = 8, height = 7, dpi = 300)
+```
+
+
+Plot by common name- # of reads (rather than rel abund)
+```{r}
+speciesGlommed = tax_glom(ps, "CommonName")
+species_df_reads <- psmelt(speciesGlommed)
+
+# replace zeroes in the table with NA
+species_df_reads[species_df_reads == 0] <- NA
+
+# and remove rows with NAs in abundance  (this is so they don't appear as small dots in plot)
+species_df_reads <-  filter(species_df_reads, !is.na(Abundance))
+
+speciesbubbleplot_eDNA_comname_reads <- ggplot(species_df_reads, aes(x = Station_ShortName, y = fct_rev(CommonName), color = Station)) + # the fancy stuff around y (CommonName) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = Station), color = "black", pch = 21) +
+#  scale_size(range = c(.25,15)) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance")+
+  theme_bw() +
+#  scale_fill_brewer(palette="Paired") +
+  theme(axis.title.x=element_blank()) +
+  facet_grid(Month~Bayside, scales = "free", space = "free", drop= TRUE)
+
+speciesbubbleplot_eDNA_comname_reads
+```
+
+Export
+```{r}
+ggsave(filename = "Figures-elasmos/speciesbubbleplot_eDNA_comname_reads.eps", plot = speciesbubbleplot_eDNA_comname_reads, units = c("in"), width = 8, height = 7, dpi = 300)
+```
+
+
+## Time Series Plots
+Look at total read abundance and rel abundance for different spp per month. Aggregate sites by bayside (E/W) and type (open water/ bivalve habitat)
+
+```{r}
+# First group total reads by Species, Habitat_type and Month so there is one point per time point on the plot
+TimeSeries_df <- species_df_reads %>%
+  group_by(Month, Habitat_type, CommonName) %>%
+  summarise(TotalReads = sum(Abundance))
+TimeSeries_df
+```
+
+
+```{r}
+#First force the order of Habitat type so it plots in desired order
+TimeSeries_df$Habitat_type_f = factor(TimeSeries_df$Habitat_type, levels=c("OPEN WATER", "CLAM SANCTUARY", "OYSTER REEF"))
+
+
+speciestimeseries_comname <- ggplot(TimeSeries_df, aes(x = Month, y = log10(TotalReads), color = CommonName)) +
+  geom_line(aes(color = CommonName), show.legend = FALSE) +
+  ylab("Log 10 (Reads)")+
+  theme_bw() +
+  theme(axis.title.x=element_blank(), legend.title=element_blank()) +
+  scale_x_continuous(breaks=c(7,8,9), labels = c("J","A","S")) +
+  facet_grid(Habitat_type_f~CommonName)
+
+speciestimeseries_comname
+```
+
+
+## stopped here 5/28/24. Keep working on Figures above. Check if zeroes are plotting as small dots (may want to delete)
+- change 7, 8, 9 to JAS in bubble plots. See this: https://r-graphics.org/recipe-facet-label-text
+- export time series figure
+- create dezcriptive figure captions
+
+Next
+- check for seasonality of cownose ray. Does it come in in August and outcompete other things? Is it more abundant at the bivalve sites?
+- double check Pelagic sting ray is at the Inlet. Discuss in discussion
+- think of a way of showing low abundance of reads in oyster/ clam shallow samples (except for occasional hit to cownose ray- possible predator of bivalves) - present total reads?
+- emphasize diversity differences between bivalve vs open water sites
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Species Richness
+Count unique species across all stations, grouped by date, for each method, trawl& eDNA (use filtered trawl data so only comparing MiFISh spp to MiFISh spp).
+
+Count total number of species from each method for each date
+```{r}
+eDNA_richness <- tally(eDNA_uniques, name = "eDNA")
+trawl_richness <- tally(trawl_uniques, name = "trawl")
+
+speciesrichness <- full_join(eDNA_richness, trawl_richness, c("Datecode" = "DATECODE"))
+speciesrichness <- pivot_longer(speciesrichness, !Datecode, names_to = "Method", values_to = "Richness")
+
+speciesrichness$Datecode <- ymd(speciesrichness$Datecode) # convert to date format (better for plotting)
+
+speciesrichness
+```
+
+
+Plot side-by-side
+```{r}
+species_richness_plot <- ggplot(speciesrichness, aes(x =Datecode, y = Richness)) +
+  geom_line(aes(color = Method), size = 3) +
+  theme_bw() +
+  xlab("") +
+  ylab("Species Richness")
+
+species_richness_plot
+
+# export plot
+ggsave(filename = "Figures-elasmos/species_richness_plot.eps", plot = species_richness_plot, units = c("in"), width = 4, height = 3, dpi = 300)
+```
+
+
+
+Sum total number of species across all dates/ stations for entire study
+```{r}
+species_sums_abun_table <- trawl_eDNA_abun_table %>%
+  group_by(CommonName) %>%
+  summarise(CPUE = sum(Trawl_CPUE, na.rm = TRUE), 
+            "Total Length (TL) PUE" = sum(Trawl_TLPUE, na.rm = TRUE), 
+            "TL * Shedding Factor PUE" = sum(Trawl_Allometric_Shedding, na.rm = TRUE), 
+            eDNA = sum(eDNA_RelAbun, na.rm=TRUE)) %>%
+  pivot_longer(!CommonName, names_to = "Method", values_to = "Abundance")
+  
+# turn zeroes to NA so they don't plot 
+species_sums_abun_table <- na_if(species_sums_abun_table,0)
+
+species_sums_abun_table
+```
+
+## Species tally across whole study
+
+For each species, plot side-by-side comparison of abundance (summed over whole study) using each method
+
+```{r}
+# First create a custom color scale to make this pretty
+myColors <- colorRampPalette(brewer.pal(11,"Spectral"))(40)
+names(myColors) <- levels(unique(species_sums_abun_table$CommonName))
+colScale <- scale_colour_manual(name = "CommonName",values = myColors)
+
+species_abun_sum_plot <- ggplot(species_sums_abun_table, aes(x = Abundance, y = reorder(CommonName, Abundance, function(x){sum(x,na.rm = TRUE)}), color = CommonName)) +
+  geom_point(size = 5) +
+  facet_wrap(~factor(Method, levels = c('CPUE','Total Length (TL) PUE','TL * Shedding Factor PUE','eDNA')), scales = "free_x", ncol = 4) +
+  theme_bw() +
+  xlab("Abundance") +
+  ylab("") + 
+  colScale +
+  theme(legend.position = "none")
+
+species_abun_sum_plot
+```
+
+Export plot
+```{r}
+ggsave(filename = "Figures-elasmos/species_abun_sum_plot.eps", plot = species_abun_sum_plot, units = c("in"), width = 10, height = 6, dpi = 300)
+```
+
+
+
+
