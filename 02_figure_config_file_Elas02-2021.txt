@@ -1,0 +1,16 @@
+##This is the REVAMP figure config file modified 6/24/24 ES for Elas02 analysis
+###Figure options:
+filterPercent=0 # since there are very few app expected, plot all of them
+pieScale=5.7
+removeNA=FALSE
+
+###
+filterLowQualSamples=FALSE
+filterPercentLowQualSamples=10
+
+##TAXA of Interest: Provides specific figures.
+##List one name per line. All from same taxonomic level.
+#providedTaxaOfInterest=TRUE
+#taxaOfInterestFile=/path/to/file/choice_taxa.txt
+#taxaOfInterestLevel=Order #Options: Kingdom, Phylum, Class, Order, Family, Genus, or Species
+# come back later and choose taxa of interest based on analysis. Leave out for now
