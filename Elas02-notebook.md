@@ -172,11 +172,14 @@ Long list but shows versions of the two I just installed:
 
 **EDIT** later on I had problem with perl dependencies not being there. IDK why but this `conda install perl-list-moreutils` seems to have resolved it.
 
-**EDIT 2, 7/8/24** Later on having trouble again with script is assets, `asv_taxonomy_processing_figureOuts.pl`. To try to troubleshoot I ran `perl asv_taxonomy_processing_figureOuts.pl -h` and got error about MoreUtil: `Can't locate List/MoreUtils.pm in @INC (you may need to install the List::MoreUtils module) (@INC contains: /opt/anaconda3/lib/site_perl/5.26.2/darwin-thread-multi-2level /opt/anaconda3/lib/site_perl/5.26.2 /opt/anaconda3/lib/5.26.2/darwin-thread-multi-2level /opt/anaconda3/lib/5.26.2 .) at asv_taxonomy_processing_figureOuts.pl line 4.
+**EDIT 2, 7/8/24** Later on having trouble again with script in assets, `asv_taxonomy_processing_figureOuts.pl`. To try to troubleshoot I ran `perl asv_taxonomy_processing_figureOuts.pl -h` and got error about MoreUtil: `Can't locate List/MoreUtils.pm in @INC (you may need to install the List::MoreUtils module) (@INC contains: /opt/anaconda3/lib/site_perl/5.26.2/darwin-thread-multi-2level /opt/anaconda3/lib/site_perl/5.26.2 /opt/anaconda3/lib/5.26.2/darwin-thread-multi-2level /opt/anaconda3/lib/5.26.2 .) at asv_taxonomy_processing_figureOuts.pl line 4.
 BEGIN failed--compilation aborted at asv_taxonomy_processing_figureOuts.pl line 4.`. Tried `sudo cpan List::MoreUtils` to install MoreUtils. Hopefully worked...
 
 - Tried installing MoreUtils with conda from [here](https://anaconda.org/bioconda/perl-list-moreutils), with `conda install bioconda::perl-list-moreutils
 `
+
+**EDIT 2, 7/22/24**
+also tried `sudo cpan List::Util` and installed but didn't help with error in merge_taxonomy.pl
 
 ## Configuration files
 Start messing with config files `01_config_file-txt`, `02_figure_config_file.txt`, and `03_sample_metadata.txt`. I already had played around a little bit with dada2 parameters from analyzing the 2023 data. For now just using 2021 elas02 metadata file modified from what Libby sent me.
@@ -909,6 +912,23 @@ MP_SS9_S4_L002 59.7
 
 ```
 
+- For both 2021 and 2023 runs, when prompted:
+
+```
+Running ASV-2-Taxonomy Script: Mon Jul 22 08:53:55 EDT 2024
+
+Reformatted taxon strings created. Options:
+Continue without changes [c]
+Manually edit file and replace in same location with identical file structure [m]
+    (Make choice when file is modified and you are ready to proceed)
+Automatically fill gaps in reformatted taxonkit hierarchy [a]
+```
+
+select `a` for automatic
+
+- I manually checked some of the high abundance unknowns that get removed in blastn: ASV_2 and _3 seems like diatoms
+
+
 Minor errors that didn't allow it to do any of the ordinations, networks, look into:
 
 ```
@@ -932,13 +952,69 @@ NADA results-revamp-2023-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_collapse
 ---
 
 **7/16/24**
-- I think the ASVstoremove is not going to work without re-running dada2 step (?) so just rerun and leave out that part. I can remove in R myself later for bubble plots, etc.
-- Still need to figure out this error:
+
+- I tried containation removal using the `remove_contaminants.txt` file but I think it's not going to work without re-running dada2 step (?) so just rerun and leave out that part. I can remove in R myself later for bubble plots, etc.
+
+
+- I think this error:
 
 ```
 Illegal division by zero at /Users/admin/software/REVAMP/assets/merge_on_taxonomy.pl line 163.
 Illegal division by zero at /Users/admin/software/REVAMP/assets/stats.pl line 162.
 ```
 
-but really the ordinations, etc, won't be accurate if they still include contamination so I should just move these ASV tables etc into my own pipeline. Can borrown from phyloseq.R in REVAMP assets if necessary
+is due to there being no reads left in a couple of files after quality filtering (happened for some of the blanks)
 
+- I think this error:
+
+```
+There is no results-revamp-2023-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_percentabund.tsv file!!
+
+cat: /Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-Elas02/processed_tables/sample_metadata*: No such file or directory
+
+
+NADA results-revamp-2023-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_controlsRemoved.tsv file!!
+
+
+NADA results-revamp-2023-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_controlsRemoved.tsv file!!
+
+```
+
+
+L784 `merge_on_taxonomy.pl` not working, not able to write the "merged_taxonomy" files
+
+
+try to run independently
+
+from revamp.sh:
+
+```
+    perl ${revampdir}/assets/merge_on_taxonomy.pl 
+    -a ${outdirectory}/dada2/ASVs_counts.tsv 
+    -t ${outdirectory}/ASV2Taxonomy/${outdirectory}_asvTaxonomyTable.txt 
+    -o ${outdirectory}/ASV2Taxonomy > ${outdirectory}/ASV2Taxonomy/ASVs_counts_mergedOnTaxonomy.tsv
+```
+
+my mods:
+
+```
+perl /Users/admin/software/REVAMP/assets/merge_on_taxonomy.pl -a /Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-Elas02/dada2/ASVs_counts.tsv -t /Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-Elas02/ASV2Taxonomy/results-revamp-2023-Elas02_asvTaxonomyTable.txt -o /Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-Elas02/ASV2Taxonomy/TEST.tsv
+
+```
+
+
+
+It's a `print() on closed filehandle OUT ` error which is a permissions error according to internet. But I can't figure out why- and it's weird that this worked fine for the 2021 and test directories.
+
+
+Instead wasting too much time on this, I can do the collapsed taxonomy myself in R using phyloseq. Move to R, `plots.Rmd` notebook. Things to do:
+
+- Remove low abundance ASVs (1000 read cutoff?) bc I have evidence that pos controls are bleeding into other samples at low abundance
+	- Alternatively use decontam?
+- remove contaminants (Homo sapiens, other mammals, etc)
+- calculate merged taxonomy
+- generate bubble plots
+- pie chart
+- sned dataset highlighting cownose ray and sand tiger shark for GIS analysis
+- update methods section
+- upload elas02 database
