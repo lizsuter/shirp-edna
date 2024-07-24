@@ -2,8 +2,9 @@
 title: "Plots"
 output: html_notebook
 ---
+[Preview notebook](http://htmlpreview.github.io/?https://github.com/lizsuter/shirp-edna/blob/main/plots.nb.html)
 
-My own script for making bubble plots, etc. Also partially borrowed/ modifed from REVAMP's [phyloseq.R](https://github.com/McAllister-NOAA/REVAMP/blob/main/assets/phyloseq.R)
+My own script for making bubble plots, etc. Partially borrowed/ modifed from REVAMP's [phyloseq.R](https://github.com/McAllister-NOAA/REVAMP/blob/main/assets/phyloseq.R)
 
 
 <br/>
