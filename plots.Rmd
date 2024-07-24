@@ -49,14 +49,6 @@ library(fantaxtic)
 
 #  Import and prepare data
 
-```{r}
-theme_set(theme_bw())
-
-chem_headers <- read.delim(as.character("results-revamp-2021-Elas02/chem_headers.txt", header=FALSE, stringsAsFactors=FALSE))
-chem_headers <- as.vector(chem_headers)
-
-```
-
 Import-
 I am creating the equivalent of "phylo1" from REVAMP, the dataset is the ASV-based, raw reads, not qual filtered dataset; "qual filtered" means the unknown ASVs have been removed, & low effort samples removed. The only filtering that has been done is the unknown ASVs have been removed.
 
@@ -87,13 +79,12 @@ phylo_2021 <- phyloseq(ASV_2021, TAX_2021, samples_2021)
 ```
 
 ```{r}
-sample_order2021 <- read.delim("results-revamp-2021-Elas02/sample_order.txt", header=FALSE, stringsAsFactors=FALSE)
-sample_order2021 <- as.vector(sample_order2021)
-
-siteorder2021 <- as.data.frame(sample_metadata$sites)
-siteorder2021 <- distinct(siteorder2021)
-siteorder2021 <- as.vector(siteorder2021)
-
+# sample_order2021 <- read.delim("results-revamp-2021-Elas02/sample_order.txt", header=FALSE, stringsAsFactors=FALSE)
+# sample_order2021 <- as.vector(sample_order2021)
+# 
+# siteorder2021 <- as.data.frame(sample_metadata$sites)
+# siteorder2021 <- distinct(siteorder2021)
+# siteorder2021 <- as.vector(siteorder2021)
 
 ```
 
@@ -122,12 +113,12 @@ phylo_2023 <- phyloseq(ASV_2023, TAX_2023, samples_2023)
 ```
 
 ```{r}
-sample_order2023 <- read.delim("results-revamp-2023-Elas02/sample_order.txt", header=FALSE, stringsAsFactors=FALSE)
-sample_order2023 <- as.vector(sample_order2023)
-
-siteorder2023 <- as.data.frame(sample_metadata$sites)
-siteorder2023 <- distinct(siteorder2023)
-siteorder2023 <- as.vector(siteorder2023)
+# sample_order2023 <- read.delim("results-revamp-2023-Elas02/sample_order.txt", header=FALSE, stringsAsFactors=FALSE)
+# sample_order2023 <- as.vector(sample_order2023)
+# 
+# siteorder2023 <- as.data.frame(sample_metadata$sites)
+# siteorder2023 <- distinct(siteorder2023)
+# siteorder2023 <- as.vector(siteorder2023)
 
 ```
 
@@ -221,7 +212,9 @@ Remove low abundant reads
     - and nurse shark [Ginglymostoma cirratum: ASV129, ASV_588]) 
 
 From Libby's MS:
-"Subcutaneous muscle tissue samples were collected for two local shark species: spiny dogfish (Squalus acanthius) and smooth dogfish (Musculus canis). A tissue sample was taken from each species. Each specimen was caught in Long Island waters and stored at -20°C as part of an alternate study. Water samples were taken from various tanks containing sharks at the Long Island Aquarium in October 2021. These tanks contained known species of elasmobranchs, including sand tiger sharks (Charcharias taurus), an ornate wobbegong (Orectolobus japonicus), and nurse sharks (Ginglymostoma cirratum). Additional water samples were taken from a shark tank at Cornell Cooperative Extension in Babylon, NY in October of 2021. This tank contained only chain catshark (Scyliorhinus retifer) but had a shared sump system with other elasmobranchs and used bay water. All positive controls were processed following the same protocol as the experimental samples."
+*Subcutaneous muscle tissue samples were collected for two local shark species: spiny dogfish (Squalus acanthius) and smooth dogfish (Musculus canis). A tissue sample was taken from each species. Each specimen was caught in Long Island waters and stored at -20°C as part of an alternate study. Water samples were taken from various tanks containing sharks at the Long Island Aquarium in October 2021. These tanks contained known species of elasmobranchs, including sand tiger sharks (Charcharias taurus), an ornate wobbegong (Orectolobus japonicus), and nurse sharks (Ginglymostoma cirratum). Additional water samples were taken from a shark tank at Cornell Cooperative Extension in Babylon, NY in October of 2021. This tank contained only chain catshark (Scyliorhinus retifer) but had a shared sump system with other elasmobranchs and used bay water. All positive controls were processed following the same protocol as the experimental samples.*
+
+
 
 **Might be interesting to make a plot of 2021 positive control detections too!**
 
@@ -278,20 +271,20 @@ There are some abundant taxa resolved only to the genus level. For example:
 
 I don't want to lose these  when I group by species. Can use NArm = FALSE option in `tax_glom` but then they will plot as NA and I will lose all tax information in the species plot... 
 
-  - Found a cool package for replacing NAs with next lowest known rank, [fantaxtic](https://github.com/gmteunisse/fantaxtic)
+  - Found a cool package for replacing NAs in the tax table with next lowest known rank, [fantaxtic](https://github.com/gmteunisse/fantaxtic)
 
-- There are only [3 species of Bathytosia](https://www.fishbase.us/Nomenclature/ScientificNameSearchList.php?crit1_value=Bathytoshia) and only one is from the North Atlantic, *Bathytoshia centroura*, the roughtail stingray. So these are likely those. Replace the Species rank name, NA, with "Bathytoshia sp."
+  - There are only [3 species of Bathytosia](https://www.fishbase.us/Nomenclature/ScientificNameSearchList.php?crit1_value=Bathytoshia) and only one is from the North Atlantic, *Bathytoshia centroura*, the roughtail stingray. So these are likely those. Replace the Species rank name, NA, with "Bathytoshia sp."
 
-- There are [many more Squalus species](https://www.fishbase.us/Nomenclature/ScientificNameSearchList.php?) so harder to say but these are likely Squalus acanthias, spiny dogfish, which are common regionally. Still the blast hits are not really conclusive so can replace with *Squalus sp.*
+  - There are [many more Squalus species](https://www.fishbase.us/Nomenclature/ScientificNameSearchList.php?) so harder to say but these are likely Squalus acanthias, spiny dogfish, which are common regionally. Still the blast hits are not really conclusive so can replace with *Squalus sp.*
 
-- There are some Rhinoptera only identified to the genus level. Their blast hits are kind of all over the genus so replace with *Rhinoptera sp.*
+  - There are some Rhinoptera only identified to the genus level. Their blast hits are kind of all over the genus so replace with *Rhinoptera sp.*
 
-- The genus Pteroplatytrygon was also identified at low abundance. There is only one species in this genus, *Pteroplatytrygon violacea*, so it is very likely this species... I don't know why REVAMP didn't pull out the spp name in this case. Replace with *Pteroplatytrygon sp.*
+  - The genus Pteroplatytrygon was also identified at low abundance. There is only one species in this genus, *Pteroplatytrygon violacea*, so it is very likely this species... I don't know why REVAMP didn't pull out the spp name in this case. Replace with *Pteroplatytrygon sp.*
 
 - **Remember to discuss all this in MS.**
   
 ```{r}
-# Check what they look lik before replacement
+# Check what they look like before replacement
 data.frame(tax_table(subset_taxa(ps2021, is.na(Species))))
 data.frame(tax_table(subset_taxa(ps2023, is.na(Species))))
 ```
@@ -304,6 +297,12 @@ tax_table(ps2023) <- tax_table(name_na_taxa(ps2023, include_rank = F, na_label =
 # Check after replacement
 data.frame(tax_table(ps2021))
 data.frame(tax_table(ps2023))
+
+```
+
+And lastly replace the Mustelis mosis ASV (ASV_78 from 2021) with Mustelus sp., based on discussion above.
+```{r}
+tax_table(ps2021) <- gsub(tax_table(ps2021), pattern="Mustelus mosis", replacement="Mustelis sp.")
 
 ```
 
@@ -325,7 +324,7 @@ data.frame(tax_table(ps2021glommed))
 
 
 ```{r}
-ps2023glommed <- tax_glom(ps2023, "Species", NArm = FALSE)
+ps2023glommed <- tax_glom(ps2023, "Species")
 
 # plot total reads
 plot_bar(ps2023glommed, x = "Sample")
@@ -382,163 +381,334 @@ write.csv(elas02_2023_sample_data_taxbased,"figures/elas02_2023_sample_data_taxb
 ```
 
 
+
+Also calculate *relative abundances* (# of ASV sequences/sum total sequences in sample), for some plotting
+
+```{r}
+ps2021_ra <- microbiome::transform(ps2021, transform = "compositional")
+ps2021glommed_ra <- microbiome::transform(ps2021glommed, transform = "compositional")
+
+ps2023_ra <- microbiome::transform(ps2023, transform = "compositional")
+ps2023glommed_ra <- microbiome::transform(ps2023glommed, transform = "compositional")
+
+```
+
 # Visualizations
 
-### CONTINUE HERE 7/23
 
-For plotting, use *relative abundances* (# of ASV sequences/sum total sequences in sample), calculated easily using microbiome::transform
 
+## Simple barplots
+
+2021, raw reads
 ```{r}
-ps_ra <- microbiome::transform(ps, transform = "compositional")
+ps2021_barplot <- plot_bar(ps2021, x = "Sample", fill = "Species")
+ps2021_barplot
 ```
 
-Export the relative abundance matrix so Sara can have it:
+2021, relatve abundances
 ```{r}
-# Extract abundance matrix from the phyloseq object
-RelAbun_matrix = as(otu_table(ps_ra), "matrix")
-
-# Coerce to data.frame
-RelAbun_dataframe = as.data.frame(RelAbun_matrix)
-
-# Export
-write.csv(RelAbun_dataframe,"results-elasmos/otutable_relabun_qualfilt.csv", row.names = TRUE)
-
-## Also export the quality-filtered absolute abundance data
-AbsAbun_matrix = as(otu_table(ps), "matrix")
-AbsAbun_dataframe = as.data.frame(AbsAbun_matrix)
-write.csv(AbsAbun_dataframe,"results-elasmos/otutable_absabun_qualfilt.csv", row.names = TRUE)
-
-
+ps2021_ra_barplot <- plot_bar(ps2021_ra, x = "Sample", fill = "Species")
+ps2021_ra_barplot
 ```
 
 
-
-## Abundance at family level
-Then aglomerate the ASVs at the family level using the phyloseq function, tax_glom
+2023, raw reads
 ```{r}
-familyGlommed_RA = tax_glom(ps_ra, "family")
-family_barplot <- plot_bar(familyGlommed_RA, x = "Sample", fill = "family")
-family_barplot
-
-
-ggsave(filename = "Figures-elasmos/familybarplot.eps", plot = family_barplot, units = c("in"), width = 9, height = 6, dpi = 300, )# and save
-
+ps2023_barplot <- plot_bar(ps2023, x = "Sample", fill = "Species")
+ps2023_barplot
 ```
 
-Notice the diff between the clam/ oyster samples (AC/As JC/JS SC/SS) vs the T open water samples!
-
-
-Remove Pos and Neg  Controls 
+2023, relatve abundances
 ```{r}
-ps <- subset_samples(ps, !SampleID == "A.Blank" & !SampleID == "A.Positive" & !SampleID == "J.Blank" & !SampleID == "J.Positive" & !SampleID == "S.Blank" & !SampleID == "S.Positive" & !SampleID == "T2Blank" & !SampleID == "T2Positive" & !SampleID == "T3Blank" & !SampleID == "T3Positive" & !SampleID == "T5Blank" & !SampleID == "T5Positive")
-
-
-ps_ra <- subset_samples(ps_ra, !SampleID == "A.Blank" & !SampleID == "A.Positive" & !SampleID == "J.Blank" & !SampleID == "J.Positive" & !SampleID == "S.Blank" & !SampleID == "S.Positive" & !SampleID == "T2Blank" & !SampleID == "T2Positive" & !SampleID == "T3Blank" & !SampleID == "T3Positive" & !SampleID == "T5Blank" & !SampleID == "T5Positive")
-
-ps
-ps_ra
+ps2023_ra_barplot <- plot_bar(ps2023_ra, x = "Sample", fill = "Species")
+ps2023_ra_barplot
 ```
-62 samples remain
 
-Agglomerate by species to take a look at the unique species
+## Examine controls 
+
+Plot positive controls
 ```{r}
-speciesGlommed_RA = tax_glom(ps_ra, "CommonName")
-speciesGlommed_RA
-tax_table(speciesGlommed_RA)
+ps2021_posctl_barplot <- plot_bar(subset_samples(ps2021glommed, controls=="positive"), x = "replicates", fill = "Species", title = "2021 Positive Controls: Read Abundance") + 
+  scale_y_continuous(name="Read Abundance")+
+  theme(axis.title.x=element_blank())
+ps2021_posctl_barplot
+
+ps2021_posctl_ra_barplot <- plot_bar(subset_samples(ps2021glommed_ra, controls=="positive"), x = "replicates", fill = "Species", title = "2021 Positive Controls: Relative Abundance") + 
+  scale_y_continuous(name="Relative Abundance")+
+  theme(axis.title.x=element_blank())
+ps2021_posctl_ra_barplot
+
+
+
+
+
+ps2023_posctl_barplot <- plot_bar(subset_samples(ps2023glommed, controls=="positive"), x = "replicates", fill = "Species", title = "2023 Positive Controls: Read Abundance") + 
+  scale_y_continuous(name="Read Abundance")+
+  theme(axis.title.x=element_blank())
+ps2023_posctl_barplot
+
+ps2023_posctl_ra_barplot <- plot_bar(subset_samples(ps2023glommed_ra, controls=="positive"), x = "replicates", fill = "Species", title = "2023 Positive Controls: Relative Abundance") + 
+  scale_y_continuous(name="Relative Abundance")+
+  theme(axis.title.x=element_blank())
+ps2023_posctl_ra_barplot
+
+
+# save
+ggsave(plot = ps2021_posctl_barplot, filename = "figures/2021_posctl_barplot.eps", width = 7, height = 5, units = "in")
+ggsave(plot = ps2021_posctl_ra_barplot, filename = "figures/2021_posctl_ra_barplot.eps", width = 7, height = 5, units = "in")
+
+ggsave(plot = ps2023_posctl_barplot, filename = "figures/2023_posctl_barplot.eps", width = 6, height = 5, units = "in")
+ggsave(plot = ps2023_posctl_ra_barplot, filename = "figures/2023_posctl_ra_barplot.eps", width = 6, height = 5, units = "in")
+```
+
+
+
+
+Remove Pos and Neg  Controls from all 8 phyloseq objects:
+
+ASV-based, reads:
+ps2021
+ps2023
+
+ASV-based, relative abundance:
+ps2021_ra
+ps2023_ra
+
+Taxonomy (species)- based, reads:
+ps2021glommed
+ps2023glommed
+
+Taxonomy (species)- based, relative abundance:
+ps2021glommed_ra
+ps2023glommed_ra
+
+```{r}
+ps2021 <- subset_samples(ps2021, is.na(controls))
+ps2021_ra <- subset_samples(ps2021_ra, is.na(controls))
+ps2021glommed <- subset_samples(ps2021glommed, is.na(controls))
+ps2021glommed_ra <- subset_samples(ps2021glommed_ra, is.na(controls))
+
+
+ps2023 <- subset_samples(ps2023, is.na(controls))
+ps2023_ra <- subset_samples(ps2023_ra, is.na(controls))
+ps2023glommed <- subset_samples(ps2023glommed, is.na(controls))
+ps2023glommed_ra <- subset_samples(ps2023glommed_ra, is.na(controls))
+
 ```
 
 
 
 ## Bubble plots
-Based on my previous [scripts](https://github.com/lizsuter/Cariaco_Euk) with Cariaco Eukaryotic data
+
+Based on my previous [scripts](https://github.com/lizsuter/Cariaco_Euk)
+
+Work with tax-based dataframes (rather than ASV-based):
+
+Taxonomy (species)- based, reads:
+ps2021glommed
+ps2023glommed
+
+Taxonomy (species)- based, relative abundance:
+ps2021glommed_ra
+ps2023glommed_ra
+
 ```{r}
 # convert ps object to dataframe using phyloseq's psmelt
-species_df <- psmelt(speciesGlommed_RA)
+ps2021glommed_df <- psmelt(ps2021glommed)
+ps2023glommed_df <- psmelt(ps2023glommed)
+ps2021glommed_ra_df <- psmelt(ps2021glommed_ra)
+ps2023glommed_ra_df <- psmelt(ps2023glommed_ra)
 
 # replace zeroes in the table with NA
-species_df[species_df == 0] <- NA
+ps2021glommed_df[ps2021glommed_df == 0] <- NA
+ps2023glommed_df[ps2023glommed_df == 0] <- NA
+ps2021glommed_ra_df[ps2021glommed_ra_df == 0] <- NA
+ps2023glommed_ra_df[ps2023glommed_ra_df == 0] <- NA
 
-# and remove rows with NAs in abundance  (this is so they don't appear as small dots in plot)
-species_df <-  filter(species_df, !is.na(Abundance))
+# and remove rows with NAs (so they don't appear as small dots in plot)
+ps2021glommed_df <-  filter(ps2021glommed_df, !is.na(Abundance))
+ps2023glommed_df <-  filter(ps2023glommed_df, !is.na(Abundance))
+ps2021glommed_ra_df <-  filter(ps2021glommed_ra_df, !is.na(Abundance))
+ps2023glommed_ra_df <-  filter(ps2023glommed_ra_df, !is.na(Abundance))
+
+# add in common names
+ps2021glommed_df <- left_join(ps2021glommed_df, commonnames, by = "Species")
+ps2023glommed_df <- left_join(ps2023glommed_df, commonnames, by = "Species")
+ps2021glommed_ra_df <- left_join(ps2021glommed_ra_df, commonnames, by = "Species")
+ps2023glommed_ra_df <- left_join(ps2023glommed_ra_df, commonnames, by = "Species")
+
+# and view
+ps2021glommed_df
+ps2023glommed_df
+ps2021glommed_ra_df
+ps2023glommed_ra_df
 ```
 
 
 
 Plot by species, scientific name
+**2021**
 ```{r}
-speciesbubbleplot_eDNA_sciname <- ggplot(species_df, aes(x = Station_ShortName, y = fct_rev(species), color = Station)) + # the fancy stuff around y (species) helps to present it in reverse order in the plot (from top to btm alphabetically)
-  geom_point(aes(size = Abundance, fill = Station), color = "black", pch = 21)+
-  scale_size(range = c(1,15)) +
-  scale_size_area(breaks = c(0,.25,.5,.75,1), max_size = 6)+
-  xlab("")+
-  ylab("")+
-  labs(size="Relative Abundance")+
-  theme_bw() +
-#  scale_fill_brewer(palette="Paired") +
-  theme(axis.title.x=element_blank()) +
-  facet_grid(Month~Bayside, scales = "free", space = "free", drop= TRUE)
+# ps2021glommed_df
+# ps2023glommed_df
 
-speciesbubbleplot_eDNA_sciname
-```
+# pull out and order site names
+levels(unique(c(ps2021glommed_df$sites, ps2023glommed_df$sites)))
+# reorder to
+sitelevels <- c("1","2","3","4","5","6","7","8","9","10","11","12","13","TI","WS", "C4", "C5", "S1", "S3","S6", "S9")
 
-* Note on above that sampling dates were not same for open water stations and bivalve stations (C* and S* stations) although they were a few days apart
+# set colors so Com name and Sp name are consistent across plots
+# have 16 unique species
+myColors_sciname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","gold1","#FDBF6F","#FB9A99","khaki2","orchid1"), commonnames$Species[which(commonnames$Species %in% unique(c(ps2021glommed_df$Species, ps2023glommed_df$Species)))])
+myColors_comname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","gold1","#FDBF6F","#FB9A99","khaki2","orchid1"),commonnames$CommonName[which(commonnames$Species %in% unique(c(ps2021glommed_df$Species, ps2023glommed_df$Species)))])
 
-Plot by species common name
-```{r}
-speciesbubbleplot_eDNA_comname <- ggplot(species_df, aes(x = Station_ShortName, y = fct_rev(CommonName), color = Station)) + # the fancy stuff around y (CommonName) helps to present it in reverse order in the plot (from top to btm alphabetically)
-  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = Station), color = "black", pch = 21)+
-  scale_size(range = c(.25,15)) +
-  scale_size_area(breaks = c(.25,.5,.75,1), max_size = 6)+
-  xlab("")+
-  ylab("")+
-  labs(size="Relative Abundance")+
-  theme_bw() +
-#  scale_fill_brewer(palette="Paired") +
-  theme(axis.title.x=element_blank()) +
-  facet_grid(Month~Bayside, scales = "free", space = "free", drop= TRUE)
-
-speciesbubbleplot_eDNA_comname
-```
+# and check they are listed in same order
+myColors_sciname
+myColors_comname
 
 
-Exportfigures
-```{r}
-ggsave(filename = "Figures-elasmos/speciesbubbleplot_eDNA_sciname.eps", plot = speciesbubbleplot_eDNA_sciname, units = c("in"), width = 8, height = 7, dpi = 300)
-
-ggsave(filename = "Figures-elasmos/speciesbubbleplot_eDNA_comname.eps", plot = speciesbubbleplot_eDNA_comname, units = c("in"), width = 8, height = 7, dpi = 300)
-```
-
-
-Plot by common name- # of reads (rather than rel abund)
-```{r}
-speciesGlommed = tax_glom(ps, "CommonName")
-species_df_reads <- psmelt(speciesGlommed)
-
-# replace zeroes in the table with NA
-species_df_reads[species_df_reads == 0] <- NA
-
-# and remove rows with NAs in abundance  (this is so they don't appear as small dots in plot)
-species_df_reads <-  filter(species_df_reads, !is.na(Abundance))
-
-speciesbubbleplot_eDNA_comname_reads <- ggplot(species_df_reads, aes(x = Station_ShortName, y = fct_rev(CommonName), color = Station)) + # the fancy stuff around y (CommonName) helps to present it in reverse order in the plot (from top to btm alphabetically)
-  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = Station), color = "black", pch = 21) +
-#  scale_size(range = c(.25,15)) +
+# 2021, read abundance, tax-based, common name
+bubbleplot_comname_2021 <- ggplot(ps2021glommed_df, aes(x = factor(sites, levels = sitelevels), y = fct_rev(CommonName))) + # the fancy stuff around y (CommonName) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = CommonName), color = "black", pch = 21) +
   scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
   xlab("")+
   ylab("")+
-  labs(size="Read Abundance")+
+  labs(size="Read Abundance", fill = "")+
   theme_bw() +
-#  scale_fill_brewer(palette="Paired") +
+  scale_fill_manual(values = myColors_comname) +
   theme(axis.title.x=element_blank()) +
-  facet_grid(Month~Bayside, scales = "free", space = "free", drop= TRUE)
+  facet_grid(MMDD~BAYSIDE, scales = "free", space = "free", drop= TRUE)
 
-speciesbubbleplot_eDNA_comname_reads
+# 2021, read abundance, tax-based, sci name
+bubbleplot_sciname_2021 <- ggplot(ps2021glommed_df, aes(x = factor(sites, levels = sitelevels), y = fct_rev(Species))) +
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = Species), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_sciname) +
+  theme(axis.title.x=element_blank()) +
+  facet_grid(MMDD~BAYSIDE, scales = "free", space = "free", drop= TRUE)
+
+
+# 2021, relative abundance, tax-based, common name
+bubbleplot_comname_2021_ra <- ggplot(ps2021glommed_ra_df, aes(x = factor(sites, levels = sitelevels), y = fct_rev(CommonName))) +
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = CommonName), color = "black", pch = 21) +
+  scale_size_area(breaks = c(.25,.5,.75,1), max_size = 6)+
+  xlab("")+
+  ylab("")+
+  labs(size="Relative Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_comname) +
+  theme(axis.title.x=element_blank()) +
+  facet_grid(MMDD~BAYSIDE, scales = "free", space = "free", drop= TRUE)
+
+
+# 2021, relative abundance, tax-based, sci name
+bubbleplot_sciname_2021_ra <- ggplot(ps2021glommed_ra_df, aes(x = factor(sites, levels = sitelevels), y = fct_rev(Species))) +
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = Species), color = "black", pch = 21) +
+  scale_size_area(breaks = c(.25,.5,.75,1), max_size = 6)+
+  xlab("")+
+  ylab("")+
+  labs(size="Relative Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_sciname) +
+  theme(axis.title.x=element_blank()) +
+  facet_grid(MMDD~BAYSIDE, scales = "free", space = "free", drop= TRUE)
+
+
+bubbleplot_comname_2021
+bubbleplot_sciname_2021
+
+bubbleplot_comname_2021_ra
+bubbleplot_sciname_2021_ra
+
+# save
+ggsave(plot = bubbleplot_comname_2021, filename = "figures/bubbleplot_comname_2021.eps", width = 7, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2021, filename = "figures/bubbleplot_sciname_2021.eps", width = 6, height = 7, units = "in")
+ggsave(plot = bubbleplot_comname_2021_ra, filename = "figures/bubbleplot_comname_2021_ra.eps", width = 7, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2021_ra, filename = "figures/bubbleplot_sciname_2021_ra.eps", width = 6, height = 7, units = "in")
 ```
 
-Export
+
+**2023**
 ```{r}
-ggsave(filename = "Figures-elasmos/speciesbubbleplot_eDNA_comname_reads.eps", plot = speciesbubbleplot_eDNA_comname_reads, units = c("in"), width = 8, height = 7, dpi = 300)
+# ps2021glommed_ra_df
+# ps2023glommed_ra_df
+
+# 2023, read abundance, tax-based, common name
+bubbleplot_comname_2023 <- ggplot(ps2023glommed_df, aes(x = factor(sites, levels = sitelevels), y = fct_rev(CommonName))) + # the fancy stuff around y (CommonName) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = CommonName), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_comname) +
+  theme(axis.title.x=element_blank()) +
+  facet_grid(Month~BAYSIDE, scales = "free", space = "free", drop= TRUE)
+
+# 2023, read abundance, tax-based, sci name
+bubbleplot_sciname_2023 <- ggplot(ps2023glommed_df, aes(x = factor(sites, levels = sitelevels), y = fct_rev(Species))) +
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = Species), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_sciname) +
+  theme(axis.title.x=element_blank()) +
+  facet_grid(Month~BAYSIDE, scales = "free", space = "free", drop= TRUE)
+
+
+# 2023, relative abundance, tax-based, common name
+bubbleplot_comname_2023_ra <- ggplot(ps2023glommed_ra_df, aes(x = factor(sites, levels = sitelevels), y = fct_rev(CommonName))) +
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = CommonName), color = "black", pch = 21) +
+  scale_size_area(breaks = c(.25,.5,.75,1), max_size = 6)+
+  xlab("")+
+  ylab("")+
+  labs(size="Relative Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_comname) +
+  theme(axis.title.x=element_blank()) +
+  facet_grid(Month~BAYSIDE, scales = "free", space = "free", drop= TRUE)
+
+
+# 2023, relative abundance, tax-based, sci name
+bubbleplot_sciname_2023_ra <- ggplot(ps2023glommed_ra_df, aes(x = factor(sites, levels = sitelevels), y = fct_rev(Species))) +
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = Species), color = "black", pch = 21) +
+  scale_size_area(breaks = c(.25,.5,.75,1), max_size = 6)+
+  xlab("")+
+  ylab("")+
+  labs(size="Relative Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_sciname) +
+  theme(axis.title.x=element_blank()) +
+  facet_grid(Month~BAYSIDE, scales = "free", space = "free", drop= TRUE)
+
+
+bubbleplot_comname_2023
+bubbleplot_sciname_2023
+
+bubbleplot_comname_2023_ra
+bubbleplot_sciname_2023_ra
+
+# save
+ggsave(plot = bubbleplot_comname_2023, filename = "figures/bubbleplot_comname_2023.eps", width = 7, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2023, filename = "figures/bubbleplot_sciname_2023.eps", width = 6, height = 7, units = "in")
+ggsave(plot = bubbleplot_comname_2023_ra, filename = "figures/bubbleplot_comname_2023_ra.eps", width = 7, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2023_ra, filename = "figures/bubbleplot_sciname_2023_ra.eps", width = 6, height = 7, units = "in")
 ```
+* Note on 2023 dataset that sampling dates were not same for open water stations and bivalve stations (C* and S* stations) although they were a few days apart so I just plotted by month (unlike 2021 where I plotted by date)
+
+
+## STOPPED HERE 7/24/24
+
+
+
+
+
 
 
 ## Time Series Plots
