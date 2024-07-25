@@ -30,6 +30,8 @@ library(RColorBrewer)
 library(microbiome)
 library(metagMisc)
 library(fantaxtic)
+library(psadd)
+
 
 # library(readxl)
 # library(Biostrings)
@@ -247,7 +249,7 @@ Again mostly zeroes. Highest read abundance is ~650 reads.
 
 Remove ASVs with less than 1000 reads in a sample. 
 ```{r}
-ps2021 <- phyloseq_filter_sample_wise_abund_trim(
+ps2021 <- phyloseq_filter_sample_wise_abund_trim::phyloseq_filter_sample_wise_abund_trim(
   ps2021,
   minabund = 1000,
   relabund = FALSE)
@@ -255,7 +257,7 @@ ps2021 <- phyloseq_filter_sample_wise_abund_trim(
 data.frame(otu_table(ps2021))
 ```
 ```{r}
-ps2023 <- phyloseq_filter_sample_wise_abund_trim(
+ps2023 <- phyloseq_filter_sample_wise_abund_trim::phyloseq_filter_sample_wise_abund_trim(
   ps2023,
   minabund = 1000,
   relabund = FALSE)
@@ -292,8 +294,8 @@ data.frame(tax_table(subset_taxa(ps2023, is.na(Species))))
 
 ```{r}
 # Replace NA in Species with "Name-of-genus sp."
-tax_table(ps2021) <- tax_table(name_na_taxa(ps2021, include_rank = F, na_label = "<tax> sp."))
-tax_table(ps2023) <- tax_table(name_na_taxa(ps2023, include_rank = F, na_label = "<tax> sp."))
+tax_table(ps2021) <- tax_table(fantaxtic::name_na_taxa(ps2021, include_rank = F, na_label = "<tax> sp."))
+tax_table(ps2023) <- tax_table(fantaxtic::name_na_taxa(ps2023, include_rank = F, na_label = "<tax> sp."))
 
 # Check after replacement
 data.frame(tax_table(ps2021))
@@ -560,8 +562,8 @@ sitelevels <- c("1","2","3","4","5","6","7","8","9","10","11","12","13","TI","WS
 
 # set colors so Com name and Sp name are consistent across plots
 # have 16 unique species
-myColors_sciname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","gold1","#FDBF6F","#FB9A99","khaki2","orchid1"), commonnames$Species[which(commonnames$Species %in% unique(c(ps2021glommed_df$Species, ps2023glommed_df$Species)))])
-myColors_comname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","gold1","#FDBF6F","#FB9A99","khaki2","orchid1"),commonnames$CommonName[which(commonnames$Species %in% unique(c(ps2021glommed_df$Species, ps2023glommed_df$Species)))])
+myColors_sciname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","orchid1","#FDBF6F","gold1","#FB9A99","khaki2"), commonnames$Species[which(commonnames$Species %in% unique(c(ps2021glommed_df$Species, ps2023glommed_df$Species)))])
+myColors_comname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","orchid1","#FDBF6F","gold1","#FB9A99","khaki2"),commonnames$CommonName[which(commonnames$Species %in% unique(c(ps2021glommed_df$Species, ps2023glommed_df$Species)))])
 
 # and check they are listed in same order
 myColors_sciname
@@ -703,8 +705,51 @@ ggsave(plot = bubbleplot_sciname_2023_ra, filename = "figures/bubbleplot_sciname
 ```
 * Note on 2023 dataset that sampling dates were not same for open water stations and bivalve stations (C* and S* stations) although they were a few days apart so I just plotted by month (unlike 2021 where I plotted by date)
 
+## Pie charts
+tried psadd package but I still can't export the pie chart data from the html
 
-## STOPPED HERE 7/24/24
+Summarize fractional abundances across whole dataset-
+```{r}
+ps2021_whole <- ps2021glommed_df %>%
+  group_by(Species) %>%
+    summarize(total_reads = sum(Abundance)) %>%
+  mutate(rel_abun = total_reads/sum(across(total_reads))) %>%
+  left_join(commonnames, by = "Species")
+
+ps2023_whole <- ps2023glommed_df %>%
+  group_by(Species) %>%
+    summarize(total_reads = sum(Abundance)) %>%
+  mutate(rel_abun = total_reads/sum(across(total_reads))) %>%
+  left_join(commonnames, by = "Species")
+
+ps2021_whole
+ps2023_whole
+```
+
+Apparently there is no geom for pie charts but you can [build a stacked geom_bar and make polar coordinates](https://r-graph-gallery.com/piechart-ggplot2.html)
+```{r}
+ggplot(ps2021_whole, aes(x="", y = rel_abun, fill=CommonName)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0) +
+  xlab("")+
+  ylab("")+
+  labs(fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_comname) +
+  theme(axis.title.x=element_blank())
+
+ggplot(ps2023_whole, aes(x="", y = rel_abun, fill=CommonName)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0) +
+  xlab("")+
+  ylab("")+
+  labs(fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_comname) +
+  theme(axis.title.x=element_blank())
+```
+
+## STOPPED HERE 7/25- keep modifying plots above and export
 
 
 
