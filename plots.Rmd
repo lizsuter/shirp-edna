@@ -214,12 +214,11 @@ Remove low abundant reads
     - Japanese wobbegong [Orectolobus japonicus, ASV_234]
     - and nurse shark [Ginglymostoma cirratum: ASV129, ASV_588]) 
 
-From Libby's MS:
+From Libby's thesis:
 *Subcutaneous muscle tissue samples were collected for two local shark species: spiny dogfish (Squalus acanthius) and smooth dogfish (Musculus canis). A tissue sample was taken from each species. Each specimen was caught in Long Island waters and stored at -20°C as part of an alternate study. Water samples were taken from various tanks containing sharks at the Long Island Aquarium in October 2021. These tanks contained known species of elasmobranchs, including sand tiger sharks (Charcharias taurus), an ornate wobbegong (Orectolobus japonicus), and nurse sharks (Ginglymostoma cirratum). Additional water samples were taken from a shark tank at Cornell Cooperative Extension in Babylon, NY in October of 2021. This tank contained only chain catshark (Scyliorhinus retifer) but had a shared sump system with other elasmobranchs and used bay water. All positive controls were processed following the same protocol as the experimental samples.*
 
 
 
-**Might be interesting to make a plot of 2021 positive control detections too!**
 
 Check some of these weird annotations:
 ```{r}
@@ -249,7 +248,7 @@ Again mostly zeroes. Highest read abundance is ~650 reads.
 
 Remove ASVs with less than 1000 reads in a sample. 
 ```{r}
-ps2021 <- phyloseq_filter_sample_wise_abund_trim::phyloseq_filter_sample_wise_abund_trim(
+ps2021 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
   ps2021,
   minabund = 1000,
   relabund = FALSE)
@@ -257,7 +256,7 @@ ps2021 <- phyloseq_filter_sample_wise_abund_trim::phyloseq_filter_sample_wise_ab
 data.frame(otu_table(ps2021))
 ```
 ```{r}
-ps2023 <- phyloseq_filter_sample_wise_abund_trim::phyloseq_filter_sample_wise_abund_trim(
+ps2023 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
   ps2023,
   minabund = 1000,
   relabund = FALSE)
@@ -282,7 +281,7 @@ I don't want to lose these  when I group by species. Can use NArm = FALSE option
 
   - There are some Rhinoptera only identified to the genus level. Their blast hits are kind of all over the genus so replace with *Rhinoptera sp.*
 
-  - The genus Pteroplatytrygon was also identified at low abundance. There is only one species in this genus, *Pteroplatytrygon violacea*, so it is very likely this species... I don't know why REVAMP didn't pull out the spp name in this case. Replace with *Pteroplatytrygon sp.*
+  - The genus Pteroplatytrygon was also identified at low abundance. There is only one species in this genus, *Pteroplatytrygon violacea*, so it is very likely this species... I don't know why REVAMP didn't pull out the spp name in this case. Replace with *Pteroplatytrygon violacea*
 
 - **Remember to discuss all this in MS.**
   
@@ -297,19 +296,28 @@ data.frame(tax_table(subset_taxa(ps2023, is.na(Species))))
 tax_table(ps2021) <- tax_table(fantaxtic::name_na_taxa(ps2021, include_rank = F, na_label = "<tax> sp."))
 tax_table(ps2023) <- tax_table(fantaxtic::name_na_taxa(ps2023, include_rank = F, na_label = "<tax> sp."))
 
+```
+
+And lastly replace the Mustelis mosis ASV (ASV_78 from 2021) with Mustelus sp., based on discussion above and replace Pteroplatytrygon sp. with Pteroplatytrygon violacea.
+
+```{r}
+tax_table(ps2021) <- gsub(tax_table(ps2021), pattern="Mustelus mosis", replacement="Mustelis sp.")
+tax_table(ps2023) <- gsub(tax_table(ps2023), pattern="Pteroplatytrygon sp.", replacement="Pteroplatytrygon violacea")
+
+```
+
+```{r}
 # Check after replacement
 data.frame(tax_table(ps2021))
 data.frame(tax_table(ps2023))
-
 ```
-
-And lastly replace the Mustelis mosis ASV (ASV_78 from 2021) with Mustelus sp., based on discussion above.
+Fix some labeling issues with 2021 positive controls:
+Remove SA2 and MC2- something went wrong with these
 ```{r}
-tax_table(ps2021) <- gsub(tax_table(ps2021), pattern="Mustelus mosis", replacement="Mustelis sp.")
-
+ps2021 = subset_samples(ps2021, replicates != "MC2" & replicates != "SA2")
+ps2021
 ```
-
-
+Also SA1 and MC1 labels were swapped. Fixed this directly in metadata table under "replicates" column
 
 
 ## Agglomerate by taxonomy
@@ -341,7 +349,7 @@ data.frame(tax_table(ps2023glommed))
 **2021**
 ```{r}
 elas02_2021_asv_table_taxbased <- data.frame(otu_table(ps2021glommed))
-elas02_2021_tax_table_taxbased <- data.frame(tax_table(ps2021glommed))
+elas02_2021_tax_table_taxbased <- rownames_to_column(data.frame(tax_table(ps2021glommed)), var = "1stRepresentative_ASV")
 elas02_2021_sample_data_taxbased <- data.frame(sample_data(ps2021glommed))
 
 
@@ -356,7 +364,7 @@ elas02_2021_sample_data_taxbased
 
 # export
 write.csv(elas02_2021_asv_table_taxbased,"figures/elas02_2021_asv_table_taxbased.csv", row.names = TRUE)
-write.csv(elas02_2021_tax_table_taxbased,"figures/elas02_2021_tax_table_taxbased.csv", row.names = TRUE)
+write.csv(elas02_2021_tax_table_taxbased,"figures/elas02_2021_tax_table_taxbased.csv", row.names = FALSE)
 write.csv(elas02_2021_sample_data_taxbased,"figures/elas02_2021_sample_data_taxbased.csv", row.names = TRUE)
 ```
 
@@ -364,9 +372,8 @@ write.csv(elas02_2021_sample_data_taxbased,"figures/elas02_2021_sample_data_taxb
 **2023**
 ```{r}
 elas02_2023_asv_table_taxbased <- data.frame(otu_table(ps2023glommed))
-elas02_2023_tax_table_taxbased <- data.frame(tax_table(ps2023glommed))
+elas02_2023_tax_table_taxbased <- rownames_to_column(data.frame(tax_table(ps2023glommed)), var = "1stRepresentative_ASV")
 elas02_2023_sample_data_taxbased <- data.frame(sample_data(ps2023glommed))
-
 
 # add on common names to tax_table
 commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
@@ -379,7 +386,7 @@ elas02_2023_sample_data_taxbased
 
 # export
 write.csv(elas02_2023_asv_table_taxbased,"figures/elas02_2023_asv_table_taxbased.csv", row.names = TRUE)
-write.csv(elas02_2023_tax_table_taxbased,"figures/elas02_2023_tax_table_taxbased.csv", row.names = TRUE)
+write.csv(elas02_2023_tax_table_taxbased,"figures/elas02_2023_tax_table_taxbased.csv", row.names = FALSE)
 write.csv(elas02_2023_sample_data_taxbased,"figures/elas02_2023_sample_data_taxbased.csv", row.names = TRUE)
 ```
 
@@ -430,6 +437,7 @@ ps2023_ra_barplot
 ## Examine controls 
 
 Plot positive controls
+
 ```{r}
 ps2021_posctl_barplot <- plot_bar(subset_samples(ps2021glommed, controls=="positive"), x = "replicates", fill = "Species", title = "2021 Positive Controls: Read Abundance") + 
   scale_y_continuous(name="Read Abundance")+
@@ -445,25 +453,12 @@ ps2021_posctl_ra_barplot
 
 
 
-ps2023_posctl_barplot <- plot_bar(subset_samples(ps2023glommed, controls=="positive"), x = "replicates", fill = "Species", title = "2023 Positive Controls: Read Abundance") + 
-  scale_y_continuous(name="Read Abundance")+
-  theme(axis.title.x=element_blank())
-ps2023_posctl_barplot
-
-ps2023_posctl_ra_barplot <- plot_bar(subset_samples(ps2023glommed_ra, controls=="positive"), x = "replicates", fill = "Species", title = "2023 Positive Controls: Relative Abundance") + 
-  scale_y_continuous(name="Relative Abundance")+
-  theme(axis.title.x=element_blank())
-ps2023_posctl_ra_barplot
-
-
 # save
 ggsave(plot = ps2021_posctl_barplot, filename = "figures/2021_posctl_barplot.eps", width = 7, height = 5, units = "in")
 ggsave(plot = ps2021_posctl_ra_barplot, filename = "figures/2021_posctl_ra_barplot.eps", width = 7, height = 5, units = "in")
 
-ggsave(plot = ps2023_posctl_barplot, filename = "figures/2023_posctl_barplot.eps", width = 6, height = 5, units = "in")
-ggsave(plot = ps2023_posctl_ra_barplot, filename = "figures/2023_posctl_ra_barplot.eps", width = 6, height = 5, units = "in")
 ```
-
+Note: the "positive controls" in 2023 dataset were actually positives for the Mifish sequencing primers. Not elasmo positives so ignore for this dataset.
 
 
 
@@ -699,15 +694,15 @@ bubbleplot_sciname_2023_ra
 
 # save
 ggsave(plot = bubbleplot_comname_2023, filename = "figures/bubbleplot_comname_2023.eps", width = 7, height = 7, units = "in")
-ggsave(plot = bubbleplot_sciname_2023, filename = "figures/bubbleplot_sciname_2023.eps", width = 6, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2023, filename = "figures/bubbleplot_sciname_2023.eps", width = 7.5, height = 7, units = "in")
 ggsave(plot = bubbleplot_comname_2023_ra, filename = "figures/bubbleplot_comname_2023_ra.eps", width = 7, height = 7, units = "in")
-ggsave(plot = bubbleplot_sciname_2023_ra, filename = "figures/bubbleplot_sciname_2023_ra.eps", width = 6, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2023_ra, filename = "figures/bubbleplot_sciname_2023_ra.eps", width = 7.5, height = 7, units = "in")
 ```
 * Note on 2023 dataset that sampling dates were not same for open water stations and bivalve stations (C* and S* stations) although they were a few days apart so I just plotted by month (unlike 2021 where I plotted by date)
 
 ## Pie charts
 tried psadd package but I still can't export the pie chart data from the html
-
+## CONTINUE HERE 8/9/24
 Summarize fractional abundances across whole dataset-
 ```{r}
 ps2021_whole <- ps2021glommed_df %>%
@@ -786,10 +781,6 @@ speciestimeseries_comname
 ```
 
 
-## stopped here 5/28/24. Keep working on Figures above. Check if zeroes are plotting as small dots (may want to delete)
-- change 7, 8, 9 to JAS in bubble plots. See this: https://r-graphics.org/recipe-facet-label-text
-- export time series figure
-- create dezcriptive figure captions
 
 Next
 - check for seasonality of cownose ray. Does it come in in August and outcompete other things? Is it more abundant at the bivalve sites?
