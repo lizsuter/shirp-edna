@@ -3,7 +3,7 @@ title: "Analysis Pipeline for Elas02 amplicons from SHiRP Project"
 output: html_notebook
 ---
 
-Lab Notebook for REVAMP analysis of Elasmobranh-SHiRP amplicons.
+Lab Notebook for REVAMP analysis of Elasmobranch-SHiRP amplicons.
 
 Re-started Jun 2024 utilizing [REVAMP](https://github.com/McAllister-NOAA/REVAMP). Previously I was using my own pipeline with DADA2 and blast+ toolkit to blastn sequences (after quality filtering) and retaining top hits. Instead, I've switched to making a reference database using [rCRUX](https://github.com/CalCOFI/rCRUX) and the Elas02 primers. (See database repo). This method should be an improvement/ better approach based on 1) it utilizes a curated database specific to our primers and 2) it picks closest hits based on a phylogenetic analysis of the top 100 blastn hits
 

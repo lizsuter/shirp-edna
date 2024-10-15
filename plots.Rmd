@@ -432,7 +432,6 @@ ps2021_posctl_ra_barplot <- plot_bar(subset_samples(ps2021glommed_ra, controls==
   scale_y_continuous(name="Relative Abundance")+
   theme(axis.title.x=element_blank())+
     scale_fill_paletteer_d("MetBrewer::Signac")
-
 ps2021_posctl_ra_barplot
 
 
@@ -443,8 +442,21 @@ ps2021_posctl_ra_barplot
 ggsave(plot = ps2021_posctl_barplot, filename = "figures-salzman-etal-elasmos/2021_posctl_barplot.eps", width = 7, height = 5, units = "in")
 ggsave(plot = ps2021_posctl_ra_barplot, filename = "figures-salzman-etal-elasmos/2021_posctl_ra_barplot.eps", width = 7, height = 5, units = "in")
 
+# export data of pos ctls for text of manuscript
+ps2021_posctls <- data.frame(otu_table(subset_samples(ps2021glommed, controls == "positive")))
+ps2021_posctls_ra <- data.frame(otu_table(subset_samples(ps2021glommed_ra, controls == "positive")))
+ps2021_posctls_taxa <- data.frame(tax_table(subset_samples(ps2021glommed, controls == "positive")))
+
+ps2021_posctls
+ps2021_posctls_ra
+ps2021_posctls_taxa
+
+write.csv(ps2021_posctls, file = "figures-salzman-etal-elasmos/ps2021_posctls.csv")
+write.csv(ps2021_posctls_ra, file = "figures-salzman-etal-elasmos/ps2021_posctls_ra.csv")
+write.csv(ps2021_posctls_taxa, file = "figures-salzman-etal-elasmos/ps2021_posctls_taxa.csv")
+
+
 ```
-Note: the "positive controls" in 2023 dataset were actually positives for the Mifish sequencing primers. Not elasmo positives so ignore for this dataset.
 
 
 
