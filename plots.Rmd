@@ -30,7 +30,8 @@ library(RColorBrewer)
 library(microbiome)
 library(metagMisc)
 library(fantaxtic)
-library(psadd)
+library(ggrepel)
+library(paletteer)
 
 
 # library(readxl)
@@ -81,15 +82,6 @@ phylo_2021 <- phyloseq(ASV_2021, TAX_2021, samples_2021)
 
 ```
 
-```{r}
-# sample_order2021 <- read.delim("results-revamp-2021-Elas02/sample_order.txt", header=FALSE, stringsAsFactors=FALSE)
-# sample_order2021 <- as.vector(sample_order2021)
-# 
-# siteorder2021 <- as.data.frame(sample_metadata$sites)
-# siteorder2021 <- distinct(siteorder2021)
-# siteorder2021 <- as.vector(siteorder2021)
-
-```
 
 **2023 data**
 ```{r}
@@ -114,18 +106,6 @@ samples_2023 = sample_data(sample_metadata)
 phylo_2023 <- phyloseq(ASV_2023, TAX_2023, samples_2023)
 
 ```
-
-```{r}
-# sample_order2023 <- read.delim("results-revamp-2023-Elas02/sample_order.txt", header=FALSE, stringsAsFactors=FALSE)
-# sample_order2023 <- as.vector(sample_order2023)
-# 
-# siteorder2023 <- as.data.frame(sample_metadata$sites)
-# siteorder2023 <- distinct(siteorder2023)
-# siteorder2023 <- as.vector(siteorder2023)
-
-```
-
-
 
 
 
@@ -255,6 +235,7 @@ ps2021 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
 
 data.frame(otu_table(ps2021))
 ```
+
 ```{r}
 ps2023 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
   ps2023,
@@ -298,10 +279,10 @@ tax_table(ps2023) <- tax_table(fantaxtic::name_na_taxa(ps2023, include_rank = F,
 
 ```
 
-And lastly replace the Mustelis mosis ASV (ASV_78 from 2021) with Mustelus sp., based on discussion above and replace Pteroplatytrygon sp. with Pteroplatytrygon violacea.
+And lastly replace the Mustelus mosis ASV (ASV_78 from 2021) with Mustelus sp., based on discussion above and replace Pteroplatytrygon sp. with Pteroplatytrygon violacea.
 
 ```{r}
-tax_table(ps2021) <- gsub(tax_table(ps2021), pattern="Mustelus mosis", replacement="Mustelis sp.")
+tax_table(ps2021) <- gsub(tax_table(ps2021), pattern="Mustelus mosis", replacement="Mustelus sp.")
 tax_table(ps2023) <- gsub(tax_table(ps2023), pattern="Pteroplatytrygon sp.", replacement="Pteroplatytrygon violacea")
 
 ```
@@ -363,9 +344,9 @@ elas02_2021_tax_table_taxbased
 elas02_2021_sample_data_taxbased
 
 # export
-write.csv(elas02_2021_asv_table_taxbased,"figures/elas02_2021_asv_table_taxbased.csv", row.names = TRUE)
-write.csv(elas02_2021_tax_table_taxbased,"figures/elas02_2021_tax_table_taxbased.csv", row.names = FALSE)
-write.csv(elas02_2021_sample_data_taxbased,"figures/elas02_2021_sample_data_taxbased.csv", row.names = TRUE)
+write.csv(elas02_2021_asv_table_taxbased,"figures-salzman-etal-elasmos/elas02_2021_asv_table_taxbased.csv", row.names = TRUE)
+write.csv(elas02_2021_tax_table_taxbased,"figures-salzman-etal-elasmos/elas02_2021_tax_table_taxbased.csv", row.names = FALSE)
+write.csv(elas02_2021_sample_data_taxbased,"figures-salzman-etal-elasmos/elas02_2021_sample_data_taxbased.csv", row.names = TRUE)
 ```
 
 
@@ -385,9 +366,9 @@ elas02_2023_tax_table_taxbased
 elas02_2023_sample_data_taxbased
 
 # export
-write.csv(elas02_2023_asv_table_taxbased,"figures/elas02_2023_asv_table_taxbased.csv", row.names = TRUE)
-write.csv(elas02_2023_tax_table_taxbased,"figures/elas02_2023_tax_table_taxbased.csv", row.names = FALSE)
-write.csv(elas02_2023_sample_data_taxbased,"figures/elas02_2023_sample_data_taxbased.csv", row.names = TRUE)
+write.csv(elas02_2023_asv_table_taxbased,"figures-salzman-etal-elasmos/elas02_2023_asv_table_taxbased.csv", row.names = TRUE)
+write.csv(elas02_2023_tax_table_taxbased,"figures-salzman-etal-elasmos/elas02_2023_tax_table_taxbased.csv", row.names = FALSE)
+write.csv(elas02_2023_sample_data_taxbased,"figures-salzman-etal-elasmos/elas02_2023_sample_data_taxbased.csv", row.names = TRUE)
 ```
 
 
@@ -439,14 +420,19 @@ ps2023_ra_barplot
 Plot positive controls
 
 ```{r}
+
+
 ps2021_posctl_barplot <- plot_bar(subset_samples(ps2021glommed, controls=="positive"), x = "replicates", fill = "Species", title = "2021 Positive Controls: Read Abundance") + 
   scale_y_continuous(name="Read Abundance")+
-  theme(axis.title.x=element_blank())
+  theme(axis.title.x=element_blank())+
+  scale_fill_paletteer_d("MetBrewer::Signac")
 ps2021_posctl_barplot
 
 ps2021_posctl_ra_barplot <- plot_bar(subset_samples(ps2021glommed_ra, controls=="positive"), x = "replicates", fill = "Species", title = "2021 Positive Controls: Relative Abundance") + 
   scale_y_continuous(name="Relative Abundance")+
-  theme(axis.title.x=element_blank())
+  theme(axis.title.x=element_blank())+
+    scale_fill_paletteer_d("MetBrewer::Signac")
+
 ps2021_posctl_ra_barplot
 
 
@@ -454,8 +440,8 @@ ps2021_posctl_ra_barplot
 
 
 # save
-ggsave(plot = ps2021_posctl_barplot, filename = "figures/2021_posctl_barplot.eps", width = 7, height = 5, units = "in")
-ggsave(plot = ps2021_posctl_ra_barplot, filename = "figures/2021_posctl_ra_barplot.eps", width = 7, height = 5, units = "in")
+ggsave(plot = ps2021_posctl_barplot, filename = "figures-salzman-etal-elasmos/2021_posctl_barplot.eps", width = 7, height = 5, units = "in")
+ggsave(plot = ps2021_posctl_ra_barplot, filename = "figures-salzman-etal-elasmos/2021_posctl_ra_barplot.eps", width = 7, height = 5, units = "in")
 
 ```
 Note: the "positive controls" in 2023 dataset were actually positives for the Mifish sequencing primers. Not elasmo positives so ignore for this dataset.
@@ -575,7 +561,7 @@ bubbleplot_comname_2021 <- ggplot(ps2021glommed_df, aes(x = factor(sites, levels
   theme_bw() +
   scale_fill_manual(values = myColors_comname) +
   theme(axis.title.x=element_blank()) +
-  facet_grid(MMDD~BAYSIDE, scales = "free", space = "free", drop= TRUE)
+  facet_grid(Month~BAYSIDE, scales = "free", space = "free", drop= TRUE)
 
 # 2021, read abundance, tax-based, sci name
 bubbleplot_sciname_2021 <- ggplot(ps2021glommed_df, aes(x = factor(sites, levels = sitelevels), y = fct_rev(Species))) +
@@ -587,7 +573,7 @@ bubbleplot_sciname_2021 <- ggplot(ps2021glommed_df, aes(x = factor(sites, levels
   theme_bw() +
   scale_fill_manual(values = myColors_sciname) +
   theme(axis.title.x=element_blank()) +
-  facet_grid(MMDD~BAYSIDE, scales = "free", space = "free", drop= TRUE)
+  facet_grid(Month~BAYSIDE, scales = "free", space = "free", drop= TRUE)
 
 
 # 2021, relative abundance, tax-based, common name
@@ -600,7 +586,7 @@ bubbleplot_comname_2021_ra <- ggplot(ps2021glommed_ra_df, aes(x = factor(sites, 
   theme_bw() +
   scale_fill_manual(values = myColors_comname) +
   theme(axis.title.x=element_blank()) +
-  facet_grid(MMDD~BAYSIDE, scales = "free", space = "free", drop= TRUE)
+  facet_grid(Month~BAYSIDE, scales = "free", space = "free", drop= TRUE)
 
 
 # 2021, relative abundance, tax-based, sci name
@@ -613,7 +599,7 @@ bubbleplot_sciname_2021_ra <- ggplot(ps2021glommed_ra_df, aes(x = factor(sites, 
   theme_bw() +
   scale_fill_manual(values = myColors_sciname) +
   theme(axis.title.x=element_blank()) +
-  facet_grid(MMDD~BAYSIDE, scales = "free", space = "free", drop= TRUE)
+  facet_grid(Month~BAYSIDE, scales = "free", space = "free", drop= TRUE)
 
 
 bubbleplot_comname_2021
@@ -623,10 +609,10 @@ bubbleplot_comname_2021_ra
 bubbleplot_sciname_2021_ra
 
 # save
-ggsave(plot = bubbleplot_comname_2021, filename = "figures/bubbleplot_comname_2021.eps", width = 7, height = 7, units = "in")
-ggsave(plot = bubbleplot_sciname_2021, filename = "figures/bubbleplot_sciname_2021.eps", width = 6, height = 7, units = "in")
-ggsave(plot = bubbleplot_comname_2021_ra, filename = "figures/bubbleplot_comname_2021_ra.eps", width = 7, height = 7, units = "in")
-ggsave(plot = bubbleplot_sciname_2021_ra, filename = "figures/bubbleplot_sciname_2021_ra.eps", width = 6, height = 7, units = "in")
+ggsave(plot = bubbleplot_comname_2021, filename = "figures-salzman-etal-elasmos/bubbleplot_comname_2021.eps", width = 7, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2021, filename = "figures-salzman-etal-elasmos/bubbleplot_sciname_2021.eps", width = 6, height = 7, units = "in")
+ggsave(plot = bubbleplot_comname_2021_ra, filename = "figures-salzman-etal-elasmos/bubbleplot_comname_2021_ra.eps", width = 7, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2021_ra, filename = "figures-salzman-etal-elasmos/bubbleplot_sciname_2021_ra.eps", width = 6, height = 7, units = "in")
 ```
 
 
@@ -693,28 +679,37 @@ bubbleplot_comname_2023_ra
 bubbleplot_sciname_2023_ra
 
 # save
-ggsave(plot = bubbleplot_comname_2023, filename = "figures/bubbleplot_comname_2023.eps", width = 7, height = 7, units = "in")
-ggsave(plot = bubbleplot_sciname_2023, filename = "figures/bubbleplot_sciname_2023.eps", width = 7.5, height = 7, units = "in")
-ggsave(plot = bubbleplot_comname_2023_ra, filename = "figures/bubbleplot_comname_2023_ra.eps", width = 7, height = 7, units = "in")
-ggsave(plot = bubbleplot_sciname_2023_ra, filename = "figures/bubbleplot_sciname_2023_ra.eps", width = 7.5, height = 7, units = "in")
+ggsave(plot = bubbleplot_comname_2023, filename = "figures-salzman-etal-elasmos/bubbleplot_comname_2023.eps", width = 7, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2023, filename = "figures-salzman-etal-elasmos/bubbleplot_sciname_2023.eps", width = 7.5, height = 7, units = "in")
+ggsave(plot = bubbleplot_comname_2023_ra, filename = "figures-salzman-etal-elasmos/bubbleplot_comname_2023_ra.eps", width = 7, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2023_ra, filename = "figures-salzman-etal-elasmos/bubbleplot_sciname_2023_ra.eps", width = 7.5, height = 7, units = "in")
 ```
-* Note on 2023 dataset that sampling dates were not same for open water stations and bivalve stations (C* and S* stations) although they were a few days apart so I just plotted by month (unlike 2021 where I plotted by date)
+
+
 
 ## Pie charts
-tried psadd package but I still can't export the pie chart data from the html
-## CONTINUE HERE 8/9/24
+
 Summarize fractional abundances across whole dataset-
 ```{r}
 ps2021_whole <- ps2021glommed_df %>%
   group_by(Species) %>%
     summarize(total_reads = sum(Abundance)) %>%
   mutate(rel_abun = total_reads/sum(across(total_reads))) %>%
+  mutate(rel_abun_percent = rel_abun*100) %>%
+  mutate(csum = rev(cumsum(rev(rel_abun))), 
+         pos = rel_abun/2 + lead(csum, 1),
+         pos = if_else(is.na(pos), rel_abun/2, pos)) %>%
   left_join(commonnames, by = "Species")
 
 ps2023_whole <- ps2023glommed_df %>%
   group_by(Species) %>%
     summarize(total_reads = sum(Abundance)) %>%
   mutate(rel_abun = total_reads/sum(across(total_reads))) %>%
+  mutate(rel_abun_percent = rel_abun*100) %>%
+  mutate(csum = rev(cumsum(rev(rel_abun))), 
+         pos = rel_abun/2 + lead(csum, 1),
+         pos = if_else(is.na(pos), rel_abun/2, pos)) %>%
+
   left_join(commonnames, by = "Species")
 
 ps2021_whole
@@ -731,7 +726,9 @@ ggplot(ps2021_whole, aes(x="", y = rel_abun, fill=CommonName)) +
   labs(fill = "")+
   theme_bw() +
   scale_fill_manual(values = myColors_comname) +
-  theme(axis.title.x=element_blank())
+  theme(axis.title.x=element_blank()) +
+  geom_text(aes(label = round(rel_abun_percent,1)),
+            position = position_stack(vjust = 0.5))
 
 ggplot(ps2023_whole, aes(x="", y = rel_abun, fill=CommonName)) +
   geom_bar(stat="identity", width=1) +
@@ -741,12 +738,14 @@ ggplot(ps2023_whole, aes(x="", y = rel_abun, fill=CommonName)) +
   labs(fill = "")+
   theme_bw() +
   scale_fill_manual(values = myColors_comname) +
-  theme(axis.title.x=element_blank())
+  theme(axis.title.x=element_blank()) +
+  geom_text(aes(label = round(rel_abun_percent,1)),
+            position = position_stack(vjust = 0.5))
+
 ```
 
-## STOPPED HERE 7/25- keep modifying plots above and export
 
-
+## 10/7/24 CONTINUE EDITING BELOW
 
 
 
