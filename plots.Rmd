@@ -109,6 +109,56 @@ phylo_2023 <- phyloseq(ASV_2023, TAX_2023, samples_2023)
 
 
 
+Generate some metadata for manuscript
+How many ASVs and reads were thrown out as unknowns?
+
+**2021**
+```{r}
+asv_count_unknowns_2021 <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2021-Elas02/processed_tables/ASVs_counts_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_unknowns_2021) <- asv_count_unknowns_2021$x
+asv_count_unknowns_2021 <- asv_count_unknowns_2021 %>% select(-x)
+
+asv_count_nounknowns_2021 <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2021-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_nounknowns_2021) <- asv_count_nounknowns_2021$x
+asv_count_nounknowns_2021 <- asv_count_nounknowns_2021 %>% select(-x)
+
+
+# number of ASVs retained after removal of unknowns
+count(asv_count_nounknowns_2021)/count(asv_count_unknowns_2021)
+
+
+# number of reads retained after removal of unknowns
+sum(rowSums(asv_count_nounknowns_2021))/sum(rowSums(asv_count_unknowns_2021))
+
+
+
+```
+
+
+
+**2023**
+```{r}
+asv_count_unknowns_2023 <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-Elas02/processed_tables/ASVs_counts_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_unknowns_2023) <- asv_count_unknowns_2023$x
+asv_count_unknowns_2023 <- asv_count_unknowns_2023 %>% select(-x)
+
+asv_count_nounknowns_2023 <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_nounknowns_2023) <- asv_count_nounknowns_2023$x
+asv_count_nounknowns_2023 <- asv_count_nounknowns_2023 %>% select(-x)
+
+
+# number of ASVs retained after removal of unknowns
+count(asv_count_nounknowns_2023)/count(asv_count_unknowns_2023)
+
+
+# number of reads retained after removal of unknowns
+sum(rowSums(asv_count_nounknowns_2023))/sum(rowSums(asv_count_unknowns_2023))
+
+
+
+```
+
+
 
 # QC and filtering
 
