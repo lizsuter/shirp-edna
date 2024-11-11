@@ -229,7 +229,7 @@ revamp.sh -p 01_config_file_Elas02-2023.txt -f 02_figure_config_file_Elas02-2023
 	```
 
 
-	Helpful [link](https://unix.stackexchange.com/questions/45212/remove-prefixes-from-filenames0 for removing prefixes) for removing prefixes from files (the revamp.sh keeps adding prefixes to my fast.gz file names so when rerun, it gets messed up).
+	Helpful [link](https://unix.stackexchange.com/questions/45212/remove-prefixes-from-filenames0 for removing prefixes) for removing prefixes from files (the revamp.sh keeps adding prefixes to my fastq.gz file names so when rerun, it gets messed up).
 
 
 	```
