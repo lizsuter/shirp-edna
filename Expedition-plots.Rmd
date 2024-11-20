@@ -1,0 +1,1271 @@
+---
+title: "Plots"
+output: html_notebook: default
+html_document: default
+---
+[Preview this notebook](http://htmlpreview.github.io/?https://github.com/lizsuter/shirp-edna/blob/main/plots.nb.html)
+
+My own script for making bubble plots, etc. Partially borrowed/ modifed from REVAMP's [phyloseq.R](https://github.com/McAllister-NOAA/REVAMP/blob/main/assets/phyloseq.R)
+
+
+<br/>
+<br/>
+
+
+
+# Load packages
+
+```{r}
+# rm(list = ls())
+library(tidyverse)
+library(phyloseq)
+library(decontam)
+library(vegan)
+library(RColorBrewer)
+library(microbiome)
+library(metagMisc)
+library(fantaxtic)
+library(ggrepel)
+library(paletteer)
+library(pals)
+#library(microViz)
+```
+
+#  Import and prepare data
+
+Import-
+I am creating the equivalent of "phylo1" from REVAMP, the dataset is the ASV-based, raw reads, not qual filtered dataset; "qual filtered" means the unknown ASVs have been removed, & low effort samples removed. The only filtering that has been done is the unknown ASVs have been removed.
+
+Side note- I checked some of the high abundance unknowns that were thrown out (ASV_4 from 2021 and ASV_2 and _3 from 2023) and they are diatoms. They are coming up as unknown bc they are not in my Elas02 database. 
+
+**2024 Expedition data**
+Mifish-
+```{r}
+asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh-expedition/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+asv_taxonomy <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh-expedition/ASV2Taxonomy/results-revamp-2024-MiFish-expedition_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh-expedition/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata) <- sample_metadata$Sample
+sample_metadata <- sample_metadata %>% select(-Sample)
+
+ASV_2024_exp_mifish = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX_2024_exp_mifish = tax_table(asv_taxonomy_mat)
+samples_2024_exp_mifish = sample_data(sample_metadata)
+
+phylo_2024_exp_mifish <- phyloseq(ASV_2024_exp_mifish, TAX_2024_exp_mifish, samples_2024_exp_mifish)
+
+rm(asv_count, asv_count_mat, asv_taxonomy, asv_taxonomy_mat, sample_metadata)
+
+```
+
+Elas02-
+```{r}
+asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+asv_taxonomy <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/ASV2Taxonomy/results-revamp-2024-Elas02-expedition_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata) <- sample_metadata$Sample
+sample_metadata <- sample_metadata %>% select(-Sample)
+
+ASV_2024_exp_elas = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX_2024_exp_elas = tax_table(asv_taxonomy_mat)
+samples_2024_exp_elas = sample_data(sample_metadata)
+
+phylo_2024_exp_elas <- phyloseq(ASV_2024_exp_elas, TAX_2024_exp_elas, samples_2024_exp_elas)
+
+rm(asv_count, asv_count_mat, asv_taxonomy, asv_taxonomy_mat, sample_metadata)
+
+```
+
+
+
+Generate some metadata for manuscript
+How many ASVs and reads were thrown out as unknowns?
+
+
+**2024 expedition**
+Mifish-
+```{r}
+asv_count_unknowns_2024_exp_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFish-expedition/processed_tables/ASVs_counts_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_unknowns_2024_exp_mifish) <- asv_count_unknowns_2024_exp_mifish$x
+asv_count_unknowns_2024_exp_mifish <- asv_count_unknowns_2024_exp_mifish %>% select(-x)
+
+asv_count_nounknowns_2024_exp_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFish-expedition/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_nounknowns_2024_exp_mifish) <- asv_count_nounknowns_2024_exp_mifish$x
+asv_count_nounknowns_2024_exp_mifish <- asv_count_nounknowns_2024_exp_mifish %>% select(-x)
+
+
+# number of ASVs retained after removal of unknowns
+count(asv_count_nounknowns_2024_exp_mifish)/count(asv_count_unknowns_2024_exp_mifish)
+
+
+# number of reads retained after removal of unknowns
+sum(rowSums(asv_count_nounknowns_2024_exp_mifish))/sum(rowSums(asv_count_unknowns_2024_exp_mifish))
+
+
+```
+
+Elas02-
+```{r}
+asv_count_unknowns_2024_exp_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/processed_tables/ASVs_counts_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_unknowns_2024_exp_elas) <- asv_count_unknowns_2024_exp_elas$x
+asv_count_unknowns_2024_exp_elas <- asv_count_unknowns_2024_exp_elas %>% select(-x)
+
+asv_count_nounknowns_2024_exp_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_nounknowns_2024_exp_elas) <- asv_count_nounknowns_2024_exp_elas$x
+asv_count_nounknowns_2024_exp_elas <- asv_count_nounknowns_2024_exp_elas %>% select(-x)
+
+
+# number of ASVs retained after removal of unknowns
+count(asv_count_nounknowns_2024_exp_elas)/count(asv_count_unknowns_2024_exp_elas)
+
+
+# number of reads retained after removal of unknowns
+sum(rowSums(asv_count_nounknowns_2024_exp_elas))/sum(rowSums(asv_count_unknowns_2024_exp_elas))
+
+
+```
+
+
+MiFish: 6.5% of ASVs were unknowns (0.9% of total reads)
+Elas02: 60.6% of ASVs were unknowns (20.8% of total reads)
+
+
+
+
+# QC and filtering
+
+
+## Rarefaction curves
+
+```{r}
+# output from phyloseq needs to be converted to matrix and transposed
+table1 <- otu_table(phylo_2024_exp_mifish)
+class(table1) <- "matrix" 
+table1 <- t(table1) 
+
+table2 <- otu_table(phylo_2024_exp_elas)
+class(table2) <- "matrix" 
+table2 <- t(table2) 
+
+rarecurve(table1, step=50, cex=0.5)
+rarecurve(table2, step=50, cex=0.5)
+
+```
+
+MiFish: Keep en eye on sample 7_8
+Elas: There are many samples (deployments 6, 8, the controls) that are low reads- keep an eye to see if these get filtered out later
+
+
+
+
+## Curating
+
+For quick reference, scan through Krona plots:
+- 2024 MiFish expedition dataset [here](/results-revamp-2024-MiFish-expedition/Figures/00_KRONA_plots/results-revamp-2024-MiFish-expedition_samplesSummedKRONA.html)  
+- 2024 Elas02 expedition dataset [here](/results-revamp-2024-Elas02-expedition/Figures/00_KRONA_plots/results-revamp-2024-Elas02-expedition_samplesSummedKRONA.html)
+- Note, unknowns in Krona plots were already removed from phylo objects
+- Scan REVAMP output:
+  - MiFIsh: `ASV2Taxonomy/results-revamp-2024-MiFish-expedition_asvTaxonomyTable.txt` and `ASV2Taxonomy/ASVcounts_mergedOnTaxonomy.txt` have taxonomy of all ASVs. Look closely at controls: Negative controls, C_2, C_3 and positive controls, C_4, and C_5 for high read-number entries (ignoring unknowns and things I already removed like bacteria, mammals)
+  - Elas02: `ASV2Taxonomy/results-revamp-2024-Elas02-expedition_asvTaxonomyTable.txt` and `ASV2Taxonomy/ASVcounts_mergedOnTaxonomy.txt` have taxonomy. For these, all controls, C_2, C_3, C_4, and C_5 should be negative controls (because there were no elasmobranchs in the control tank).
+
+**2024 expedition**
+Check some features of the phyloseq object
+MiFIsh-
+```{r}
+ranks <- rank_names(phylo_2024_exp_mifish)
+ranks
+
+as.data.frame(unique(tax_table(phylo_2024_exp_mifish)[, ranks[1]]))
+as.data.frame(unique(tax_table(phylo_2024_exp_mifish)[, ranks[2]]))
+as.data.frame(unique(tax_table(phylo_2024_exp_mifish)[, ranks[3]]))
+
+nrow(tax_table(phylo_2024_exp_mifish)) # number of taxa before filtering
+```
+
+Elas02-
+```{r}
+ranks <- rank_names(phylo_2024_exp_elas)
+ranks
+
+as.data.frame(unique(tax_table(phylo_2024_exp_elas)[, ranks[1]]))
+as.data.frame(unique(tax_table(phylo_2024_exp_elas)[, ranks[2]]))
+as.data.frame(unique(tax_table(phylo_2024_exp_elas)[, ranks[3]]))
+
+nrow(tax_table(phylo_2024_exp_elas)) # number of taxa before filtering
+```
+
+
+
+Before moving on, replace NAs in taxonomy because this becomes problematic when filtering.
+There are some abundant taxa resolved only to the genus or family level. 
+
+MiFish-
+```{r}
+# Check what they look like before replacement
+data.frame(tax_table(phylo_2024_exp_mifish))
+data.frame(tax_table(subset_taxa(phylo_2024_exp_mifish, is.na(Species))))
+```
+
+Elas-
+```{r}
+# Check what they look like before replacement
+data.frame(tax_table(phylo_2024_exp_elas))
+data.frame(tax_table(subset_taxa(phylo_2024_exp_elas, is.na(Species))))
+```
+
+
+```{r}
+# Replace NA in taxa list with next highest annotated taxon"
+tax_table(phylo_2024_exp_mifish) <- tax_table(fantaxtic::name_na_taxa(phylo_2024_exp_mifish, include_rank = T))
+tax_table(phylo_2024_exp_elas) <- tax_table(fantaxtic::name_na_taxa(phylo_2024_exp_elas, include_rank = T))
+
+# Check after replacement
+data.frame(tax_table(phylo_2024_exp_mifish))
+data.frame(tax_table(phylo_2024_exp_elas))
+
+```
+
+#### Start filtering
+
+Rename filtered phyloseq object to `ps2024_exp_XX`. Unfiltered is `phylo_2024_exp_XX`
+
+*Remove the prokaryotes*
+MiFish-
+```{r}
+nrow(tax_table(phylo_2024_exp_mifish)) # number of taxa before filtering
+ps2024_exp_mifish <- subset_taxa(phylo_2024_exp_mifish, !Kingdom == 'Bacteria')
+nrow(tax_table(ps2024_exp_mifish)) # number of taxa left
+unique(tax_table(ps2024_exp_mifish)[, ranks[1]])
+```
+--> Lost ~40% of the unique taxa by removing Bacteria from MiFish libarary
+
+
+Elas02-
+There are no Bacteria is Elas02 library
+
+
+Check mammals:
+
+MiFish-
+```{r}
+mammals_2024_exp_mifish <- subset_taxa(ps2024_exp_mifish, Class == 'Mammalia')
+unique(tax_table(mammals_2024_exp_mifish)[, ranks[7]])
+
+```
+These are the typical contaminants: dog, mouse, human, pig, raccoon, cow. The only interesting one is Megaptera novaeangliae, the humpback whale!- keep this one in.
+
+
+
+Elasmo-
+```{r}
+mammals_2024_exp_elas <- subset_taxa(phylo_2024_exp_elas, Class == 'Mammalia')
+unique(tax_table(mammals_2024_exp_elas)[, ranks[7]])
+
+```
+These are the typical contamination- human, pig, undulates, shrew(?). Delete all mammals.
+
+
+
+*Remove the non-marine mammals* 
+MiFish-
+```{r}
+as.data.frame(unique(tax_table(ps2024_exp_mifish)[, ranks[7]]))
+nrow(tax_table(ps2024_exp_mifish)) # number of ASVs before filtering
+
+ps2024_exp_mifish <- subset_taxa(ps2024_exp_mifish, !Species == 'Canis lupus' & !Species == 'Mus musculus' & !Species == 'Homo sapiens' & !Species == 'Sus scrofa' & !Species == 'Unknown Canis (Genus)' & !Species == 'Procyon lotor' & !Species == 'Bos taurus')
+
+nrow(tax_table(ps2024_exp_mifish)) # number of ASVs left
+as.data.frame(unique(tax_table(ps2024_exp_mifish)[, ranks[7]]))
+```
+1148 unique taxa remain from the original 2085
+
+
+Elas02- 
+```{r}
+nrow(tax_table(phylo_2024_exp_elas)) # number of taxa before filtering
+ps2024_exp_elas <- subset_taxa(phylo_2024_exp_elas, !Class == 'Mammalia')
+nrow(tax_table(ps2024_exp_elas)) # number of taxa left
+as.data.frame(unique(tax_table(ps2024_exp_elas)[, ranks[7]]))
+
+```
+1232 unique taxa remain
+
+*Remove the Aves* 
+MiFish- there are none
+Elas02-
+
+```{r}
+ps2024_exp_elas <-   subset_taxa(ps2024_exp_elas, !Class == 'Aves')
+nrow(tax_table(ps2024_exp_elas)) # number of taxa left
+as.data.frame(unique(tax_table(ps2024_exp_elas)[, ranks[7]]))
+```
+
+1231 taxa remain (31 unique)
+
+
+
+Check remaining ASVs in neg controls to see what contamination is left
+MiFish-
+```{r}
+data.frame(otu_table(ps2024_exp_mifish)[,which(sample_data(ps2024_exp_mifish)$controls == "negative")])
+max(otu_table(ps2024_exp_mifish)[,which(sample_data(ps2024_exp_mifish)$controls == "negative")])
+```
+
+After removing typical contamination (bacteria, human, etc), the max read abundance remaining in the negative controls is 601- this is great. The highest was from ASV_1, menhaden, the most abundant ASV in the dataset overall.
+
+Elas02-
+```{r}
+data.frame(otu_table(ps2024_exp_elas)[,which(sample_data(ps2024_exp_elas)$controls == "negative")])
+max(otu_table(ps2024_exp_elas)[,which(sample_data(ps2024_exp_elas)$controls == "negative")])
+```
+After removing typical contamination (bacteria, human, mammals, aves, etc), the max read abundance remaining in the negative controls is 4984. The highest was from ASV_1, M. Canis, the most abundant ASV in the dataset overall. This is not as great but not terrible. 
+
+
+*POSITIVE CTL ANALYSIS- MiFish*
+No positive controls were used in this Elas02 library
+
+The remaining contamination issue is "cross-talk"- eg. some of the high abundance ASVs seem to bleed over, at  low abundances, into other samples. ASV_1 is an example (above) as well as some of the positive control species from MiFish library, which are not expected in the other samples (usually; these are tropical species in the positive controls. These are occasionally found in Shinnecock Bay, which is actually where they were taken from originally and put in the aquarium where we took the pos control samples from) but are also sometimes detected at very low read abundances. 
+
+Check which species are abundant in the pos controls and check out the different in read abundance between "real" ASVs and cross-talk in positive controls
+MiFish-
+```{r}
+df.pos <- as.data.frame(otu_table(ps2024_exp_mifish)[,which(sample_data(ps2024_exp_mifish)$controls == "positive")])
+
+# arrange ASVs from pos ctl in descending order to see most abundant
+df.pos <- df.pos %>% mutate(Sum = MP_C_4ES2_S25_L001+MP_C_5ES2_S25_L001) %>% arrange(desc(Sum))
+df.pos
+  
+# what is the taxonomy of these
+df.pos.ASVs <- as.data.frame(tax_table(phylo_2024_exp_mifish)[rownames(data.frame(otu_table(ps2024_exp_mifish)[,which(sample_data(ps2024_exp_mifish)$controls == "positive")]))])
+
+df.pos.ASVs[rownames(df.pos),]
+```
+
+I believe the low read abundances (<~100 reads) are cross-talk, while the high read abundance (<10,000) are real but it's difficult to find a cutoff for contamination...
+
+Top 5 hits in positive control samples are tropicals. 6th most aubndant, ASV_1, is menhaden, then 7th-15th are all tropicals. 16th is Anchoa mitchilli. Then 17th-21st are tropicals and 22nd is seaboard goby. 23rd is Black sea bass, 24th is Menidia menidia. 25th through 29th are tropicals and 30th is menhaden again. 31st to 34th are tropicals then 35th is Tautoga, 36th is Spot, 37th is Tautog, 38th is northern sennet (probably real) and 39th-41st are tropicals. Next set really start to blend between tropical/ pos controls and cross-talk. After 51st, it seems to be mostly cross-talk (not pos ctls) but with som eexceptions.
+
+In terms of abundance, there is a big drop off from 1st to 2nd most abundant (225,980 --> 47,742), another from 3rd to 4th (36,343 --> 4,548), from 4th to 5th (4548 -->2820), from 14th to 15th (1338 --> 945), from 15th to 16th (945 --> 566), 24th-25th (357 --> 241) and the rest is a gradual decline. Read abundance of 51st is 115.
+
+*DECISION* use 500 as a cutoff
+
+Remove ASVs with less than 500 reads in a sample. 
+MiFish-
+```{r}
+data.frame(otu_table(ps2024_exp_mifish)) # compare before
+
+ps2024_exp_mifish <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps2024_exp_mifish,
+  minabund = 500,
+  relabund = FALSE)
+
+data.frame(otu_table(ps2024_exp_mifish)) # and after
+```
+
+Note that the above also removed rows for ASVs which no longer exist after setting the min threshold.
+423 taxa remain
+
+
+Elas02-
+```{r}
+data.frame(otu_table(ps2024_exp_elas)) # compare before
+
+ps2024_exp_elas <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps2024_exp_elas,
+  minabund = 500,
+  relabund = FALSE)
+
+data.frame(otu_table(ps2024_exp_elas)) # and after
+```
+449 taxa remain.
+
+
+
+### Agglomerate by taxonomy
+Generate new otu tables after grouping ASVs by annotated species name
+MiFish-
+```{r}
+ps2024_exp_mifish_glommed <- tax_glom(ps2024_exp_mifish, "Species")
+
+# plot total reads
+plot_bar(ps2024_exp_mifish_glommed, x = "Name.Deploy_Cartr_Library")
+
+# view tax_table
+data.frame(tax_table(ps2024_exp_mifish_glommed))
+```
+
+
+
+Elas02-
+```{r}
+ps2024_exp_elas_glommed <- tax_glom(ps2024_exp_elas, "Species")
+
+# plot total reads
+plot_bar(ps2024_exp_elas_glommed, x = "Name_Deploy_Cartr_Library")
+
+# view tax_table
+data.frame(tax_table(ps2024_exp_elas_glommed))
+```
+
+
+
+
+Remove samples with low total number of reads. Based on both libraries above, there is a sharp difference between the low abundant and high abundant samples. Use cutoff of 25,000 for both.
+
+(Note- this will delete the negative controls too)
+
+MiFish-
+```{r}
+ps2024_exp_mifish_glommed <- prune_samples(sample_sums(ps2024_exp_mifish_glommed)>=25000, ps2024_exp_mifish_glommed)
+ps2024_exp_mifish <- prune_samples(sample_sums(ps2024_exp_mifish)>=25000, ps2024_exp_mifish)
+
+# plot again
+plot_bar(ps2024_exp_mifish_glommed, x = "Name.Deploy_Cartr_Library")
+
+# how many samples remain?
+dim(sample_data(ps2024_exp_mifish_glommed))[1]
+dim(sample_data(ps2024_exp_mifish))[1]
+```
+Looks good. Ssample 7_8, which was the one I flagged in rarefaction analysis, did not pass this QC (in addition to others). Rest look great. 91 MiFIsh samples remain.
+
+
+Elas02-
+```{r}
+ps2024_exp_elas_glommed <- prune_samples(sample_sums(ps2024_exp_elas_glommed)>=25000, ps2024_exp_elas_glommed)
+ps2024_exp_elas <- prune_samples(sample_sums(ps2024_exp_elas)>=25000, ps2024_exp_elas)
+
+# plot again
+plot_bar(ps2024_exp_elas_glommed, x = "Name_Deploy_Cartr_Library")
+
+# how many samples remain?
+dim(sample_data(ps2024_exp_elas_glommed))[1]
+dim(sample_data(ps2024_exp_elas))[1]
+```
+
+Looks good. All low effort samples removed, including controls. Rest look great. 61 Elas02 samples remain.
+
+
+
+
+### Add in Common Names and Export
+
+**2024 expedition**
+MiFish-
+```{r}
+mifish_2024_exp_asv_table_taxbased <- data.frame(otu_table(ps2024_exp_mifish_glommed))
+mifish_2024_exp_tax_table_taxbased <- rownames_to_column(data.frame(tax_table(ps2024_exp_mifish_glommed)), var = "1stRepresentative_ASV")
+mifish_2024_exp_sample_data_taxbased <- data.frame(sample_data(ps2024_exp_mifish_glommed))
+
+
+# add on common names to tax_table
+commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
+mifish_2024_exp_tax_table_taxbased <- left_join(mifish_2024_exp_tax_table_taxbased, commonnames, by = "Species")
+
+# view
+mifish_2024_exp_asv_table_taxbased
+mifish_2024_exp_tax_table_taxbased
+mifish_2024_exp_sample_data_taxbased
+
+# export
+write.csv(mifish_2024_exp_asv_table_taxbased,"figures-expedition/mifish_2024_exp_asv_table_taxbased.csv", row.names = TRUE)
+write.csv(mifish_2024_exp_tax_table_taxbased,"figures-expedition/mifish_2024_exp_tax_table_taxbased.csv", row.names = FALSE)
+write.csv(mifish_2024_exp_sample_data_taxbased,"figures-expedition/mifish_2024_exp_sample_data_taxbased.csv", row.names = TRUE)
+```
+
+
+Elas02-
+```{r}
+elas_2024_exp_asv_table_taxbased <- data.frame(otu_table(ps2024_exp_elas_glommed))
+elas_2024_exp_tax_table_taxbased <- rownames_to_column(data.frame(tax_table(ps2024_exp_elas_glommed)), var = "1stRepresentative_ASV")
+elas_2024_exp_sample_data_taxbased <- data.frame(sample_data(ps2024_exp_elas_glommed))
+
+
+# add on common names to tax_table
+commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
+elas_2024_exp_tax_table_taxbased <- left_join(elas_2024_exp_tax_table_taxbased, commonnames, by = "Species")
+
+# view
+elas_2024_exp_asv_table_taxbased
+elas_2024_exp_tax_table_taxbased
+elas_2024_exp_sample_data_taxbased
+
+# export
+write.csv(elas_2024_exp_asv_table_taxbased,"figures-expedition/elas_2024_exp_asv_table_taxbased.csv", row.names = TRUE)
+write.csv(elas_2024_exp_tax_table_taxbased,"figures-expedition/elas_2024_exp_tax_table_taxbased.csv", row.names = FALSE)
+write.csv(elas_2024_exp_sample_data_taxbased,"figures-expedition/elas_2024_exp_sample_data_taxbased.csv", row.names = TRUE)
+```
+After all that filtering, there are only 7 unique Elasmobranchs left in the dataset.
+
+
+
+
+Also calculate *relative abundances* (# of ASV sequences/sum total sequences in sample), for some plotting
+
+```{r}
+ps2024_exp_mifish_ra <- microbiome::transform(ps2024_exp_mifish, transform = "compositional")
+ps2024_exp_mifish_glommed_ra <- microbiome::transform(ps2024_exp_mifish_glommed, transform = "compositional")
+
+ps2024_exp_elas_ra <- microbiome::transform(ps2024_exp_elas, transform = "compositional")
+ps2024_exp_elas_glommed_ra <- microbiome::transform(ps2024_exp_elas_glommed, transform = "compositional")
+```
+
+
+
+# Visualizations
+
+
+
+## Simple barplots
+
+MiFish-
+
+2024 expedition, raw reads
+```{r}
+ps2024_exp_mifish_barplot <- plot_bar(ps2024_exp_mifish, x = "Name.Deploy_Cartr_Library", fill = "Order")
+ps2024_exp_mifish_barplot
+```
+
+2024 expedition, relatve abundances
+```{r}
+ps2024_exp_ra_mifish_barplot <- plot_bar(ps2024_exp_mifish_ra, x = "Name.Deploy_Cartr_Library", fill = "Order")
+ps2024_exp_ra_mifish_barplot
+```
+
+Elas02-
+
+2024 expedition, raw reads
+```{r}
+ps2024_exp_elas_barplot <- plot_bar(ps2024_exp_elas, x = "Name_Deploy_Cartr_Library", fill = "Species")
+ps2024_exp_elas_barplot
+```
+
+2024 expedition, relatve abundances
+```{r}
+ps2024_exp_ra_elas_barplot <- plot_bar(ps2024_exp_elas_ra, x = "Name_Deploy_Cartr_Library", fill = "Species")
+ps2024_exp_ra_elas_barplot
+```
+
+
+## Examine controls 
+
+Plot positive controls
+MiFish-
+(no Elasmo pos controls)
+
+```{r}
+# Make new df with positive controls and remove ASVs that are not represented
+ps2024_exp_mifish_glommed_posctl <- subset_samples(ps2024_exp_mifish_glommed, controls=="positive")
+ps2024_exp_mifish_glommed_ra_posctl <- subset_samples(ps2024_exp_mifish_glommed_ra, controls=="positive")
+
+# Use metagMisc to remove ASV rows with 0 abundance for all positive samples
+ps2024_exp_mifish_glommed_posctl <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps2024_exp_mifish_glommed_posctl,
+  minabund = 0,
+  relabund = FALSE)
+
+ps2024_exp_mifish_glommed_ra_posctl <- prune_taxa(taxa_names(ps2024_exp_mifish_glommed_posctl),ps2024_exp_mifish_glommed_ra_posctl)
+
+
+ps2024_exp_mifish_posctl_barplot <- plot_bar(ps2024_exp_mifish_glommed_posctl, fill = "Species", title = "2024 Expedition: Positive Controls: Read Abundance") + 
+  scale_y_continuous(name="Read Abundance")+
+  theme(axis.title.x=element_blank())+
+  scale_fill_paletteer_d("MetBrewer::Austria")
+ps2024_exp_mifish_posctl_barplot
+
+ps2024_exp_mifish_posctl_ra_barplot <- plot_bar(ps2024_exp_mifish_glommed_ra_posctl, fill = "Species", title = "2024 Expedition: Positive Controls: Relative Abundance") + 
+  scale_y_continuous(name="Relative Abundance")+
+  theme(axis.title.x=element_blank())+
+    scale_fill_paletteer_d("MetBrewer::Austria")
+ps2024_exp_mifish_posctl_ra_barplot
+
+
+# save
+ggsave(plot = ps2024_exp_mifish_posctl_barplot, filename = "figures-expedition/2024_exp_mifish_posctl_barplot.eps", width = 7, height = 5, units = "in")
+ggsave(plot = ps2024_exp_mifish_posctl_ra_barplot, filename = "figures-expedition/2024_exp_mifish_posctl_ra_barplot.eps", width = 7, height = 5, units = "in")
+
+```
+
+
+
+Remove Pos and Neg  Controls from all MiFish phyloseq objects:
+(Note, they were already removed from Elas obkects just based on quality filtering above)
+
+ASV-based, reads:
+ps2024_exp_mifish
+
+ASV-based, relative abundance:
+ps2024_exp_mifish_ra
+
+Taxonomy (species)- based, reads:
+ps2024_exp_mifish_glommed
+
+Taxonomy (species)- based, relative abundance:
+ps2024_exp_mifish_glommed_ra
+
+
+```{r}
+ps2024_exp_mifish <- subset_samples(ps2024_exp_mifish, is.na(controls))
+ps2024_exp_mifish_ra <- subset_samples(ps2024_exp_mifish_ra, is.na(controls))
+ps2024_exp_mifish_glommed <- subset_samples(ps2024_exp_mifish_glommed, is.na(controls))
+ps2024_exp_mifish_glommed_ra <- subset_samples(ps2024_exp_mifish_glommed_ra, is.na(controls))
+```
+
+
+
+## Bubble plots
+
+Based on my previous [scripts](https://github.com/lizsuter/Cariaco_Euk)
+
+Work with tax-based dataframes (rather than ASV-based):
+
+Taxonomy (species)- based, reads:
+ps2024_exp_mifish_glommed
+
+Taxonomy (species)- based, relative abundance:
+ps2024_exp_mifish_glommed_ra
+
+### MiFish-
+```{r}
+# convert ps object to dataframe using phyloseq's psmelt
+ps2024_exp_mifish_glommed_df <- psmelt(ps2024_exp_mifish_glommed)
+ps2024_exp_mifish_glommed_ra_df <- psmelt(ps2024_exp_mifish_glommed_ra)
+
+# replace zeroes in the table with NA
+ps2024_exp_mifish_glommed_df[ps2024_exp_mifish_glommed_df == 0] <- NA
+ps2024_exp_mifish_glommed_ra_df[ps2024_exp_mifish_glommed_ra_df == 0] <- NA
+
+# and remove rows with NAs (so they don't appear as small dots in plot)
+ps2024_exp_mifish_glommed_df <-  filter(ps2024_exp_mifish_glommed_df, !is.na(Abundance))
+ps2024_exp_mifish_glommed_ra_df <-  filter(ps2024_exp_mifish_glommed_ra_df, !is.na(Abundance))
+
+# add in common names
+ps2024_exp_mifish_glommed_df <- left_join(ps2024_exp_mifish_glommed_df, commonnames, by = "Species")
+ps2024_exp_mifish_glommed_ra_df <- left_join(ps2024_exp_mifish_glommed_ra_df, commonnames, by = "Species")
+
+# and view
+ps2024_exp_mifish_glommed_df
+ps2024_exp_mifish_glommed_ra_df
+```
+
+Elas02-
+```{r}
+# convert ps object to dataframe using phyloseq's psmelt
+ps2024_exp_elas_glommed_df <- psmelt(ps2024_exp_elas_glommed)
+ps2024_exp_elas_glommed_ra_df <- psmelt(ps2024_exp_elas_glommed_ra)
+
+# replace zeroes in the table with NA
+ps2024_exp_elas_glommed_df[ps2024_exp_elas_glommed_df == 0] <- NA
+ps2024_exp_elas_glommed_ra_df[ps2024_exp_elas_glommed_ra_df == 0] <- NA
+
+# and remove rows with NAs (so they don't appear as small dots in plot)
+ps2024_exp_elas_glommed_df <-  filter(ps2024_exp_elas_glommed_df, !is.na(Abundance))
+ps2024_exp_elas_glommed_ra_df <-  filter(ps2024_exp_elas_glommed_ra_df, !is.na(Abundance))
+
+# add in common names
+ps2024_exp_elas_glommed_df <- left_join(ps2024_exp_elas_glommed_df, commonnames, by = "Species")
+ps2024_exp_elas_glommed_ra_df <- left_join(ps2024_exp_elas_glommed_ra_df, commonnames, by = "Species")
+
+# and view
+ps2024_exp_elas_glommed_df
+ps2024_exp_elas_glommed_ra_df
+```
+
+
+
+Plot species-common name by site
+
+MiFish-
+
+```{r}
+
+# First sort the site names in a sensible way
+levels(unique(c(ps2024_exp_mifish_glommed_df$sites)))
+sitelevels <- as.character(sort(as.numeric(levels(unique(c(ps2024_exp_mifish_glommed_df$sites))))))
+sitelevels
+
+# Order E-W in sensible way by making it a factor
+ps2024_exp_mifish_glommed_df$Bayside_f= factor(ps2024_exp_mifish_glommed_df$Bayside, levels=c('W','E'))
+
+```
+
+
+Plot by bayside
+```{r}
+# First average replicates at same sites
+ps2024_exp_mifish_glommed_df_bayside <- ps2024_exp_mifish_glommed_df %>%
+    group_by(sites, Bayside_f, Species, CommonName, `Species-CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+ps2024_exp_mifish_glommed_df_bayside
+
+
+
+bubbleplot_comname_2024_expedition_mifish_Bayside <- ggplot(ps2024_exp_mifish_glommed_df_bayside, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species-CommonName`))) + # the fancy stuff around y (`Species-CommonName`) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species-CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+ # paletteer::scale_fill_paletteer_d("trekcolors::lcars_series") +
+  theme(axis.title.x=element_blank()) +
+  guides(fill="none") +
+  facet_grid(~Bayside_f, scales = "free", space = "free", drop= TRUE)
+bubbleplot_comname_2024_expedition_mifish_Bayside
+
+# save
+ggsave(plot = bubbleplot_comname_2024_expedition_mifish_Bayside, filename = "figures-expedition/bubbleplot_comname_2024_expedition_mifish_Bayside.eps", width = 10, height = 6, units = "in")
+```
+
+Plot by DayNight
+```{r}
+# First average replicates at same sites
+ps2024_exp_mifish_glommed_df_daynight <- ps2024_exp_mifish_glommed_df %>%
+    group_by(sites, Night__Day, Species, CommonName, `Species-CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+ps2024_exp_mifish_glommed_df_daynight
+
+
+bubbleplot_comname_2024_expedition_mifish_DayNight <- ggplot(ps2024_exp_mifish_glommed_df_daynight, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species-CommonName`))) + # the fancy stuff around y (`Species-CommonName`) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species-CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+ # paletteer::scale_fill_paletteer_d("trekcolors::lcars_series") +
+  theme(axis.title.x=element_blank()) +
+  guides(fill="none") +
+  facet_grid(~Night__Day, scales = "free", space = "free", drop= TRUE)
+bubbleplot_comname_2024_expedition_mifish_DayNight
+
+
+ggsave(plot = bubbleplot_comname_2024_expedition_mifish_DayNight, filename = "figures-expedition/bubbleplot_comname_2024_expedition_mifish_DayNight.eps", width = 12, height = 7, units = "in")
+```
+
+Plot by Habitat
+```{r}
+# First average replicates at same sites
+ps2024_exp_mifish_glommed_df_habitat <- ps2024_exp_mifish_glommed_df %>%
+    group_by(sites, Habitat, Species, CommonName, `Species-CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+ps2024_exp_mifish_glommed_df_habitat
+
+
+bubbleplot_comname_2024_expedition_mifish_Habitat <- ggplot(ps2024_exp_mifish_glommed_df_habitat, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species-CommonName`))) + # the fancy stuff around y (`Species-CommonName`) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species-CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+ # paletteer::scale_fill_paletteer_d("trekcolors::lcars_series") +
+  theme(axis.title.x=element_blank()) +
+  guides(fill="none") +
+  facet_grid(~Habitat, scales = "free", space = "free", drop= TRUE)
+bubbleplot_comname_2024_expedition_mifish_Habitat
+
+ggsave(plot = bubbleplot_comname_2024_expedition_mifish_Habitat, filename = "figures-expedition/bubbleplot_comname_2024_expedition_mifish_Habitat.eps", width = 12, height = 7, units = "in")
+```
+Plot by Bayside and Day-Night
+```{r}
+# First average replicates at same sites
+ps2024_exp_mifish_glommed_df_bayside_daynight <- ps2024_exp_mifish_glommed_df %>%
+    group_by(sites, Bayside_f, Night__Day, Species, CommonName, `Species-CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+ps2024_exp_mifish_glommed_df_bayside_daynight
+
+
+bubbleplot_comname_2024_expedition_mifish_Bayside_DayNight <- ggplot(ps2024_exp_mifish_glommed_df_bayside_daynight, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species-CommonName`))) + # the fancy stuff around y (`Species-CommonName`) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species-CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+ # paletteer::scale_fill_paletteer_d("trekcolors::lcars_series") +
+  theme(axis.title.x=element_blank()) +
+  guides(fill="none") +
+  facet_grid(Night__Day~Bayside_f, scales = "free", space = "free", drop= TRUE)
+bubbleplot_comname_2024_expedition_mifish_Bayside_DayNight
+
+
+
+
+ggsave(plot = bubbleplot_comname_2024_expedition_mifish_Bayside_DayNight, filename = "figures-expedition/bubbleplot_comname_2024_expedition_mifish_Bayside_DayNight.eps", width = 10, height = 9, units = "in")
+
+```
+
+
+
+
+
+### Elas02-
+
+```{r}
+
+# First sort the site names in a sensible way
+levels(unique(c(ps2024_exp_elas_glommed_df$sites)))
+sitelevels <- as.character(sort(as.numeric(levels(unique(c(ps2024_exp_elas_glommed_df$sites))))))
+sitelevels
+
+# Order E-W in sensible way by making it a factor
+ps2024_exp_elas_glommed_df$Bayside_f= factor(ps2024_exp_elas_glommed_df$Bayside, levels=c('W','E'))
+
+```
+
+
+Plot by bayside
+```{r}
+# First average replicates at same sites
+ps2024_exp_elas_glommed_df_bayside <- ps2024_exp_elas_glommed_df %>%
+    group_by(sites, Bayside_f, Species, CommonName, `Species-CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+ps2024_exp_elas_glommed_df_bayside
+
+
+
+bubbleplot_comname_2024_expedition_elas_Bayside <- ggplot(ps2024_exp_elas_glommed_df_bayside, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species-CommonName`))) + # the fancy stuff around y (`Species-CommonName`) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species-CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+ # paletteer::scale_fill_paletteer_d("trekcolors::lcars_series") +
+  theme(axis.title.x=element_blank()) +
+  guides(fill="none") +
+  facet_grid(~Bayside_f, scales = "free", space = "free", drop= TRUE)
+bubbleplot_comname_2024_expedition_elas_Bayside
+
+# save
+ggsave(plot = bubbleplot_comname_2024_expedition_elas_Bayside, filename = "figures-expedition/bubbleplot_comname_2024_expedition_elas_Bayside.eps", width = 8, height = 2.5, units = "in")
+```
+
+Plot by DayNight
+```{r}
+# First average replicates at same sites
+ps2024_exp_elas_glommed_df_daynight <- ps2024_exp_elas_glommed_df %>%
+    group_by(sites, Night__Day, Species, CommonName, `Species-CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+ps2024_exp_elas_glommed_df_daynight
+
+
+bubbleplot_comname_2024_expedition_elas_DayNight <- ggplot(ps2024_exp_elas_glommed_df_daynight, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species-CommonName`))) + # the fancy stuff around y (`Species-CommonName`) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species-CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+ # paletteer::scale_fill_paletteer_d("trekcolors::lcars_series") +
+  theme(axis.title.x=element_blank()) +
+  guides(fill="none") +
+  facet_grid(~Night__Day, scales = "free", space = "free", drop= TRUE)
+bubbleplot_comname_2024_expedition_elas_DayNight
+
+
+ggsave(plot = bubbleplot_comname_2024_expedition_elas_DayNight, filename = "figures-expedition/bubbleplot_comname_2024_expedition_elas_DayNight.eps", width = 10, height = 2.5, units = "in")
+```
+
+Plot by Habitat
+```{r}
+# First average replicates at same sites
+ps2024_exp_elas_glommed_df_habitat <- ps2024_exp_elas_glommed_df %>%
+    group_by(sites, Habitat, Species, CommonName, `Species-CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+ps2024_exp_elas_glommed_df_habitat
+
+
+bubbleplot_comname_2024_expedition_elas_Habitat <- ggplot(ps2024_exp_elas_glommed_df_habitat, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species-CommonName`))) + # the fancy stuff around y (`Species-CommonName`) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species-CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+ # paletteer::scale_fill_paletteer_d("trekcolors::lcars_series") +
+  theme(axis.title.x=element_blank()) +
+  guides(fill="none") +
+  facet_grid(~Habitat, scales = "free", space = "free", drop= TRUE)
+bubbleplot_comname_2024_expedition_elas_Habitat
+
+ggsave(plot = bubbleplot_comname_2024_expedition_elas_Habitat, filename = "figures-expedition/bubbleplot_comname_2024_expedition_elas_Habitat.eps", width = 10, height = 2.5, units = "in")
+```
+Plot by Bayside and Day-Night
+```{r}
+# First average replicates at same sites
+ps2024_exp_elas_glommed_df_bayside_daynight <- ps2024_exp_elas_glommed_df %>%
+    group_by(sites, Bayside_f, Night__Day, Species, CommonName, `Species-CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+ps2024_exp_elas_glommed_df_bayside_daynight
+
+
+bubbleplot_comname_2024_expedition_elas_Bayside_DayNight <- ggplot(ps2024_exp_elas_glommed_df_bayside_daynight, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species-CommonName`))) + # the fancy stuff around y (`Species-CommonName`) helps to present it in reverse order in the plot (from top to btm alphabetically)
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species-CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+ # paletteer::scale_fill_paletteer_d("trekcolors::lcars_series") +
+  theme(axis.title.x=element_blank()) +
+  guides(fill="none") +
+  facet_grid(Night__Day~Bayside_f, scales = "free", space = "free", drop= TRUE)
+bubbleplot_comname_2024_expedition_elas_Bayside_DayNight
+
+
+
+
+ggsave(plot = bubbleplot_comname_2024_expedition_elas_Bayside_DayNight, filename = "figures-expedition/bubbleplot_comname_2024_expedition_elas_Bayside_DayNight.eps", width = 10, height = 4, units = "in")
+
+```
+
+
+
+
+
+
+## Fractional Abundance Plots
+
+Summarize fractional abundances across whole dataset-
+```{r}
+ps2024_exp_mifish_whole <- ps2024_exp_mifish_glommed_df %>%
+  group_by(Species) %>%
+    summarize(total_reads = sum(Abundance)) %>%
+  mutate(rel_abun = total_reads/sum(across(total_reads))) %>%
+  mutate(rel_abun_percent = rel_abun*100) %>%
+  mutate(csum = rev(cumsum(rev(rel_abun))), 
+         pos = rel_abun/2 + lead(csum, 1),
+         pos = if_else(is.na(pos), rel_abun/2, pos)) %>%
+  left_join(commonnames, by = "Species")
+
+ps2024_exp_mifish_whole
+
+```
+
+
+
+Apparently there is no geom for pie charts but you can [build a stacked geom_bar and make polar coordinates](https://r-graph-gallery.com/piechart-ggplot2.html)
+
+I also found a color palette package with a few options for large number of diverging cartegories, [pals](https://github.com/kwstat/pals)
+
+```{r}
+
+# first filter out anything <1% rel abun
+ps2024_exp_mifish_whole_forplot <- ps2024_exp_mifish_whole %>%
+  filter(!rel_abun_percent < 1)
+
+# Turn Species-CommonName into factor for plotting in correct order
+ps2024_exp_mifish_whole_forplot$`Species-CommonName_f`= factor(ps2024_exp_mifish_whole_forplot$`Species-CommonName`, levels=sort(unique(ps2024_exp_mifish_whole_forplot$`Species-CommonName`)))
+
+# add "Other" row at bottom of factors which sums all taxa <1%
+ps2024_exp_mifish_whole_forplot <- ps2024_exp_mifish_whole_forplot %>%
+  add_row(Species = "Other",
+          CommonName = "Other",
+          `Species-CommonName` = "Other",
+          `Species-CommonName_f` = "Other",
+          rel_abun = 1-sum(ps2024_exp_mifish_whole_forplot$rel_abun), 
+          rel_abun_percent = 100-sum(ps2024_exp_mifish_whole_forplot$rel_abun_percent))
+ps2024_exp_mifish_whole_forplot
+
+
+# plot
+piechart_2024_exp_mifish_all <- ggplot(ps2024_exp_mifish_whole_forplot, 
+                                aes(x= "", 
+                                    y = rel_abun_percent, 
+                                    fill=factor(`Species-CommonName`, levels = `Species-CommonName_f`))) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0) +
+  xlab("")+
+  ylab("")+
+  labs(fill = "")+
+  theme_bw() +
+  scale_fill_manual(values=unname(cols25())) +
+  theme(axis.title.x=element_blank()) +
+  geom_text(aes(label = round(rel_abun_percent,1)),
+            position = position_stack(vjust = 0.5))
+
+piechart_2024_exp_mifish_all
+
+
+ggsave(plot = piechart_2024_exp_mifish_all, filename = "figures-expedition/piechart_2024_exp_mifish_all.eps", width = 12, height = 7, units = "in")
+
+```
+
+
+Alternatively, Krona plot
+Following [this](https://github.com/markschl/embed_krona/blob/main/example.Rmd)
+Compatible with phyloseq objects
+Run in the console:
+```{r}
+# source('https://raw.githubusercontent.com/markschl/embed_krona/master/embed_krona.R')
+# plot_krona(ps2024_exp_mifish_glommed)
+# plot_krona(ps2024_exp_elas_glommed)
+
+
+```
+
+Generates the [MiFish krona plot](krona_files/krona_1.html) and [Elas02 krona plot](krona_files/krona_2.html) as an html file in current working directory
+
+
+Alternatively, stacked barplot (this might be better way to present this)
+### CONTINUE HRE 11/18/24
+```{r}
+barplot_2024_exp_all <- ggplot(ps2024_exp_whole_forplot, aes(x="", y = rel_abun_percent, fill=`Species-CommonName`)) +
+  geom_bar(stat="identity", width=1) +
+#  coord_polar("y", start=0) +
+  xlab("")+
+  ylab("")+
+  labs(fill = "")+
+  theme_bw() +
+  scale_fill_paletteer_d("MetBrewer::Signac") +
+  theme(axis.title.x=element_blank()) +
+  geom_text(aes(label = round(rel_abun_percent,1)),
+            position = position_stack(vjust = 0.5))
+
+barplot_2024_exp_all
+
+#ggsave(plot = piechart_2024_exp_all, filename = "figures-expedition/piechart_2024_exp_all.eps", width = 12, height = 7, units = "in")
+
+```
+
+#### Do same stacked barplot, by Bayside
+```{r}
+ps2024_exp_bayside_e <- ps2024_exp_glommed_df %>%
+  filter(Bayside == "E") %>%
+  group_by(Species) %>%
+    summarize(total_reads = sum(Abundance)) %>%
+  mutate(rel_abun = total_reads/sum(across(total_reads))) %>%
+  mutate(rel_abun_percent = rel_abun*100) %>%
+  mutate(csum = rev(cumsum(rev(rel_abun))), 
+         pos = rel_abun/2 + lead(csum, 1),
+         pos = if_else(is.na(pos), rel_abun/2, pos)) %>%
+  left_join(commonnames, by = "Species") %>%
+  mutate(Bayside = "E")
+  
+ps2024_exp_bayside_w <- ps2024_exp_glommed_df %>%
+  filter(Bayside == "W") %>%
+  group_by(Species) %>%
+    summarize(total_reads = sum(Abundance)) %>%
+  mutate(rel_abun = total_reads/sum(across(total_reads))) %>%
+  mutate(rel_abun_percent = rel_abun*100) %>%
+  mutate(csum = rev(cumsum(rev(rel_abun))), 
+         pos = rel_abun/2 + lead(csum, 1),
+         pos = if_else(is.na(pos), rel_abun/2, pos)) %>%
+  left_join(commonnames, by = "Species") %>%
+  mutate(Bayside = "W")
+
+ps2024_exp_bayside_e
+ps2024_exp_bayside_w
+
+```
+
+## Replication
+How do replicates compare?
+
+```{r}
+sample_data(ps2024_exp_mifish)$replicates
+# 90 samples, with 73 unique levels. So there are 17 samples which were collected in duplicate
+
+duplicate_IDs <- sample_data(ps2024_exp_mifish)$replicates[duplicated(sample_data(ps2024_exp_mifish)$replicates)]
+duplicate_IDs
+
+# make new phyloseq object with only replicates
+ps2024_exp_reps <- subset_samples(ps2024_exp_mifish, replicates %in% duplicate_IDs)
+ps2024_exp_reps_ra <- subset_samples(ps2024_exp_mifish_ra, replicates %in% duplicate_IDs)
+
+
+ps2024_exp_barplot_replicates <- plot_bar(ps2024_exp_reps, x = "Name.Deploy_Cartr_Library", fill = "Order")
+ps2024_exp_barplot_replicates
+
+ps2024_exp_ra_barplot_replicates_ra <- plot_bar(ps2024_exp_reps_ra, x = "Name.Deploy_Cartr_Library", fill = "Order")
+ps2024_exp_ra_barplot_replicates_ra
+
+# view replicates pair-by-pair
+ps2024_exp_ra_barplot_replicates_ra <- ps2024_exp_ra_barplot_replicates_ra +
+    facet_grid(~replicates, scales = "free", space = "free", drop= TRUE)
+ps2024_exp_ra_barplot_replicates_ra
+
+
+ggsave(plot = ps2024_exp_ra_barplot_replicates_ra, filename = "figures-expedition/barplot_2024_expedition_replicates_sidebyside.eps", width = 12, height = 7, units = "in")
+```
+
+- some replicates look very close to each other (~10 of the 17) while others do not. 
+- Next: Test for dissimilarity  to see what the overall strength of replication was
+
+
+For [compositional data](https://www.frontiersin.org/journals/microbiology/articles/10.3389/fmicb.2017.02224/full), use Aitchison distance on CLR-transformed data
+
+
+From [vegan](https://rdrr.io/cran/vegan/man/vegdist.html) documentation, "aitchison" method in `vegdist` automatically does the clr transformation before calculating the distance matrix. Phyloseq has [some options](https://joey711.github.io/phyloseq/distance.html) to do run vegdist with a phyloseq object using a `distance` function, however aitchison is not listed:
+```{r}
+dist_methods <- unlist(distanceMethodList)
+print(dist_methods)
+```
+
+On the other hand, from the vegan documentation, Aitchison distance is just the Euclidean distance on clr-transformed data, so I can do a transformation first and then the Euclidean distance calculation:
+```{r}
+ps2024_exp_reps_clr <- microbiome::transform(ps2024_exp_reps, transform = 'clr')
+ps2024_exp_reps_dist <- distance(ps2024_exp_reps_clr, method= "euclidean")
+
+ps2024_exp_reps_dist_mat <- as.matrix(ps2024_exp_reps_dist)
+
+ps2024_exp_reps_dist_df <- as.data.frame(ps2024_exp_reps_dist_mat)
+ps2024_exp_reps_dist_df
+
+write.csv(ps2024_exp_reps_dist_df,"figures-expedition/mifish_2024_exp_aitchisondistance_replicates.csv", row.names = TRUE)
+```
+Analyzed the above in Excel in the file, [mifish_2024_exp_aitchisondistance_replicates.xlsx](figures-expedition/mifish_2024_exp_aitchisondistance_replicates.xlsx)
+- Highlighted dissimilarity index between replicates
+- Calculated average dissimilarity between replicates = 12.18479861; SD = 2.75176089
+
+Get dissimilarity indices and their average across whole dataset, just for comparison:
+```{r}
+ps2024_exp_clr <- microbiome::transform(ps2024_exp, transform = 'clr')
+ps2024_exp_dist <- distance(ps2024_exp_clr, method= "euclidean")
+
+ps2024_exp_dist_mat <- as.matrix(ps2024_exp_dist)
+
+ps2024_exp_dist_df <- as.data.frame(ps2024_exp_dist_mat)
+ps2024_exp_dist_df
+
+# mean of all distance indices?
+mean(ps2024_exp_dist)
+sd(ps2024_exp_dist)
+
+```
+On average, across the whole dataset, the dissimilarity is 13.4 (SD 2.1) while the average dissimilarity between replicates is 12.2 (SD 2.8). It's good that the replicates are less dissimilar than the on average but these numbers don't seem very far apart, especially taking into account the standard deviation
+
+
+## Site Occupancy
+
+Present Presence/ Absence as site occupancy, eg. across all samples from XX habitat type or east/west etc etc, how many times did species X appear. Check out [Lawson Handley et al. 2019](https://onlinelibrary.wiley.com/doi/full/10.1002/edn3.5)
+
+```{r}
+# How many total samples taken in each habitat type?
+Total_samples_habitat <- as.data.frame(sample_metadata) %>%
+  group_by(Habitat) %>%
+  count(name = "Habitat_sample_total") %>%
+  na.omit()
+
+# in east vs west?
+Total_samples_EW <- as.data.frame(sample_metadata) %>%
+  group_by(Bayside) %>%
+  count(name = "Bayside_sample_total") %>%
+  filter(!Bayside=='Control')
+
+# in day vs night?
+Total_samples_DayNight <- as.data.frame(sample_metadata) %>%
+  group_by(Night__Day) %>%
+  count(name = "Night_day_sample_total") %>%
+  na.omit()
+
+Total_samples_habitat
+Total_samples_EW
+Total_samples_DayNight
+```
+
+```{r}
+# join sample totals to dataframe so there is a denomenator for the calculation
+ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df, Total_samples_habitat, by = "Habitat")
+ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df_2, Total_samples_EW, by = "Bayside")
+ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df_2, Total_samples_DayNight, by = "Night__Day")
+
+
+ps2024_exp_glommed_df_2
+
+```
+
+Calculate site occupancy for each species
+```{r}
+# Habitat
+Species_occurences_habitat <- ps2024_exp_glommed_df_2 %>%
+  group_by(Species, Habitat) %>%
+  count(name = "Sp_occ_in_habitat")
+
+ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df_2, Species_occurences_habitat, by = c("Habitat"="Habitat","Species"="Species"))
+
+#Bayside
+Species_occurences_bayside <- ps2024_exp_glommed_df_2 %>%
+  group_by(Species, Bayside) %>%
+  count(name = "Sp_occ_in_bayside")
+
+ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df_2, Species_occurences_bayside, by = c("Bayside"="Bayside","Species"="Species"))
+
+#Daynight
+Species_occurences_daynight <- ps2024_exp_glommed_df_2 %>%
+  group_by(Species, Night__Day) %>%
+  count(name = "Sp_occ_in_DayNight")
+
+ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df_2, Species_occurences_daynight, by = c("Night__Day"="Night__Day","Species"="Species"))
+
+
+# Calculate occurrence over sample total
+Species_occurences_habitat <- ps2024_exp_glommed_df_2 %>%
+  group_by(Species, Habitat, Habitat_sample_total, Sp_occ_in_habitat) %>%
+  mutate(Species_occurences_in_habitat = Sp_occ_in_habitat/Habitat_sample_total) %>%
+  select(Species, CommonName, Habitat, Species_occurences_in_habitat) %>%
+  distinct()
+Species_occurences_habitat
+
+Species_occurences_bayside <- ps2024_exp_glommed_df_2 %>%
+  group_by(Species, Bayside, Bayside_sample_total, Sp_occ_in_bayside) %>%
+  mutate(Species_occurences_in_habitat = Sp_occ_in_bayside/Bayside_sample_total) %>%
+  select(Species, CommonName, Bayside, Species_occurences_in_habitat) %>%
+  distinct()
+Species_occurences_bayside
+
+Species_occurences_daynight <- ps2024_exp_glommed_df_2 %>%
+  group_by(Species, Night__Day, Night_day_sample_total, Sp_occ_in_DayNight) %>%
+  mutate(Species_occurences_in_daynight = Sp_occ_in_DayNight/Night_day_sample_total) %>%
+  select(Species, CommonName, Night__Day, Species_occurences_in_daynight) %>%
+  distinct()
+Species_occurences_daynight
+
+
+```
+
+Plot
+```{r}
+speciesoccurrence_habitat <- ggplot(data = Species_occurences_habitat)+
+  geom_bar(aes(x = CommonName, y = Species_occurences_in_habitat), stat = "identity")+
+  facet_wrap(~Habitat)+ 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ylab("Species Occurrence")+
+  xlab("")
+speciesoccurrence_habitat
+
+ggsave(plot = speciesoccurrence_habitat, filename = "figures-expedition/speciesoccurrence_habitat.eps", width = 12, height = 7, units = "in")
+
+```
+
+
+## CONTINUE EDITING above plot on Site occupancy, 11/11/2024
+Things to do
+- Day night comparison: present in a way which removes samples that were only sampled in the day
+- Present analysis of replicates
+- Clean up bubble plots: Averaging for bubbles and new color scheme
+- Multivariate anlayses: determine if there is influence of time of day, location, etc. 
+- Separate flounder figure?
+- Process Elasmo data
+- Make pie charts for bayside
+- Presnet mifish and elasmos together
+
+
+
+
