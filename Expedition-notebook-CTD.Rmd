@@ -1,0 +1,99 @@
+---
+title: "Expedition Notebook- CTD Data"
+output: html_notebook
+---
+
+
+
+```{r}
+# rm(list = ls())
+library(tidyverse)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+```
+
+Import Sample Key with times
+```{r}
+key <-  read_csv("raw_data/2024-CTD-expedition/SampleKey.csv")
+key
+```
+
+
+
+Import CTD data
+```{r}
+Deployment01 <- read_csv("raw_data/2024-CTD-expedition/DX07_CTDData_Deployment01.csv")
+```
+
+
+Confirmed with Madie that times are in Vancouver time. Use lubridate to set timezone
+```{r}
+Deployment01$Time <- force_tz(Deployment01$Time, tzone = "America/Vancouver")
+```
+
+
+
+Make new column with local time, Time_ET
+```{r}
+Deployment01$Time_ET <- with_tz(Deployment01$Time, tzone = "America/New_York")
+Deployment01
+
+```
+
+
+
+Check GPS of cartridge 1 if it makes sense with known location according to watchkeeper log, 40.837915, -72.536772 at 11:07:36 on 9/10
+```{r}
+Deployment01 %>% filter(Time_ET == "2024-09-10 11:07:30")
+```
+
+Looks pretty good! Checked a few other times from deployment 1 log sheet to see if GPS matches up, and they all look great.
+```{r}
+Deployment01 %>% filter(Time_ET == "2024-09-10 18:33:40")
+
+```
+
+
+Map Shinnecock Bay map-
+Need high resolution coastline data (the included R maps and the oce package are not high enough)
+
+
+
+Try higher res [GSHHG map from NOAA](https://www.soest.hawaii.edu/pwessel/gshhg/)
+Following [tutorial](https://rpubs.com/MRufino/coastlines)
+Also had to add in [fix](https://gis.stackexchange.com/questions/404385/r-sf-some-edges-are-crossing-in-a-multipolygon-how-to-make-it-valid-when-using)
+```{r}
+# lets get a box to make a smaller sized objects and facilitate the examples:
+geo.box <- c(xmin=-72.65, xmax=-72.4, ymin=40.8, ymax=40.9)
+
+sf_use_s2(FALSE)
+
+# Shoreline data for us detail
+gshhg.l1 <- sf::read_sf("raw_data/gshhg-shp-2.3.7/GSHHS_shp/f/GSHHS_f_L1.shp") %>% st_crop(geo.box)
+plot(gshhg.l1["id"])
+
+# make ggplot object
+shinnbay_map <- ggplot(data = gshhg.l1) +
+  geom_sf(aes(geometry = geometry))
+shinnbay_map
+
+
+```
+
+
+
+Overlay the USV deployment tracks with time in ET
+```{r}
+shinnbay_map +
+  geom_point(data = Deployment01, aes(y=`Latitude (°)`, x = `Longitude (°)`, color = Time_ET)) +
+  ggtitle("Deployment 1: 2024-09-10")
+```
+
+
+Extract table of CTD for each eDNA sample interval
+Examine for outliers, etc.
+```{r}
+
+```
+

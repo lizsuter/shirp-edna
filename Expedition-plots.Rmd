@@ -41,53 +41,51 @@ Side note- I checked some of the high abundance unknowns that were thrown out (A
 **2024 Expedition data**
 Mifish-
 ```{r}
-asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh-expedition/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
-row.names(asv_count) <- asv_count$x
-asv_count <- asv_count %>% select(-x)
-asv_count_mat <- as.matrix(asv_count)
+asv_count_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh-expedition/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_mifish) <- asv_count_mifish$x
+asv_count_mifish <- asv_count_mifish %>% select(-x)
+asv_count_mifish_mat <- as.matrix(asv_count_mifish)
 
-asv_taxonomy <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh-expedition/ASV2Taxonomy/results-revamp-2024-MiFish-expedition_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
-row.names(asv_taxonomy) <- asv_taxonomy$ASV
-asv_taxonomy <- asv_taxonomy %>% select(-ASV)
-asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+asv_taxonomy_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh-expedition/ASV2Taxonomy/results-revamp-2024-MiFish-expedition_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy_mifish) <- asv_taxonomy_mifish$ASV
+asv_taxonomy_mifish <- asv_taxonomy_mifish %>% select(-ASV)
+asv_taxonomy_mifish_mat <- as.matrix(asv_taxonomy_mifish)
 
-sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh-expedition/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
-row.names(sample_metadata) <- sample_metadata$Sample
-sample_metadata <- sample_metadata %>% select(-Sample)
+sample_metadata_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh-expedition/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata_mifish) <- sample_metadata_mifish$Sample
+sample_metadata_mifish <- sample_metadata_mifish %>% select(-Sample)
 
-ASV_2024_exp_mifish = otu_table(asv_count_mat, taxa_are_rows = TRUE)
-TAX_2024_exp_mifish = tax_table(asv_taxonomy_mat)
-samples_2024_exp_mifish = sample_data(sample_metadata)
+ASV_2024_exp_mifish = otu_table(asv_count_mifish_mat, taxa_are_rows = TRUE)
+TAX_2024_exp_mifish = tax_table(asv_taxonomy_mifish_mat)
+samples_2024_exp_mifish = sample_data(sample_metadata_mifish)
 
 phylo_2024_exp_mifish <- phyloseq(ASV_2024_exp_mifish, TAX_2024_exp_mifish, samples_2024_exp_mifish)
 
-rm(asv_count, asv_count_mat, asv_taxonomy, asv_taxonomy_mat, sample_metadata)
 
 ```
 
 Elas02-
 ```{r}
-asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
-row.names(asv_count) <- asv_count$x
-asv_count <- asv_count %>% select(-x)
-asv_count_mat <- as.matrix(asv_count)
+asv_count_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_elas) <- asv_count_elas$x
+asv_count_elas <- asv_count_elas %>% select(-x)
+asv_count_elas_mat <- as.matrix(asv_count_elas)
 
-asv_taxonomy <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/ASV2Taxonomy/results-revamp-2024-Elas02-expedition_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
-row.names(asv_taxonomy) <- asv_taxonomy$ASV
-asv_taxonomy <- asv_taxonomy %>% select(-ASV)
-asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+asv_taxonomy_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/ASV2Taxonomy/results-revamp-2024-Elas02-expedition_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy_elas) <- asv_taxonomy_elas$ASV
+asv_taxonomy_elas <- asv_taxonomy_elas %>% select(-ASV)
+asv_taxonomy_elas_mat <- as.matrix(asv_taxonomy_elas)
 
-sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
-row.names(sample_metadata) <- sample_metadata$Sample
-sample_metadata <- sample_metadata %>% select(-Sample)
+sample_metadata_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata_elas) <- sample_metadata_elas$Sample
+sample_metadata_elas <- sample_metadata_elas %>% select(-Sample)
 
-ASV_2024_exp_elas = otu_table(asv_count_mat, taxa_are_rows = TRUE)
-TAX_2024_exp_elas = tax_table(asv_taxonomy_mat)
-samples_2024_exp_elas = sample_data(sample_metadata)
+ASV_2024_exp_elas = otu_table(asv_count_elas_mat, taxa_are_rows = TRUE)
+TAX_2024_exp_elas = tax_table(asv_taxonomy_elas_mat)
+samples_2024_exp_elas = sample_data(sample_metadata_elas)
 
 phylo_2024_exp_elas <- phyloseq(ASV_2024_exp_elas, TAX_2024_exp_elas, samples_2024_exp_elas)
 
-rm(asv_count, asv_count_mat, asv_taxonomy, asv_taxonomy_mat, sample_metadata)
 
 ```
 
@@ -1013,9 +1011,9 @@ Following [this](https://github.com/markschl/embed_krona/blob/main/example.Rmd)
 Compatible with phyloseq objects
 Run in the console:
 ```{r}
-# source('https://raw.githubusercontent.com/markschl/embed_krona/master/embed_krona.R')
-# plot_krona(ps2024_exp_mifish_glommed)
-# plot_krona(ps2024_exp_elas_glommed)
+ # source('https://raw.githubusercontent.com/markschl/embed_krona/master/embed_krona.R')
+ # plot_krona(ps2024_exp_mifish_glommed)
+ # plot_krona(ps2024_exp_elas_glommed)
 
 
 ```
@@ -1026,7 +1024,7 @@ Generates the [MiFish krona plot](krona_files/krona_1.html) and [Elas02 krona pl
 Alternatively, stacked barplot (this might be better way to present this)
 ### CONTINUE HRE 11/18/24
 ```{r}
-barplot_2024_exp_all <- ggplot(ps2024_exp_whole_forplot, aes(x="", y = rel_abun_percent, fill=`Species-CommonName`)) +
+barplot_2024_exp_all <- ggplot(ps2024_exp_mifish_whole_forplot, aes(x="", y = rel_abun_percent, fill=`Species-CommonName`)) +
   geom_bar(stat="identity", width=1) +
 #  coord_polar("y", start=0) +
   xlab("")+
@@ -1046,7 +1044,7 @@ barplot_2024_exp_all
 
 #### Do same stacked barplot, by Bayside
 ```{r}
-ps2024_exp_bayside_e <- ps2024_exp_glommed_df %>%
+ps2024_exp_bayside_e <- ps2024_exp_mifish_glommed_df %>%
   filter(Bayside == "E") %>%
   group_by(Species) %>%
     summarize(total_reads = sum(Abundance)) %>%
@@ -1058,7 +1056,7 @@ ps2024_exp_bayside_e <- ps2024_exp_glommed_df %>%
   left_join(commonnames, by = "Species") %>%
   mutate(Bayside = "E")
   
-ps2024_exp_bayside_w <- ps2024_exp_glommed_df %>%
+ps2024_exp_bayside_w <- ps2024_exp_mifish_glommed_df %>%
   filter(Bayside == "W") %>%
   group_by(Species) %>%
     summarize(total_reads = sum(Abundance)) %>%
@@ -1136,7 +1134,7 @@ Analyzed the above in Excel in the file, [mifish_2024_exp_aitchisondistance_repl
 
 Get dissimilarity indices and their average across whole dataset, just for comparison:
 ```{r}
-ps2024_exp_clr <- microbiome::transform(ps2024_exp, transform = 'clr')
+ps2024_exp_clr <- microbiome::transform(ps2024_exp_mifish, transform = 'clr')
 ps2024_exp_dist <- distance(ps2024_exp_clr, method= "euclidean")
 
 ps2024_exp_dist_mat <- as.matrix(ps2024_exp_dist)
@@ -1156,21 +1154,23 @@ On average, across the whole dataset, the dissimilarity is 13.4 (SD 2.1) while t
 
 Present Presence/ Absence as site occupancy, eg. across all samples from XX habitat type or east/west etc etc, how many times did species X appear. Check out [Lawson Handley et al. 2019](https://onlinelibrary.wiley.com/doi/full/10.1002/edn3.5)
 
+### MiFIsh
+
 ```{r}
 # How many total samples taken in each habitat type?
-Total_samples_habitat <- as.data.frame(sample_metadata) %>%
+Total_samples_habitat <- as.data.frame(sample_metadata_mifish) %>%
   group_by(Habitat) %>%
   count(name = "Habitat_sample_total") %>%
   na.omit()
 
 # in east vs west?
-Total_samples_EW <- as.data.frame(sample_metadata) %>%
+Total_samples_EW <- as.data.frame(sample_metadata_mifish) %>%
   group_by(Bayside) %>%
   count(name = "Bayside_sample_total") %>%
   filter(!Bayside=='Control')
 
 # in day vs night?
-Total_samples_DayNight <- as.data.frame(sample_metadata) %>%
+Total_samples_DayNight <- as.data.frame(sample_metadata_mifish) %>%
   group_by(Night__Day) %>%
   count(name = "Night_day_sample_total") %>%
   na.omit()
@@ -1182,55 +1182,55 @@ Total_samples_DayNight
 
 ```{r}
 # join sample totals to dataframe so there is a denomenator for the calculation
-ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df, Total_samples_habitat, by = "Habitat")
-ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df_2, Total_samples_EW, by = "Bayside")
-ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df_2, Total_samples_DayNight, by = "Night__Day")
+ps2024_exp_mifish_glommed_df_2 <- full_join(ps2024_exp_mifish_glommed_df, Total_samples_habitat, by = "Habitat")
+ps2024_exp_mifish_glommed_df_2 <- full_join(ps2024_exp_mifish_glommed_df_2, Total_samples_EW, by = "Bayside")
+ps2024_exp_mifish_glommed_df_2 <- full_join(ps2024_exp_mifish_glommed_df_2, Total_samples_DayNight, by = "Night__Day")
 
 
-ps2024_exp_glommed_df_2
+ps2024_exp_mifish_glommed_df_2
 
 ```
 
 Calculate site occupancy for each species
 ```{r}
 # Habitat
-Species_occurences_habitat <- ps2024_exp_glommed_df_2 %>%
+Species_occurences_habitat <- ps2024_exp_mifish_glommed_df_2 %>%
   group_by(Species, Habitat) %>%
   count(name = "Sp_occ_in_habitat")
 
-ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df_2, Species_occurences_habitat, by = c("Habitat"="Habitat","Species"="Species"))
+ps2024_exp_mifish_glommed_df_2 <- full_join(ps2024_exp_mifish_glommed_df_2, Species_occurences_habitat, by = c("Habitat"="Habitat","Species"="Species"))
 
 #Bayside
-Species_occurences_bayside <- ps2024_exp_glommed_df_2 %>%
+Species_occurences_bayside <- ps2024_exp_mifish_glommed_df_2 %>%
   group_by(Species, Bayside) %>%
   count(name = "Sp_occ_in_bayside")
 
-ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df_2, Species_occurences_bayside, by = c("Bayside"="Bayside","Species"="Species"))
+ps2024_exp_mifish_glommed_df_2 <- full_join(ps2024_exp_mifish_glommed_df_2, Species_occurences_bayside, by = c("Bayside"="Bayside","Species"="Species"))
 
 #Daynight
-Species_occurences_daynight <- ps2024_exp_glommed_df_2 %>%
+Species_occurences_daynight <- ps2024_exp_mifish_glommed_df_2 %>%
   group_by(Species, Night__Day) %>%
   count(name = "Sp_occ_in_DayNight")
 
-ps2024_exp_glommed_df_2 <- full_join(ps2024_exp_glommed_df_2, Species_occurences_daynight, by = c("Night__Day"="Night__Day","Species"="Species"))
+ps2024_exp_mifish_glommed_df_2 <- full_join(ps2024_exp_mifish_glommed_df_2, Species_occurences_daynight, by = c("Night__Day"="Night__Day","Species"="Species"))
 
 
 # Calculate occurrence over sample total
-Species_occurences_habitat <- ps2024_exp_glommed_df_2 %>%
+Species_occurences_habitat <- ps2024_exp_mifish_glommed_df_2 %>%
   group_by(Species, Habitat, Habitat_sample_total, Sp_occ_in_habitat) %>%
   mutate(Species_occurences_in_habitat = Sp_occ_in_habitat/Habitat_sample_total) %>%
   select(Species, CommonName, Habitat, Species_occurences_in_habitat) %>%
   distinct()
 Species_occurences_habitat
 
-Species_occurences_bayside <- ps2024_exp_glommed_df_2 %>%
+Species_occurences_bayside <- ps2024_exp_mifish_glommed_df_2 %>%
   group_by(Species, Bayside, Bayside_sample_total, Sp_occ_in_bayside) %>%
-  mutate(Species_occurences_in_habitat = Sp_occ_in_bayside/Bayside_sample_total) %>%
-  select(Species, CommonName, Bayside, Species_occurences_in_habitat) %>%
+  mutate(Species_occurences_in_bayside = Sp_occ_in_bayside/Bayside_sample_total) %>%
+  select(Species, CommonName, Bayside, Species_occurences_in_bayside) %>%
   distinct()
 Species_occurences_bayside
 
-Species_occurences_daynight <- ps2024_exp_glommed_df_2 %>%
+Species_occurences_daynight <- ps2024_exp_mifish_glommed_df_2 %>%
   group_by(Species, Night__Day, Night_day_sample_total, Sp_occ_in_DayNight) %>%
   mutate(Species_occurences_in_daynight = Sp_occ_in_DayNight/Night_day_sample_total) %>%
   select(Species, CommonName, Night__Day, Species_occurences_in_daynight) %>%
@@ -1242,20 +1242,185 @@ Species_occurences_daynight
 
 Plot
 ```{r}
-speciesoccurrence_habitat <- ggplot(data = Species_occurences_habitat)+
-  geom_bar(aes(x = CommonName, y = Species_occurences_in_habitat), stat = "identity")+
-  facet_wrap(~Habitat)+ 
+speciesoccurrence_habitat <- ggplot(data = Species_occurences_habitat, aes(x = CommonName, y = Species_occurences_in_habitat, fill = Habitat))+
+  geom_bar(stat = "identity", position = position_dodge(preserve = "single"), color = "black", linewidth = 0.25)+
+  theme_bw()+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
   ylab("Species Occurrence")+
-  xlab("")
+  xlab("")+
+  scale_fill_manual(values = c("azure2", "chartreuse4", "cadetblue1", "darkgrey"))
 speciesoccurrence_habitat
 
+speciesoccurrence_daynight <- ggplot(data = Species_occurences_daynight, aes(x = CommonName, y = Species_occurences_in_daynight, fill = Night__Day))+
+  geom_bar(stat = "identity", position = position_dodge(preserve = "single"), color = "black", linewidth = 0.25)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.title = element_blank())+
+  ylab("Species Occurrence")+
+  xlab("")+
+  scale_fill_manual(values = c("cornsilk", "antiquewhite4"))
+speciesoccurrence_daynight
+
+speciesoccurrence_bayside <- ggplot(data = Species_occurences_bayside, aes(x = CommonName, y = Species_occurences_in_bayside, fill = Bayside))+
+  geom_bar(stat = "identity", position = position_dodge(preserve = "single"), color = "black", linewidth = 0.25)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.title = element_blank())+
+  ylab("Species Occurrence")+
+  xlab("")+
+  scale_fill_manual(values = c("coral", "cornflowerblue"))
+speciesoccurrence_bayside
+
+
 ggsave(plot = speciesoccurrence_habitat, filename = "figures-expedition/speciesoccurrence_habitat.eps", width = 12, height = 7, units = "in")
+
+ggsave(plot = speciesoccurrence_daynight, filename = "figures-expedition/speciesoccurrence_daynight.eps", width = 12, height = 7, units = "in")
+
+ggsave(plot = speciesoccurrence_bayside, filename = "figures-expedition/speciesoccurrence_bayside.eps", width = 12, height = 7, units = "in")
+
+
+```
+
+### Elas02
+
+```{r}
+# How many total samples taken in each habitat type?
+Total_samples_habitat <- as.data.frame(sample_metadata_elas) %>%
+  group_by(Habitat) %>%
+  count(name = "Habitat_sample_total") %>%
+  na.omit()
+
+# in east vs west?
+Total_samples_EW <- as.data.frame(sample_metadata_elas) %>%
+  group_by(Bayside) %>%
+  count(name = "Bayside_sample_total") %>%
+  filter(!Bayside=='Control')
+
+# in day vs night?
+Total_samples_DayNight <- as.data.frame(sample_metadata_elas) %>%
+  group_by(Night__Day) %>%
+  count(name = "Night_day_sample_total") %>%
+  na.omit()
+
+Total_samples_habitat
+Total_samples_EW
+Total_samples_DayNight
+```
+
+
+
+```{r}
+# join sample totals to dataframe so there is a denomenator for the calculation
+ps2024_exp_elas_glommed_df_2 <- full_join(ps2024_exp_elas_glommed_df, Total_samples_habitat, by = "Habitat")
+ps2024_exp_elas_glommed_df_2 <- full_join(ps2024_exp_elas_glommed_df_2, Total_samples_EW, by = "Bayside")
+ps2024_exp_elas_glommed_df_2 <- full_join(ps2024_exp_elas_glommed_df_2, Total_samples_DayNight, by = "Night__Day")
+
+
+# there are no elasmos detected at oyster reef sites so there is an empty row. Delete
+ps2024_exp_elas_glommed_df_2 <- ps2024_exp_elas_glommed_df_2 %>% filter(!is.na(OTU))
+
+
+ps2024_exp_elas_glommed_df_2
 
 ```
 
 
-## CONTINUE EDITING above plot on Site occupancy, 11/11/2024
+Calculate site occupancy for each species
+```{r}
+# Habitat
+Species_occurences_habitat <- ps2024_exp_elas_glommed_df_2 %>%
+  group_by(Species, Habitat) %>%
+  count(name = "Sp_occ_in_habitat")
+
+ps2024_exp_elas_glommed_df_2 <- full_join(ps2024_exp_elas_glommed_df_2, Species_occurences_habitat, by = c("Habitat"="Habitat","Species"="Species"))
+
+#Bayside
+Species_occurences_bayside <- ps2024_exp_elas_glommed_df_2 %>%
+  group_by(Species, Bayside) %>%
+  count(name = "Sp_occ_in_bayside")
+
+ps2024_exp_elas_glommed_df_2 <- full_join(ps2024_exp_elas_glommed_df_2, Species_occurences_bayside, by = c("Bayside"="Bayside","Species"="Species"))
+
+#Daynight
+Species_occurences_daynight <- ps2024_exp_elas_glommed_df_2 %>%
+  group_by(Species, Night__Day) %>%
+  count(name = "Sp_occ_in_DayNight")
+
+ps2024_exp_elas_glommed_df_2 <- full_join(ps2024_exp_elas_glommed_df_2, Species_occurences_daynight, by = c("Night__Day"="Night__Day","Species"="Species"))
+
+
+# Calculate occurrence over sample total
+Species_occurences_habitat <- ps2024_exp_elas_glommed_df_2 %>%
+  group_by(Species, Habitat, Habitat_sample_total, Sp_occ_in_habitat) %>%
+  mutate(Species_occurences_in_habitat = Sp_occ_in_habitat/Habitat_sample_total) %>%
+  select(Species, CommonName, Habitat, Species_occurences_in_habitat) %>%
+  distinct()
+Species_occurences_habitat
+
+Species_occurences_bayside <- ps2024_exp_elas_glommed_df_2 %>%
+  group_by(Species, Bayside, Bayside_sample_total, Sp_occ_in_bayside) %>%
+  mutate(Species_occurences_in_bayside = Sp_occ_in_bayside/Bayside_sample_total) %>%
+  select(Species, CommonName, Bayside, Species_occurences_in_bayside) %>%
+  distinct()
+Species_occurences_bayside
+
+Species_occurences_daynight <- ps2024_exp_elas_glommed_df_2 %>%
+  group_by(Species, Night__Day, Night_day_sample_total, Sp_occ_in_DayNight) %>%
+  mutate(Species_occurences_in_daynight = Sp_occ_in_DayNight/Night_day_sample_total) %>%
+  select(Species, CommonName, Night__Day, Species_occurences_in_daynight) %>%
+  distinct()
+Species_occurences_daynight
+
+
+```
+
+
+
+Plot
+```{r}
+speciesoccurrence_habitat <- ggplot(data = Species_occurences_habitat, aes(x = CommonName, y = Species_occurences_in_habitat, fill = Habitat))+
+  geom_bar(stat = "identity", position = position_dodge(preserve = "single"), color = "black", linewidth = 0.25)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+  ylab("Species Occurrence")+
+  xlab("")+
+  scale_fill_manual(values = c("azure2", "chartreuse4", "cadetblue1", "darkgrey"))
+speciesoccurrence_habitat
+
+speciesoccurrence_daynight <- ggplot(data = Species_occurences_daynight, aes(x = CommonName, y = Species_occurences_in_daynight, fill = Night__Day))+
+  geom_bar(stat = "identity", position = position_dodge(preserve = "single"), color = "black", linewidth = 0.25)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.title = element_blank())+
+  ylab("Species Occurrence")+
+  xlab("")+
+  scale_fill_manual(values = c("cornsilk", "antiquewhite4"))
+speciesoccurrence_daynight
+
+speciesoccurrence_bayside <- ggplot(data = Species_occurences_bayside, aes(x = CommonName, y = Species_occurences_in_bayside, fill = Bayside))+
+  geom_bar(stat = "identity", position = position_dodge(preserve = "single"), color = "black", linewidth = 0.25)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.title = element_blank())+
+  ylab("Species Occurrence")+
+  xlab("")+
+  scale_fill_manual(values = c("coral", "cornflowerblue"))
+speciesoccurrence_bayside
+
+
+ggsave(plot = speciesoccurrence_habitat, filename = "figures-expedition/speciesoccurrence_habitat_elas.eps", width = 12, height = 7, units = "in")
+
+ggsave(plot = speciesoccurrence_daynight, filename = "figures-expedition/speciesoccurrence_daynight_elas.eps", width = 12, height = 7, units = "in")
+
+ggsave(plot = speciesoccurrence_bayside, filename = "figures-expedition/speciesoccurrence_bayside_elas.eps", width = 12, height = 7, units = "in")
+
+
+```
+
+
+
+
+## CONTINUE EDITING above plot on Site occupancy, 
 Things to do
 - Day night comparison: present in a way which removes samples that were only sampled in the day
 - Present analysis of replicates
