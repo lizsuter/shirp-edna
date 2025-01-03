@@ -1735,3 +1735,5 @@ Raw CTD files are in my `/Users/admin/Documents/ShiRP/Expedition_Data/CTD ` fold
 
 - Use the `KEEPS` tab from `Sample_Inventory.xlsx` sheet to cross reference and pull out times for each sample. This is the Sample Key
 - Import into R using `Expedition-notebook-CTD.Rmd` script
+- Times were screwy. Maddie confirmed CTD is in Pacific time
+- Fixing times and started mapping- see R notebook
