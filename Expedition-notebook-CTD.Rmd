@@ -79,7 +79,46 @@ CTD
 
 ```
 
+CTD only recorded Conductivity. Need to do a conversion to Salinity based on temperature. Following [1983 Technical Paper from UNESCO, "Algorithms for computation of fundamental properties of seawater"](https://raw.githubusercontent.com/ocefpaf/python-seawater/master/docs/UNESCO-TechPaper44_eo.pdf). Use Excel sheet from [jimbodouglass.blogspot.com](https://jimbodouglass.blogspot.com/2010/11/conductivity-to-salinity-conversion-for.html). Converted to R equation:
+```{r}
+CTD$Salinity_psu <-with(CTD, {
+  # Convert Conductivity from mS/cm to µS/cm
+  conductivity_uS <- `Conductivity (mS/cm)` * 1000
+  
+  # Compute rt
+  rt <- 0.6766097 + 
+        0.0200564 * `Temperature (°C)` + 
+        0.0001104259 * `Temperature (°C)`^2 + 
+        (-6.9698e-7) * `Temperature (°C)`^3 + 
+        (1.0031e-9) * `Temperature (°C)`^4
+  
+  # Compute Conductivity Ratio (D15 from Excel sheet)
+  conductivity_ratio <- conductivity_uS / 42900
+  
+  # Compute Rt (E15)
+  Rt <- conductivity_ratio / rt
+  
+  # Compute dS
+  dS <- ((`Temperature (°C)` - 15) / (1 + 0.0162 * (`Temperature (°C)` - 15))) * (
+    0.0005 +
+    (-0.0056) * sqrt(Rt) +
+    (-0.0066) * Rt +
+    (-0.0375) * Rt^(1.5) +
+    (0.0636) * Rt^2 +
+    (-0.0144) * Rt^(2.5)
+  )
+  
+  # Compute Salinity (H15)
+  0.008 +
+    (-0.1692) * sqrt(Rt) +
+    25.3851 * Rt +
+    14.0941 * Rt^(1.5) +
+    (-7.0261) * Rt^2 +
+    2.7081 * Rt^(2.5) +
+    dS
+})
 
+```
 
 Check GPS of deployment 1/cartridge 1 if it makes sense with known location according to watchkeeper log, 40.837915, -72.536772 at 11:07:36 on 9/10
 (round times to nearest 10 seconds to match CTD)
@@ -117,7 +156,7 @@ Following [tutorial](https://rpubs.com/MRufino/coastlines)
 Also had to add in [fix](https://gis.stackexchange.com/questions/404385/r-sf-some-edges-are-crossing-in-a-multipolygon-how-to-make-it-valid-when-using)
 ```{r}
 # lets get a box to make a smaller sized objects and facilitate the examples:
-geo.box <- c(xmin=-72.65, xmax=-72.4, ymin=40.8, ymax=40.9)
+geo.box <- c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9)
 
 sf_use_s2(FALSE)
 
@@ -127,9 +166,11 @@ plot(gshhg.l1["id"])
 
 # make ggplot object
 shinnbay_map <- ggplot(data = gshhg.l1) +
-  geom_sf(aes(geometry = geometry))
-shinnbay_map
+  geom_sf(aes(geometry = geometry)) +
+    scale_x_continuous(breaks = seq(-72.6, -72.4, 0.1)) +
+    scale_y_continuous(breaks = seq(40.80, 40.9, 0.05))
 
+shinnbay_map
 
 ```
 
@@ -203,16 +244,16 @@ ggsave("figures-expedition/Deployments_temperature.eps", plot = Deployments_temp
   units = c("in"))
 
 ```
-Conductivity
+Salinity
 ```{r}
-Deployments_conductivity <- shinnbay_map +
-    geom_point(data = CTD, aes(y=`Latitude (°)`, x = `Longitude (°)`, color = `Conductivity (mS/cm)`)) +
+Deployments_salinity <- shinnbay_map +
+    geom_point(data = CTD, aes(y=`Latitude (°)`, x = `Longitude (°)`, color = Salinity_psu)) +
   facet_wrap(~Deployment) +
-  scale_color_gradient2(low="yellow", mid="white", high="purple", midpoint=41, limits=c(38, 45))
+  scale_color_gradient2(low="yellow", mid="white", high="purple", midpoint=30, limits=c(27, 33))
   
-Deployments_conductivity
+Deployments_salinity
 
-ggsave("figures-expedition/Deployments_conductivity.eps", plot = Deployments_conductivity, width = 10,
+ggsave("figures-expedition/Deployments_salinity.eps", plot = Deployments_salinity, width = 10,
   height = 8,
   units = c("in"))
 
@@ -254,7 +295,7 @@ Chlorophyll
 Deployments_chloro <- shinnbay_map +
       geom_point(data = CTD, aes(y=`Latitude (°)`, x = `Longitude (°)`, color = `Chloro Blue (ug/L)`)) +
   facet_wrap(~Deployment) +
-  scale_color_gradient2(low="blue", high="green", midpoint=25, limits=c(0, 50), oob=scales::squish)
+  scale_color_gradient2(low="black", high="green", limits=c(0, 50), oob=scales::squish)
   
 Deployments_chloro
 
@@ -298,7 +339,7 @@ generate_plot <- function(i) {
   
   p4 <- CTD_filtered %>%
     ggplot() +
-    geom_line(aes(x = Time_ET, y = `Conductivity (mS/cm)`))
+    geom_line(aes(x = Time_ET, y = Salinity_psu))
   
   p5 <- CTD_filtered %>%
     ggplot() +
@@ -335,7 +376,7 @@ summary_table <- data.frame(
   `Name-Deploy_Cartr_Library` = character(),
   Avg_Depth_m = numeric(),
   Avg_Temperature_C = numeric(),
-  Avg_Conductivity_mScm = numeric(),
+  Avg_Salinity_psu = numeric(),
   Avg_Chlorophyll_ugL = numeric(),
   Avg_Turbidity_NTU = numeric(),
   stringsAsFactors = FALSE
@@ -350,7 +391,7 @@ for (i in 1:nrow(key)) {
   # Calculate averages for each parameter
   avg_depth <- mean(CTD_filtered$`Depth (m)`, na.rm = TRUE)
   avg_temperature <- mean(CTD_filtered$`Temperature (°C)`, na.rm = TRUE)
-  avg_conductivity <- mean(CTD_filtered$`Conductivity (mS/cm)`, na.rm = TRUE)
+  avg_salinity <- mean(CTD_filtered$Salinity_psu, na.rm = TRUE)
   avg_chlorophyll <- mean(CTD_filtered$`Chloro Blue (ug/L)`, na.rm = TRUE)
   avg_turbidity <- mean(CTD_filtered$`Turbidity (NTU)`, na.rm = TRUE)
   
@@ -360,7 +401,7 @@ for (i in 1:nrow(key)) {
     `Deploy_Cartr_Library` = key$`Name-Deploy_Cartr_Library`[i],
     Avg_Depth_m = avg_depth,
     Avg_Temperature_C = avg_temperature,
-    Avg_Conductivity_mScm = avg_conductivity,
+    Avg_Salinity_psu = avg_salinity,
     Avg_Chlorophyll_ugL = avg_chlorophyll,
     Avg_Turbidity_NTU = avg_turbidity
   ))

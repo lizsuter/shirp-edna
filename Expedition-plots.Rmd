@@ -28,7 +28,6 @@ library(fantaxtic)
 library(ggrepel)
 library(paletteer)
 library(pals)
-#library(microViz)
 ```
 
 #  Import and prepare data
@@ -38,8 +37,8 @@ I am creating the equivalent of "phylo1" from REVAMP, the dataset is the ASV-bas
 
 Side note- I checked some of the high abundance unknowns that were thrown out (ASV_4 from 2021 and ASV_2 and _3 from 2023) and they are diatoms. They are coming up as unknown bc they are not in my Elas02 database. 
 
-**2024 Expedition data**
-Mifish-
+## 2024 Expedition data**
+### Mifish-
 ```{r}
 asv_count_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh-expedition/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
 row.names(asv_count_mifish) <- asv_count_mifish$x
@@ -64,7 +63,7 @@ phylo_2024_exp_mifish <- phyloseq(ASV_2024_exp_mifish, TAX_2024_exp_mifish, samp
 
 ```
 
-Elas02-
+### Elas02-
 ```{r}
 asv_count_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
 row.names(asv_count_elas) <- asv_count_elas$x
@@ -89,14 +88,73 @@ phylo_2024_exp_elas <- phyloseq(ASV_2024_exp_elas, TAX_2024_exp_elas, samples_20
 
 ```
 
+## 2024 Trawl data**
+### Mifish-
+```{r}
+asv_count_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_mifish) <- asv_count_mifish$x
+asv_count_mifish <- asv_count_mifish %>% select(-x)
+asv_count_mifish_mat <- as.matrix(asv_count_mifish)
+
+asv_taxonomy_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh/ASV2Taxonomy/results-revamp-2024-MiFish_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy_mifish) <- asv_taxonomy_mifish$ASV
+asv_taxonomy_mifish <- asv_taxonomy_mifish %>% select(-ASV)
+asv_taxonomy_mifish_mat <- as.matrix(asv_taxonomy_mifish)
+
+sample_metadata_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata_mifish) <- sample_metadata_mifish$Sample
+sample_metadata_mifish <- sample_metadata_mifish %>% select(-Sample)
+
+ASV_2024_trawl_mifish = otu_table(asv_count_mifish_mat, taxa_are_rows = TRUE)
+TAX_2024_trawl_mifish = tax_table(asv_taxonomy_mifish_mat)
+samples_2024_trawl_mifish = sample_data(sample_metadata_mifish)
+
+phylo_2024_trawl_mifish <- phyloseq(ASV_2024_trawl_mifish, TAX_2024_trawl_mifish, samples_2024_trawl_mifish)
 
 
-Generate some metadata for manuscript
+```
+
+### Elas02-
+```{r}
+asv_count_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_elas) <- asv_count_elas$x
+asv_count_elas <- asv_count_elas %>% select(-x)
+asv_count_elas_mat <- as.matrix(asv_count_elas)
+
+asv_taxonomy_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02/ASV2Taxonomy/results-revamp-2024-Elas02_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy_elas) <- asv_taxonomy_elas$ASV
+asv_taxonomy_elas <- asv_taxonomy_elas %>% select(-ASV)
+asv_taxonomy_elas_mat <- as.matrix(asv_taxonomy_elas)
+
+sample_metadata_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata_elas) <- sample_metadata_elas$Sample
+sample_metadata_elas <- sample_metadata_elas %>% select(-Sample)
+
+ASV_2024_trawl_elas = otu_table(asv_count_elas_mat, taxa_are_rows = TRUE)
+TAX_2024_trawl_elas = tax_table(asv_taxonomy_elas_mat)
+samples_2024_trawl_elas = sample_data(sample_metadata_elas)
+
+phylo_2024_trawl_elas <- phyloseq(ASV_2024_trawl_elas, TAX_2024_trawl_elas, samples_2024_trawl_elas)
+
+
+```
+
+
+For this analysis, I am only using the trawl results that coincide with the expedition (will use the rest of the season in another analysis).
+Filter by date (expedition was 9/10-9/19/24)
+
+```{r}
+phylo_2024_trawl_mifish = subset_samples(phylo_2024_trawl_mifish, Datecode %in% c("20240910","20240916"))
+
+phylo_2024_trawl_elas = subset_samples(phylo_2024_trawl_elas, Datecode %in% c("20240910","20240916"))
+```
+
+
+## Generate some metadata for manuscript
 How many ASVs and reads were thrown out as unknowns?
 
-
-**2024 expedition**
-Mifish-
+### Expedition
+#### Mifish-
 ```{r}
 asv_count_unknowns_2024_exp_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFish-expedition/processed_tables/ASVs_counts_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
 row.names(asv_count_unknowns_2024_exp_mifish) <- asv_count_unknowns_2024_exp_mifish$x
@@ -105,19 +163,31 @@ asv_count_unknowns_2024_exp_mifish <- asv_count_unknowns_2024_exp_mifish %>% sel
 asv_count_nounknowns_2024_exp_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFish-expedition/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
 row.names(asv_count_nounknowns_2024_exp_mifish) <- asv_count_nounknowns_2024_exp_mifish$x
 asv_count_nounknowns_2024_exp_mifish <- asv_count_nounknowns_2024_exp_mifish %>% select(-x)
+```
 
-
+```{r}
 # number of ASVs retained after removal of unknowns
+count(asv_count_nounknowns_2024_exp_mifish)
+```
+
+```{r}
+# fraction of ASVs retained after removal of unknowns
 count(asv_count_nounknowns_2024_exp_mifish)/count(asv_count_unknowns_2024_exp_mifish)
-
-
+```
+```{r}
 # number of reads retained after removal of unknowns
-sum(rowSums(asv_count_nounknowns_2024_exp_mifish))/sum(rowSums(asv_count_unknowns_2024_exp_mifish))
-
+sum(rowSums(asv_count_nounknowns_2024_exp_mifish))
 
 ```
 
-Elas02-
+```{r}
+# fraction of reads retained after removal of unknowns
+sum(rowSums(asv_count_nounknowns_2024_exp_mifish))/sum(rowSums(asv_count_unknowns_2024_exp_mifish))
+
+```
+
+
+#### Elas02-
 ```{r}
 asv_count_unknowns_2024_exp_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/processed_tables/ASVs_counts_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
 row.names(asv_count_unknowns_2024_exp_elas) <- asv_count_unknowns_2024_exp_elas$x
@@ -126,21 +196,104 @@ asv_count_unknowns_2024_exp_elas <- asv_count_unknowns_2024_exp_elas %>% select(
 asv_count_nounknowns_2024_exp_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
 row.names(asv_count_nounknowns_2024_exp_elas) <- asv_count_nounknowns_2024_exp_elas$x
 asv_count_nounknowns_2024_exp_elas <- asv_count_nounknowns_2024_exp_elas %>% select(-x)
+```
 
-
+```{r}
 # number of ASVs retained after removal of unknowns
+count(asv_count_nounknowns_2024_exp_elas)
+```
+
+```{r}
+# fraction of ASVs retained after removal of unknowns
 count(asv_count_nounknowns_2024_exp_elas)/count(asv_count_unknowns_2024_exp_elas)
+```
 
 
+```{r}
 # number of reads retained after removal of unknowns
-sum(rowSums(asv_count_nounknowns_2024_exp_elas))/sum(rowSums(asv_count_unknowns_2024_exp_elas))
+sum(rowSums(asv_count_nounknowns_2024_exp_elas))
+```
 
+```{r}
+# fraction of reads retained after removal of unknowns
+sum(rowSums(asv_count_nounknowns_2024_exp_elas))/sum(rowSums(asv_count_unknowns_2024_exp_elas))
+```
+
+##### Expedition Results of REVAMP Filtering:
+MiFish: 6.5% of ASVs were removed as unknowns (0.9% of total reads). 2009 ASVs retained (13,286,471 reads). 
+Elas02: 60.6% of ASVs were removed as unknowns (20.8% of total reads). 1247 ASVs retained (19,000,859 reads). 
+
+### Trawl
+#### Mifish-
+```{r}
+asv_count_unknowns_2024_trawl_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFish/processed_tables/ASVs_counts_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_unknowns_2024_trawl_mifish) <- asv_count_unknowns_2024_trawl_mifish$x
+asv_count_unknowns_2024_trawl_mifish <- asv_count_unknowns_2024_trawl_mifish %>% select(-x)
+
+asv_count_nounknowns_2024_trawl_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFish/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_nounknowns_2024_trawl_mifish) <- asv_count_nounknowns_2024_trawl_mifish$x
+asv_count_nounknowns_2024_trawl_mifish <- asv_count_nounknowns_2024_trawl_mifish %>% select(-x)
+```
+
+```{r}
+# number of ASVs retained after removal of unknowns
+count(asv_count_nounknowns_2024_trawl_mifish)
+```
+
+```{r}
+# fraction of ASVs retained after removal of unknowns
+count(asv_count_nounknowns_2024_trawl_mifish)/count(asv_count_unknowns_2024_trawl_mifish)
+```
+```{r}
+# number of reads retained after removal of unknowns
+sum(rowSums(asv_count_nounknowns_2024_trawl_mifish))
+
+```
+
+```{r}
+# fraction of reads retained after removal of unknowns
+sum(rowSums(asv_count_nounknowns_2024_trawl_mifish))/sum(rowSums(asv_count_unknowns_2024_trawl_mifish))
 
 ```
 
 
-MiFish: 6.5% of ASVs were unknowns (0.9% of total reads)
-Elas02: 60.6% of ASVs were unknowns (20.8% of total reads)
+#### Elas02-
+```{r}
+asv_count_unknowns_2024_trawl_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02/processed_tables/ASVs_counts_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_unknowns_2024_trawl_elas) <- asv_count_unknowns_2024_trawl_elas$x
+asv_count_unknowns_2024_trawl_elas <- asv_count_unknowns_2024_trawl_elas %>% select(-x)
+
+asv_count_nounknowns_2024_trawl_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_nounknowns_2024_trawl_elas) <- asv_count_nounknowns_2024_trawl_elas$x
+asv_count_nounknowns_2024_trawl_elas <- asv_count_nounknowns_2024_trawl_elas %>% select(-x)
+```
+
+```{r}
+# number of ASVs retained after removal of unknowns
+count(asv_count_nounknowns_2024_trawl_elas)
+```
+
+```{r}
+# fraction of ASVs retained after removal of unknowns
+count(asv_count_nounknowns_2024_trawl_elas)/count(asv_count_unknowns_2024_trawl_elas)
+```
+
+
+```{r}
+# number of reads retained after removal of unknowns
+sum(rowSums(asv_count_nounknowns_2024_trawl_elas))
+```
+
+```{r}
+# fraction of reads retained after removal of unknowns
+sum(rowSums(asv_count_nounknowns_2024_trawl_elas))/sum(rowSums(asv_count_unknowns_2024_trawl_elas))
+```
+
+##### Trawl Results of REVAMP Filtering:
+MiFish: 8.1% of ASVs were removed as unknowns (1.4% of total reads). 1691 ASVs retained (12,096,417 reads). 
+Elas02: 58.8% of ASVs were removed as unknowns (29.2% of total reads). 1500 ASVs retained (16,625,907 reads). 
+
+
 
 
 
@@ -160,13 +313,35 @@ table2 <- otu_table(phylo_2024_exp_elas)
 class(table2) <- "matrix" 
 table2 <- t(table2) 
 
+table3 <- otu_table(phylo_2024_trawl_mifish)
+class(table3) <- "matrix" 
+table3 <- t(table3) 
+
+table4 <- otu_table(phylo_2024_trawl_elas)
+class(table4) <- "matrix" 
+table4 <- t(table4) 
+
 rarecurve(table1, step=50, cex=0.5)
 rarecurve(table2, step=50, cex=0.5)
+rarecurve(table3, step=50, cex=0.5)
+rarecurve(table4, step=50, cex=0.5)
+
+
+```
+View sample sums, from min to max to flag low-effort samples:
+```{r}
+as.data.frame(sort(sample_sums(phylo_2024_exp_mifish)))
+as.data.frame(sort(sample_sums(phylo_2024_exp_elas)))
+as.data.frame(sort(sample_sums(phylo_2024_trawl_mifish)))
+as.data.frame(sort(sample_sums(phylo_2024_trawl_elas)))
 
 ```
 
-MiFish: Keep en eye on sample 7_8
-Elas: There are many samples (deployments 6, 8, the controls) that are low reads- keep an eye to see if these get filtered out later
+MiFish/ expedition: Keep en eye on sample 7_8
+Elas/ expedition: There are a few many samples (8_15, 2_11, 2_13, ...) that are low reads- keep an eye to see if these get filtered out later. They may be those areas that have no/few elasmos
+MiFish/trawl: Other than controls, most look good in terms of sequencing effort
+Elas/ trawl: Other than controls, most look good in terms of sequencing effort
+
 
 
 
@@ -176,14 +351,68 @@ Elas: There are many samples (deployments 6, 8, the controls) that are low reads
 For quick reference, scan through Krona plots:
 - 2024 MiFish expedition dataset [here](/results-revamp-2024-MiFish-expedition/Figures/00_KRONA_plots/results-revamp-2024-MiFish-expedition_samplesSummedKRONA.html)  
 - 2024 Elas02 expedition dataset [here](/results-revamp-2024-Elas02-expedition/Figures/00_KRONA_plots/results-revamp-2024-Elas02-expedition_samplesSummedKRONA.html)
-- Note, unknowns in Krona plots were already removed from phylo objects
-- Scan REVAMP output:
-  - MiFIsh: `ASV2Taxonomy/results-revamp-2024-MiFish-expedition_asvTaxonomyTable.txt` and `ASV2Taxonomy/ASVcounts_mergedOnTaxonomy.txt` have taxonomy of all ASVs. Look closely at controls: Negative controls, C_2, C_3 and positive controls, C_4, and C_5 for high read-number entries (ignoring unknowns and things I already removed like bacteria, mammals)
-  - Elas02: `ASV2Taxonomy/results-revamp-2024-Elas02-expedition_asvTaxonomyTable.txt` and `ASV2Taxonomy/ASVcounts_mergedOnTaxonomy.txt` have taxonomy. For these, all controls, C_2, C_3, C_4, and C_5 should be negative controls (because there were no elasmobranchs in the control tank).
+- 2024 MiFish trawl dataset [here](/results-revamp-2024-MiFish/Figures/00_KRONA_plots/results-revamp-2024-MiFish_samplesSummedKRONA.html)
+- 2024 Elas02 trawl dataset [here](/results-revamp-2024-Elas02/Figures/00_KRONA_plots/results-revamp-2024-Elas02_samplesSummedKRONA.html)
 
-**2024 expedition**
-Check some features of the phyloseq object
-MiFIsh-
+- Note, unknowns in Krona plots were already removed from phylo objects. Also the Krona plots from the trawl include all samples, including those from earlier in season
+
+- Scan REVAMP output in REVAMP directories
+  - MiFIsh/ expedition example: `ASV2Taxonomy/results-revamp-2024-MiFish-expedition_asvTaxonomyTable.txt` and `ASV2Taxonomy/ASVcounts_mergedOnTaxonomy.txt` have taxonomy of all ASVs. Look closely at controls: Negative controls, C_2, C_3 and positive controls, C_4, and C_5 for high read-number entries (ignoring unknowns and things I already removed like bacteria, mammals)
+  - Elas02: For these, all controls should be negative controls (because there were no elasmobranchs in the control tanks).
+
+### Replace NAs in taxonomy 
+because this becomes problematic when filtering.
+There are some abundant taxa resolved only to the genus or family level. 
+
+Exp/MiFish-
+```{r}
+# Check what they look like before replacement
+data.frame(tax_table(phylo_2024_exp_mifish))
+data.frame(tax_table(subset_taxa(phylo_2024_exp_mifish, is.na(Species))))
+```
+
+Exp/Elas-
+```{r}
+# Check what they look like before replacement
+data.frame(tax_table(phylo_2024_exp_elas))
+data.frame(tax_table(subset_taxa(phylo_2024_exp_elas, is.na(Species))))
+```
+
+Trawl/MiFish-
+```{r}
+# Check what they look like before replacement
+data.frame(tax_table(phylo_2024_trawl_mifish))
+data.frame(tax_table(subset_taxa(phylo_2024_trawl_mifish, is.na(Species))))
+```
+
+Trawl/Elas-
+```{r}
+# Check what they look like before replacement
+data.frame(tax_table(phylo_2024_trawl_elas))
+data.frame(tax_table(subset_taxa(phylo_2024_trawl_elas, is.na(Species))))
+```
+
+
+```{r}
+# Replace NA in taxa list with next highest annotated taxon"
+tax_table(phylo_2024_exp_mifish) <- tax_table(fantaxtic::name_na_taxa(phylo_2024_exp_mifish, include_rank = T))
+
+tax_table(phylo_2024_exp_elas) <- tax_table(fantaxtic::name_na_taxa(phylo_2024_exp_elas, include_rank = T))
+
+tax_table(phylo_2024_trawl_mifish) <- tax_table(fantaxtic::name_na_taxa(phylo_2024_trawl_mifish, include_rank = T))
+
+tax_table(phylo_2024_trawl_elas) <- tax_table(fantaxtic::name_na_taxa(phylo_2024_trawl_elas, include_rank = T))
+
+# Check after replacement
+data.frame(tax_table(phylo_2024_exp_mifish))
+data.frame(tax_table(phylo_2024_exp_elas))
+data.frame(tax_table(phylo_2024_trawl_mifish))
+data.frame(tax_table(phylo_2024_trawl_elas))
+
+```
+
+### Check taxonomy 
+#### Expedition-MiFish
 ```{r}
 ranks <- rank_names(phylo_2024_exp_mifish)
 ranks
@@ -195,7 +424,7 @@ as.data.frame(unique(tax_table(phylo_2024_exp_mifish)[, ranks[3]]))
 nrow(tax_table(phylo_2024_exp_mifish)) # number of taxa before filtering
 ```
 
-Elas02-
+#### Expedition-Elas02
 ```{r}
 ranks <- rank_names(phylo_2024_exp_elas)
 ranks
@@ -207,80 +436,104 @@ as.data.frame(unique(tax_table(phylo_2024_exp_elas)[, ranks[3]]))
 nrow(tax_table(phylo_2024_exp_elas)) # number of taxa before filtering
 ```
 
-
-
-Before moving on, replace NAs in taxonomy because this becomes problematic when filtering.
-There are some abundant taxa resolved only to the genus or family level. 
-
-MiFish-
+#### Trawl-MiFish
 ```{r}
-# Check what they look like before replacement
-data.frame(tax_table(phylo_2024_exp_mifish))
-data.frame(tax_table(subset_taxa(phylo_2024_exp_mifish, is.na(Species))))
+ranks <- rank_names(phylo_2024_trawl_mifish)
+ranks
+
+as.data.frame(unique(tax_table(phylo_2024_trawl_mifish)[, ranks[1]]))
+as.data.frame(unique(tax_table(phylo_2024_trawl_mifish)[, ranks[2]]))
+as.data.frame(unique(tax_table(phylo_2024_trawl_mifish)[, ranks[3]]))
+
+nrow(tax_table(phylo_2024_trawl_mifish)) # number of taxa before filtering
 ```
 
-Elas-
+#### Trawl-Elas02
 ```{r}
-# Check what they look like before replacement
-data.frame(tax_table(phylo_2024_exp_elas))
-data.frame(tax_table(subset_taxa(phylo_2024_exp_elas, is.na(Species))))
+ranks <- rank_names(phylo_2024_trawl_elas)
+ranks
+
+as.data.frame(unique(tax_table(phylo_2024_trawl_elas)[, ranks[1]]))
+as.data.frame(unique(tax_table(phylo_2024_trawl_elas)[, ranks[2]]))
+as.data.frame(unique(tax_table(phylo_2024_trawl_elas)[, ranks[3]]))
+
+nrow(tax_table(phylo_2024_trawl_elas)) # number of taxa before filtering
 ```
 
 
-```{r}
-# Replace NA in taxa list with next highest annotated taxon"
-tax_table(phylo_2024_exp_mifish) <- tax_table(fantaxtic::name_na_taxa(phylo_2024_exp_mifish, include_rank = T))
-tax_table(phylo_2024_exp_elas) <- tax_table(fantaxtic::name_na_taxa(phylo_2024_exp_elas, include_rank = T))
+#### Start filtering by taxonomy
 
-# Check after replacement
-data.frame(tax_table(phylo_2024_exp_mifish))
-data.frame(tax_table(phylo_2024_exp_elas))
+Meanwhile, rename *filtered* phyloseq objects to `ps` from `phylo`. 
+So `ps2024_exp_mifish`. Unfiltered is `phylo_2024_exp_mifish`, etc.
 
-```
-
-#### Start filtering
-
-Rename filtered phyloseq object to `ps2024_exp_XX`. Unfiltered is `phylo_2024_exp_XX`
-
-*Remove the prokaryotes*
-MiFish-
+##### Remove prokaryotes
+MiFish/ Expedition-
 ```{r}
 nrow(tax_table(phylo_2024_exp_mifish)) # number of taxa before filtering
 ps2024_exp_mifish <- subset_taxa(phylo_2024_exp_mifish, !Kingdom == 'Bacteria')
 nrow(tax_table(ps2024_exp_mifish)) # number of taxa left
 unique(tax_table(ps2024_exp_mifish)[, ranks[1]])
 ```
---> Lost ~40% of the unique taxa by removing Bacteria from MiFish libarary
+--> Lost ~40% of the unique taxa by removing Bacteria from Exp/MiFish library
 
 
-Elas02-
-There are no Bacteria is Elas02 library
+Elas02/ Expedition-
+There are no Bacteria in Exp/Elas02 library
+
+MiFish/ Trawl-
+```{r}
+nrow(tax_table(phylo_2024_trawl_mifish)) # number of taxa before filtering
+ps2024_trawl_mifish <- subset_taxa(phylo_2024_trawl_mifish, !Kingdom == 'Bacteria')
+nrow(tax_table(ps2024_trawl_mifish)) # number of taxa left
+unique(tax_table(ps2024_trawl_mifish)[, ranks[1]])
+```
+--> Lost ~15% of the unique taxa by removing Bacteria from Trawl/MiFish library
+
+Elas02/ Trawl-
+There are no Bacteria in Exp/Elas02 library
 
 
 Check mammals:
 
-MiFish-
+MiFish/ Expedition-
 ```{r}
 mammals_2024_exp_mifish <- subset_taxa(ps2024_exp_mifish, Class == 'Mammalia')
 unique(tax_table(mammals_2024_exp_mifish)[, ranks[7]])
 
 ```
-These are the typical contaminants: dog, mouse, human, pig, raccoon, cow. The only interesting one is Megaptera novaeangliae, the humpback whale!- keep this one in.
+These are the typical contaminants: dog, mouse, human, pig, raccoon, cow. 
+The only interesting one (that I will keep in) is Megaptera novaeangliae, the humpback whale!- keep this one in.
 
 
 
-Elasmo-
+Elasmo/ Expedition-
 ```{r}
 mammals_2024_exp_elas <- subset_taxa(phylo_2024_exp_elas, Class == 'Mammalia')
 unique(tax_table(mammals_2024_exp_elas)[, ranks[7]])
+```
+These are the typical contamination- human, pig, undulates, shrew(?). Delete all.
+
+
+MiFish/ Trawl-
+```{r}
+mammals_2024_trawl_mifish <- subset_taxa(ps2024_trawl_mifish, Class == 'Mammalia')
+unique(tax_table(mammals_2024_trawl_mifish)[, ranks[7]])
 
 ```
-These are the typical contamination- human, pig, undulates, shrew(?). Delete all mammals.
+Delete all mammals in this case.
+
+Elasmo/ trawl
+```{r}
+mammals_2024_trawl_elas <- subset_taxa(phylo_2024_trawl_elas, Class == 'Mammalia')
+unique(tax_table(mammals_2024_trawl_elas)[, ranks[7]])
+```
+Delete all mammals in this case.
 
 
+##### Remove non-marine mammals
 
-*Remove the non-marine mammals* 
-MiFish-
+
+Exp/MiFish-
 ```{r}
 as.data.frame(unique(tax_table(ps2024_exp_mifish)[, ranks[7]]))
 nrow(tax_table(ps2024_exp_mifish)) # number of ASVs before filtering
@@ -290,10 +543,10 @@ ps2024_exp_mifish <- subset_taxa(ps2024_exp_mifish, !Species == 'Canis lupus' & 
 nrow(tax_table(ps2024_exp_mifish)) # number of ASVs left
 as.data.frame(unique(tax_table(ps2024_exp_mifish)[, ranks[7]]))
 ```
-1148 unique taxa remain from the original 2085
+1148 species taxa remain from the original 2085
 
 
-Elas02- 
+Exp/Elas02- 
 ```{r}
 nrow(tax_table(phylo_2024_exp_elas)) # number of taxa before filtering
 ps2024_exp_elas <- subset_taxa(phylo_2024_exp_elas, !Class == 'Mammalia')
@@ -303,22 +556,84 @@ as.data.frame(unique(tax_table(ps2024_exp_elas)[, ranks[7]]))
 ```
 1232 unique taxa remain
 
-*Remove the Aves* 
-MiFish- there are none
-Elas02-
+Trawl/MiFish-
+```{r}
+as.data.frame(unique(tax_table(ps2024_trawl_mifish)[, ranks[7]]))
+nrow(tax_table(ps2024_trawl_mifish)) # number of ASVs before filtering
+
+ps2024_trawl_mifish <- subset_taxa(ps2024_trawl_mifish, !Class == 'Mammalia')
+
+nrow(tax_table(ps2024_trawl_mifish)) # number of ASVs left
+as.data.frame(unique(tax_table(ps2024_trawl_mifish)[, ranks[7]]))
+```
+1417 unique taxa remain 
+
+
+Trawl/Elas02- 
+```{r}
+nrow(tax_table(phylo_2024_trawl_elas)) # number of taxa before filtering
+ps2024_trawl_elas <- subset_taxa(phylo_2024_trawl_elas, !Class == 'Mammalia')
+nrow(tax_table(ps2024_trawl_elas)) # number of taxa left
+as.data.frame(unique(tax_table(ps2024_trawl_elas)[, ranks[7]]))
+
+```
+1528 unique taxa remain
+
+
+
+##### Remove the Aves
 
 ```{r}
+# subset_taxa(ps2024_exp_mifish, Class == 'Aves')
+
+subset_taxa(ps2024_exp_elas, Class == 'Aves')
+unique(tax_table(subset_taxa(ps2024_exp_elas, Class == 'Aves')))
+
+subset_taxa(ps2024_trawl_mifish, Class == 'Aves')
+unique(tax_table(subset_taxa(ps2024_trawl_mifish, Class == 'Aves')))
+
+subset_taxa(ps2024_trawl_elas, Class == 'Aves')
+unique(tax_table(subset_taxa(ps2024_trawl_elas, Class == 'Aves')))
+```
+Expedition:
+MiFish- there are none
+Elas02- remove 1 taxon: chicken
+
+Trawl:
+Mifish- 3 taxa from: chicken and song sparrow
+Elas- 6 taxa from chicken and turkey
+
+--> Remove all Aves
+
+```{r}
+# ps2024_exp_mifish <-   subset_taxa(ps2024_exp_mifish, !Class == 'Aves')
+nrow(tax_table(ps2024_exp_mifish)) # number of taxa left
+as.data.frame(unique(tax_table(ps2024_exp_mifish)[, ranks[4]]))
+as.data.frame(unique(tax_table(ps2024_exp_mifish)[, ranks[7]]))
+
 ps2024_exp_elas <-   subset_taxa(ps2024_exp_elas, !Class == 'Aves')
 nrow(tax_table(ps2024_exp_elas)) # number of taxa left
+as.data.frame(unique(tax_table(ps2024_exp_elas)[, ranks[4]]))
 as.data.frame(unique(tax_table(ps2024_exp_elas)[, ranks[7]]))
+
+ps2024_trawl_mifish <-   subset_taxa(ps2024_trawl_mifish, !Class == 'Aves')
+nrow(tax_table(ps2024_trawl_mifish)) # number of taxa left
+as.data.frame(unique(tax_table(ps2024_trawl_mifish)[, ranks[4]]))
+as.data.frame(unique(tax_table(ps2024_trawl_mifish)[, ranks[7]]))
+
+ps2024_trawl_elas <-   subset_taxa(ps2024_trawl_elas, !Class == 'Aves')
+nrow(tax_table(ps2024_trawl_elas)) # number of taxa left
+as.data.frame(unique(tax_table(ps2024_trawl_elas)[, ranks[4]]))
+as.data.frame(unique(tax_table(ps2024_trawl_elas)[, ranks[7]]))
 ```
 
-1231 taxa remain (31 unique)
 
 
 
+#### Filter based on Controls
 Check remaining ASVs in neg controls to see what contamination is left
-MiFish-
+
+MiFish/ Expedition-
 ```{r}
 data.frame(otu_table(ps2024_exp_mifish)[,which(sample_data(ps2024_exp_mifish)$controls == "negative")])
 max(otu_table(ps2024_exp_mifish)[,which(sample_data(ps2024_exp_mifish)$controls == "negative")])
@@ -326,12 +641,28 @@ max(otu_table(ps2024_exp_mifish)[,which(sample_data(ps2024_exp_mifish)$controls 
 
 After removing typical contamination (bacteria, human, etc), the max read abundance remaining in the negative controls is 601- this is great. The highest was from ASV_1, menhaden, the most abundant ASV in the dataset overall.
 
-Elas02-
+Elas02/ Expedition-
 ```{r}
 data.frame(otu_table(ps2024_exp_elas)[,which(sample_data(ps2024_exp_elas)$controls == "negative")])
 max(otu_table(ps2024_exp_elas)[,which(sample_data(ps2024_exp_elas)$controls == "negative")])
 ```
 After removing typical contamination (bacteria, human, mammals, aves, etc), the max read abundance remaining in the negative controls is 4984. The highest was from ASV_1, M. Canis, the most abundant ASV in the dataset overall. This is not as great but not terrible. 
+
+MiFish/ Trawl-
+```{r}
+data.frame(otu_table(ps2024_trawl_mifish)[,which(sample_data(ps2024_trawl_mifish)$controls == "negative")])
+max(otu_table(ps2024_trawl_mifish)[,which(sample_data(ps2024_trawl_mifish)$controls == "negative")])
+```
+After removing typical contamination (bacteria, human, mammals, aves, etc), the max read abundance remaining in the negative controls is 486. The highest was from ASV_1, menhaden, again the most abundant ASV in the dataset overall. 
+
+Elas/ Trawl-
+```{r}
+data.frame(otu_table(ps2024_trawl_elas)[,which(sample_data(ps2024_trawl_elas)$controls == "negative")])
+max(otu_table(ps2024_trawl_elas)[,which(sample_data(ps2024_trawl_elas)$controls == "negative")])
+```
+After removing typical contamination (bacteria, human, mammals, aves, etc), the max read abundance remaining in the negative controls is 1651. The highest was from ASV_1, Mustelus canis, again the most abundant ASV in the dataset overall. 
+
+
 
 
 *POSITIVE CTL ANALYSIS- MiFish*
@@ -340,7 +671,8 @@ No positive controls were used in this Elas02 library
 The remaining contamination issue is "cross-talk"- eg. some of the high abundance ASVs seem to bleed over, at  low abundances, into other samples. ASV_1 is an example (above) as well as some of the positive control species from MiFish library, which are not expected in the other samples (usually; these are tropical species in the positive controls. These are occasionally found in Shinnecock Bay, which is actually where they were taken from originally and put in the aquarium where we took the pos control samples from) but are also sometimes detected at very low read abundances. 
 
 Check which species are abundant in the pos controls and check out the different in read abundance between "real" ASVs and cross-talk in positive controls
-MiFish-
+
+Exp/MiFish-
 ```{r}
 df.pos <- as.data.frame(otu_table(ps2024_exp_mifish)[,which(sample_data(ps2024_exp_mifish)$controls == "positive")])
 
@@ -363,7 +695,8 @@ In terms of abundance, there is a big drop off from 1st to 2nd most abundant (22
 *DECISION* use 500 as a cutoff
 
 Remove ASVs with less than 500 reads in a sample. 
-MiFish-
+
+Exp/MiFish-
 ```{r}
 data.frame(otu_table(ps2024_exp_mifish)) # compare before
 
@@ -379,7 +712,7 @@ Note that the above also removed rows for ASVs which no longer exist after setti
 423 taxa remain
 
 
-Elas02-
+Exp/Elas02-
 ```{r}
 data.frame(otu_table(ps2024_exp_elas)) # compare before
 
@@ -392,11 +725,37 @@ data.frame(otu_table(ps2024_exp_elas)) # and after
 ```
 449 taxa remain.
 
+Trawl/MiFish-
+```{r}
+data.frame(otu_table(ps2024_trawl_mifish)) # compare before
+
+ps2024_trawl_mifish <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps2024_trawl_mifish,
+  minabund = 500,
+  relabund = FALSE)
+
+data.frame(otu_table(ps2024_trawl_mifish)) # and after
+```
+200 taxa remain
+
+
+Trawl/Elas02-
+```{r}
+data.frame(otu_table(ps2024_trawl_elas)) # compare before
+
+ps2024_trawl_elas <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps2024_trawl_elas,
+  minabund = 500,
+  relabund = FALSE)
+
+data.frame(otu_table(ps2024_trawl_elas)) # and after
+```
+237 taxa remain
 
 
 ### Agglomerate by taxonomy
 Generate new otu tables after grouping ASVs by annotated species name
-MiFish-
+Exp/MiFish-
 ```{r}
 ps2024_exp_mifish_glommed <- tax_glom(ps2024_exp_mifish, "Species")
 
@@ -409,7 +768,7 @@ data.frame(tax_table(ps2024_exp_mifish_glommed))
 
 
 
-Elas02-
+Exp/Elas02-
 ```{r}
 ps2024_exp_elas_glommed <- tax_glom(ps2024_exp_elas, "Species")
 
@@ -421,13 +780,35 @@ data.frame(tax_table(ps2024_exp_elas_glommed))
 ```
 
 
+Trawl/MiFish-
+```{r}
+ps2024_trawl_mifish_glommed <- tax_glom(ps2024_trawl_mifish, "Species")
+
+# plot total reads
+plot_bar(ps2024_trawl_mifish_glommed)
+
+# view tax_table
+data.frame(tax_table(ps2024_trawl_mifish_glommed))
+```
+
+Trawl/MiFish-
+```{r}
+ps2024_trawl_elas_glommed <- tax_glom(ps2024_trawl_elas, "Species")
+
+# plot total reads
+plot_bar(ps2024_trawl_elas_glommed)
+
+# view tax_table
+data.frame(tax_table(ps2024_trawl_elas_glommed))
+```
 
 
-Remove samples with low total number of reads. Based on both libraries above, there is a sharp difference between the low abundant and high abundant samples. Use cutoff of 25,000 for both.
+### Remove samples with low total number of reads. 
+Based on both libraries above, there is a sharp difference between the low abundant and high abundant samples. Use cutoff of 25,000 for both.
 
 (Note- this will delete the negative controls too)
 
-MiFish-
+Exp/MiFish-
 ```{r}
 ps2024_exp_mifish_glommed <- prune_samples(sample_sums(ps2024_exp_mifish_glommed)>=25000, ps2024_exp_mifish_glommed)
 ps2024_exp_mifish <- prune_samples(sample_sums(ps2024_exp_mifish)>=25000, ps2024_exp_mifish)
@@ -439,10 +820,10 @@ plot_bar(ps2024_exp_mifish_glommed, x = "Name.Deploy_Cartr_Library")
 dim(sample_data(ps2024_exp_mifish_glommed))[1]
 dim(sample_data(ps2024_exp_mifish))[1]
 ```
-Looks good. Ssample 7_8, which was the one I flagged in rarefaction analysis, did not pass this QC (in addition to others). Rest look great. 91 MiFIsh samples remain.
+Looks good. Sample 7_8, which was the one I flagged in rarefaction analysis, did not pass this QC (in addition to others). Rest look great. 91 samples remain.
 
 
-Elas02-
+Exp/ Elas02-
 ```{r}
 ps2024_exp_elas_glommed <- prune_samples(sample_sums(ps2024_exp_elas_glommed)>=25000, ps2024_exp_elas_glommed)
 ps2024_exp_elas <- prune_samples(sample_sums(ps2024_exp_elas)>=25000, ps2024_exp_elas)
@@ -457,13 +838,40 @@ dim(sample_data(ps2024_exp_elas))[1]
 
 Looks good. All low effort samples removed, including controls. Rest look great. 61 Elas02 samples remain.
 
+Trawl/MiFish-
+```{r}
+ps2024_trawl_mifish_glommed <- prune_samples(sample_sums(ps2024_trawl_mifish_glommed)>=25000, ps2024_trawl_mifish_glommed)
 
+ps2024_trawl_mifish <- prune_samples(sample_sums(ps2024_trawl_mifish)>=25000, ps2024_trawl_mifish)
 
+# plot again
+plot_bar(ps2024_trawl_mifish_glommed)
+
+# how many samples remain?
+dim(sample_data(ps2024_trawl_mifish_glommed))[1]
+dim(sample_data(ps2024_trawl_mifish))[1]
+```
+
+29 samples remain
+
+Trawl/Elas-
+```{r}
+ps2024_trawl_elas_glommed <- prune_samples(sample_sums(ps2024_trawl_elas_glommed)>=25000, ps2024_trawl_elas_glommed)
+
+ps2024_trawl_elas <- prune_samples(sample_sums(ps2024_trawl_elas)>=25000, ps2024_trawl_elas)
+
+# plot again
+plot_bar(ps2024_trawl_elas_glommed)
+
+# how many samples remain?
+dim(sample_data(ps2024_trawl_elas_glommed))[1]
+dim(sample_data(ps2024_trawl_elas))[1]
+```
+28 samples remain
 
 ### Add in Common Names and Export
 
-**2024 expedition**
-MiFish-
+Exp/MiFish-
 ```{r}
 mifish_2024_exp_asv_table_taxbased <- data.frame(otu_table(ps2024_exp_mifish_glommed))
 mifish_2024_exp_tax_table_taxbased <- rownames_to_column(data.frame(tax_table(ps2024_exp_mifish_glommed)), var = "1stRepresentative_ASV")
@@ -486,7 +894,7 @@ write.csv(mifish_2024_exp_sample_data_taxbased,"figures-expedition/mifish_2024_e
 ```
 
 
-Elas02-
+Exp/Elas02-
 ```{r}
 elas_2024_exp_asv_table_taxbased <- data.frame(otu_table(ps2024_exp_elas_glommed))
 elas_2024_exp_tax_table_taxbased <- rownames_to_column(data.frame(tax_table(ps2024_exp_elas_glommed)), var = "1stRepresentative_ASV")
@@ -509,6 +917,50 @@ write.csv(elas_2024_exp_sample_data_taxbased,"figures-expedition/elas_2024_exp_s
 ```
 After all that filtering, there are only 7 unique Elasmobranchs left in the dataset.
 
+Trawl/MiFish-
+```{r}
+mifish_2024_trawl_asv_table_taxbased <- data.frame(otu_table(ps2024_trawl_mifish_glommed))
+mifish_2024_trawl_tax_table_taxbased <- rownames_to_column(data.frame(tax_table(ps2024_trawl_mifish_glommed)), var = "1stRepresentative_ASV")
+mifish_2024_trawl_sample_data_taxbased <- data.frame(sample_data(ps2024_trawl_mifish_glommed))
+
+
+# add on common names to tax_table
+commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
+mifish_2024_trawl_tax_table_taxbased <- left_join(mifish_2024_trawl_tax_table_taxbased, commonnames, by = "Species")
+
+# view
+mifish_2024_trawl_asv_table_taxbased
+mifish_2024_trawl_tax_table_taxbased
+mifish_2024_trawl_sample_data_taxbased
+
+# export
+write.csv(mifish_2024_trawl_asv_table_taxbased,"figures-expedition/mifish_2024_trawl_asv_table_taxbased.csv", row.names = TRUE)
+write.csv(mifish_2024_trawl_tax_table_taxbased,"figures-expedition/mifish_2024_trawl_tax_table_taxbased.csv", row.names = FALSE)
+write.csv(mifish_2024_trawl_sample_data_taxbased,"figures-expedition/mifish_2024_trawl_sample_data_taxbased.csv", row.names = TRUE)
+```
+
+
+Trawl/Elas-
+```{r}
+elas_2024_trawl_asv_table_taxbased <- data.frame(otu_table(ps2024_trawl_elas_glommed))
+elas_2024_trawl_tax_table_taxbased <- rownames_to_column(data.frame(tax_table(ps2024_trawl_elas_glommed)), var = "1stRepresentative_ASV")
+elas_2024_trawl_sample_data_taxbased <- data.frame(sample_data(ps2024_trawl_elas_glommed))
+
+
+# add on common names to tax_table
+commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
+elas_2024_trawl_tax_table_taxbased <- left_join(elas_2024_trawl_tax_table_taxbased, commonnames, by = "Species")
+
+# view
+elas_2024_trawl_asv_table_taxbased
+elas_2024_trawl_tax_table_taxbased
+elas_2024_trawl_sample_data_taxbased
+
+# export
+write.csv(elas_2024_trawl_asv_table_taxbased,"figures-expedition/elas_2024_trawl_asv_table_taxbased.csv", row.names = TRUE)
+write.csv(elas_2024_trawl_tax_table_taxbased,"figures-expedition/elas_2024_trawl_tax_table_taxbased.csv", row.names = FALSE)
+write.csv(elas_2024_trawl_sample_data_taxbased,"figures-expedition/elas_2024_trawl_sample_data_taxbased.csv", row.names = TRUE)
+```
 
 
 
@@ -520,6 +972,12 @@ ps2024_exp_mifish_glommed_ra <- microbiome::transform(ps2024_exp_mifish_glommed,
 
 ps2024_exp_elas_ra <- microbiome::transform(ps2024_exp_elas, transform = "compositional")
 ps2024_exp_elas_glommed_ra <- microbiome::transform(ps2024_exp_elas_glommed, transform = "compositional")
+
+ps2024_trawl_mifish_ra <- microbiome::transform(ps2024_trawl_mifish, transform = "compositional")
+ps2024_trawl_mifish_glommed_ra <- microbiome::transform(ps2024_trawl_mifish_glommed, transform = "compositional")
+
+ps2024_trawl_elas_ra <- microbiome::transform(ps2024_trawl_elas, transform = "compositional")
+ps2024_trawl_elas_glommed_ra <- microbiome::transform(ps2024_trawl_elas_glommed, transform = "compositional")
 ```
 
 
@@ -530,39 +988,69 @@ ps2024_exp_elas_glommed_ra <- microbiome::transform(ps2024_exp_elas_glommed, tra
 
 ## Simple barplots
 
-MiFish-
+Exp/MiFish-
 
-2024 expedition, raw reads
+raw reads
 ```{r}
 ps2024_exp_mifish_barplot <- plot_bar(ps2024_exp_mifish, x = "Name.Deploy_Cartr_Library", fill = "Order")
 ps2024_exp_mifish_barplot
 ```
 
-2024 expedition, relatve abundances
+relative abundances
 ```{r}
 ps2024_exp_ra_mifish_barplot <- plot_bar(ps2024_exp_mifish_ra, x = "Name.Deploy_Cartr_Library", fill = "Order")
 ps2024_exp_ra_mifish_barplot
 ```
 
-Elas02-
+Exp/Elas02-
 
-2024 expedition, raw reads
+raw reads
 ```{r}
 ps2024_exp_elas_barplot <- plot_bar(ps2024_exp_elas, x = "Name_Deploy_Cartr_Library", fill = "Species")
 ps2024_exp_elas_barplot
 ```
 
-2024 expedition, relatve abundances
+relative abundances
 ```{r}
 ps2024_exp_ra_elas_barplot <- plot_bar(ps2024_exp_elas_ra, x = "Name_Deploy_Cartr_Library", fill = "Species")
 ps2024_exp_ra_elas_barplot
 ```
 
 
+Trawl/MiFish-
+
+raw reads
+```{r}
+ps2024_trawl_mifish_barplot <- plot_bar(ps2024_trawl_mifish, fill = "Order")
+ps2024_trawl_mifish_barplot
+```
+
+relatve abundances
+```{r}
+ps2024_trawl_ra_mifish_barplot <- plot_bar(ps2024_trawl_mifish_ra, fill = "Order")
+ps2024_trawl_ra_mifish_barplot
+```
+
+Trawl/Elas02-
+
+raw reads
+```{r}
+ps2024_trawl_elas_barplot <- plot_bar(ps2024_trawl_elas, fill = "Species")
+ps2024_trawl_elas_barplot
+```
+
+relatve abundances
+```{r}
+ps2024_trawl_ra_elas_barplot <- plot_bar(ps2024_trawl_elas_ra, fill = "Species")
+ps2024_trawl_ra_elas_barplot
+```
+
+
 ## Examine controls 
 
 Plot positive controls
-MiFish-
+
+### Exp/MiFish-
 (no Elasmo pos controls)
 
 ```{r}
@@ -623,7 +1111,45 @@ ps2024_exp_mifish_glommed <- subset_samples(ps2024_exp_mifish_glommed, is.na(con
 ps2024_exp_mifish_glommed_ra <- subset_samples(ps2024_exp_mifish_glommed_ra, is.na(controls))
 ```
 
+### Trawl/MiFish-
+(no Elasmo pos controls)
 
+```{r}
+# Make new df with positive controls and remove ASVs that are not represented
+ps2024_trawl_mifish_glommed_posctl <- subset_samples(ps2024_trawl_mifish_glommed, controls=="positive")
+ps2024_trawl_mifish_glommed_ra_posctl <- subset_samples(ps2024_trawl_mifish_glommed_ra, controls=="positive")
+
+# Use metagMisc to remove ASV rows with 0 abundance for all positive samples
+ps2024_trawl_mifish_glommed_posctl <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps2024_trawl_mifish_glommed_posctl,
+  minabund = 0,
+  relabund = FALSE)
+
+ps2024_trawl_mifish_glommed_ra_posctl <- prune_taxa(taxa_names(ps2024_trawl_mifish_glommed_posctl),ps2024_trawl_mifish_glommed_ra_posctl)
+
+
+ps2024_trawl_mifish_posctl_barplot <- plot_bar(ps2024_trawl_mifish_glommed_posctl, fill = "Species", title = "2024 Trawl (Sept. only): Positive Controls: Read Abundance") + 
+  scale_y_continuous(name="Read Abundance")+
+  theme(axis.title.x=element_blank())+
+  scale_fill_paletteer_d("MetBrewer::Austria")
+ps2024_trawl_mifish_posctl_barplot
+
+ps2024_trawl_mifish_posctl_ra_barplot <- plot_bar(ps2024_trawl_mifish_glommed_ra_posctl, fill = "Species", title = "2024 Trawl (Sept. only): Positive Controls: Relative Abundance") + 
+  scale_y_continuous(name="Relative Abundance")+
+  theme(axis.title.x=element_blank())+
+    scale_fill_paletteer_d("MetBrewer::Austria")
+ps2024_trawl_mifish_posctl_ra_barplot
+
+
+# save
+ggsave(plot = ps2024_trawl_mifish_posctl_barplot, filename = "figures-expedition/2024_trawl_mifish_posctl_barplot.eps", width = 7, height = 5, units = "in")
+ggsave(plot = ps2024_trawl_mifish_posctl_ra_barplot, filename = "figures-expedition/2024_trawl_mifish_posctl_ra_barplot.eps", width = 7, height = 5, units = "in")
+
+```
+
+
+## STOPPED HERE 1/6/24
+# ABOVE PLOT NEEDS MORE COLORS AND ALSO QC- WHAT IS ALL THE CONTAM IN THE POS CTLS? CONSIDER NEW READ ABUND CUTOFF?
 
 ## Bubble plots
 
