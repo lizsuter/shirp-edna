@@ -51,6 +51,12 @@ asv_taxonomy_mifish <- asv_taxonomy_mifish %>% select(-ASV)
 asv_taxonomy_mifish_mat <- as.matrix(asv_taxonomy_mifish)
 
 sample_metadata_mifish <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh-expedition/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+
+# also import and join CTD values averaged over each eDNA sampling interval
+sample_metadata2 <- read.csv("/Volumes/easystore/eDNA/shirp-edna/figures-expedition/CTD_avg_eDNA_sample_intervals.csv")
+
+sample_metadata_mifish <- left_join(sample_metadata_mifish, sample_metadata2, by = c("Name.Deploy_Cartr_Library" = "Deploy_Cartr_Library"))
+
 row.names(sample_metadata_mifish) <- sample_metadata_mifish$Sample
 sample_metadata_mifish <- sample_metadata_mifish %>% select(-Sample)
 
@@ -76,6 +82,9 @@ asv_taxonomy_elas <- asv_taxonomy_elas %>% select(-ASV)
 asv_taxonomy_elas_mat <- as.matrix(asv_taxonomy_elas)
 
 sample_metadata_elas <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02-expedition/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+
+sample_metadata_elas <- left_join(sample_metadata_elas, sample_metadata2, by = c("Name_Deploy_Cartr_Library" = "Deploy_Cartr_Library"))
+
 row.names(sample_metadata_elas) <- sample_metadata_elas$Sample
 sample_metadata_elas <- sample_metadata_elas %>% select(-Sample)
 
@@ -87,6 +96,7 @@ phylo_2024_exp_elas <- phyloseq(ASV_2024_exp_elas, TAX_2024_exp_elas, samples_20
 
 
 ```
+### 1/7/24 PAUSED HERE- FIX ABOVE. THE "BY" IN LINE 86 NOT WORKING BC OF DIF LIBRARY NAMES IN ELAS NAME_DEPLOY_CARTR
 
 ## 2024 Trawl data**
 ### Mifish-

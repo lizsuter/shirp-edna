@@ -49,6 +49,62 @@ Deployment07$Deployment <- 7
 Deployment08$Deployment <- 8
 ```
 
+Remove some bad data
+e.g. when USV was being put in water, it records many zeroes for Conductivity, Depth, etc. These are not real
+Deployment 1: remove rows 1-79 and last (4477-4497)
+Deplyoment 2: remove 1-51 and 5927-5953
+Deployment 3: remove 1-21 and 1734-1740
+Deployment 4: remove 1-80 and 7375-7411
+Deployment 5: remove 1-57 and 4083-4111
+Deployment 6: remove 1-50 and 3801-3832
+Deployment 7: remove 1-61 and 4277-4312
+Deployment 8: remove 1-83 and none at end
+
+Note- there is still noise in the data, especially depth sensor in deployment 8 for example.
+```{r}
+Deployment01
+Deployment01 <- Deployment01 %>% filter(row_number() <= n()-21) %>% 
+  tail(-79)
+Deployment01
+
+Deployment02
+Deployment02 <- Deployment02 %>% filter(row_number() <= n()-27) %>% 
+  tail(-51)
+Deployment02
+
+Deployment03
+Deployment03 <- Deployment03 %>% filter(row_number() <= n()-7) %>% 
+  tail(-21)
+Deployment03
+
+Deployment04
+Deployment04 <- Deployment04 %>% filter(row_number() <= n()-37) %>% 
+  tail(-80)
+Deployment04
+
+Deployment05
+Deployment05 <- Deployment05 %>% filter(row_number() <= n()-29) %>% 
+  tail(-57)
+Deployment05
+
+Deployment06
+Deployment06 <- Deployment06 %>% filter(row_number() <= n()-32) %>% 
+  tail(-50)
+Deployment06
+
+Deployment07
+Deployment07 <- Deployment07 %>% filter(row_number() <= n()-36) %>% 
+  tail(-61)
+Deployment07
+
+Deployment08
+Deployment08 <- Deployment08 %>%
+  tail(-83)
+Deployment08
+
+```
+
+
 
 Put together in one table, `CTD`
 ```{r}
@@ -78,7 +134,7 @@ CTD$Time_ET <- with_tz(CTD$Time, tzone = "America/New_York")
 CTD
 
 ```
-
+Salinity
 CTD only recorded Conductivity. Need to do a conversion to Salinity based on temperature. Following [1983 Technical Paper from UNESCO, "Algorithms for computation of fundamental properties of seawater"](https://raw.githubusercontent.com/ocefpaf/python-seawater/master/docs/UNESCO-TechPaper44_eo.pdf). Use Excel sheet from [jimbodouglass.blogspot.com](https://jimbodouglass.blogspot.com/2010/11/conductivity-to-salinity-conversion-for.html). Converted to R equation:
 ```{r}
 CTD$Salinity_psu <-with(CTD, {
@@ -229,6 +285,21 @@ ggsave("figures-expedition/Deployment07track.eps", plot = Deployment07map)
 ggsave("figures-expedition/Deployment08track.eps", plot = Deployment08map)
 
 ```
+
+also save as jpegs
+```{r}
+ggsave("figures-expedition/Deployment01track.jpg", plot = Deployment01map, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/Deployment02track.jpg", plot = Deployment02map, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/Deployment03track.jpg", plot = Deployment03map, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/Deployment04track.jpg", plot = Deployment04map, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/Deployment05track.jpg", plot = Deployment05map, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/Deployment06track.jpg", plot = Deployment06map, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/Deployment07track.jpg", plot = Deployment07map, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/Deployment08track.jpg", plot = Deployment08map, width = 7, height = 4, units = "in")
+
+```
+
+
 # Map environmental data
 Temperature
 ```{r}
@@ -240,7 +311,11 @@ Deployments_temperature <- shinnbay_map +
 Deployments_temperature
 
 ggsave("figures-expedition/Deployments_temperature.eps", plot = Deployments_temperature, width = 10,
-  height = 8,
+  height = 6,
+  units = c("in"))
+
+ggsave("figures-expedition/Deployments_temperature.jpg", plot = Deployments_temperature, width = 10,
+  height = 6,
   units = c("in"))
 
 ```
@@ -249,12 +324,16 @@ Salinity
 Deployments_salinity <- shinnbay_map +
     geom_point(data = CTD, aes(y=`Latitude (°)`, x = `Longitude (°)`, color = Salinity_psu)) +
   facet_wrap(~Deployment) +
-  scale_color_gradient2(low="yellow", mid="white", high="purple", midpoint=30, limits=c(27, 33))
+  scale_color_gradient2(low="yellow", mid="white", high="purple", midpoint=29.5, limits=c(27, 32))
   
 Deployments_salinity
 
 ggsave("figures-expedition/Deployments_salinity.eps", plot = Deployments_salinity, width = 10,
-  height = 8,
+  height = 6,
+  units = c("in"))
+
+ggsave("figures-expedition/Deployments_salinity.jpg", plot = Deployments_salinity, width = 10,
+  height = 6,
   units = c("in"))
 
 ```
@@ -269,7 +348,11 @@ Deployments_turbidity <- shinnbay_map +
 Deployments_turbidity
 
 ggsave("figures-expedition/Deployments_turbidity.eps", plot = Deployments_turbidity, width = 10,
-  height = 8,
+  height = 6,
+  units = c("in"))
+
+ggsave("figures-expedition/Deployments_turbidity.jpg", plot = Deployments_turbidity, width = 10,
+  height = 6,
   units = c("in"))
 
 ```
@@ -284,7 +367,11 @@ Deployments_depth <- shinnbay_map +
 Deployments_depth
 
 ggsave("figures-expedition/Deployments_depth.eps", plot = Deployments_depth, width = 10,
-  height = 8,
+  height = 6,
+  units = c("in"))
+
+ggsave("figures-expedition/Deployments_depth.jpg", plot = Deployments_depth, width = 10,
+  height = 6,
   units = c("in"))
 
 ```
@@ -300,7 +387,11 @@ Deployments_chloro <- shinnbay_map +
 Deployments_chloro
 
 ggsave("figures-expedition/Deployments_chloro.eps", plot = Deployments_chloro, width = 10,
-  height = 8,
+  height = 6,
+  units = c("in"))
+
+ggsave("figures-expedition/Deployments_chloro.jpg", plot = Deployments_chloro, width = 10,
+  height = 6,
   units = c("in"))
 
 ```
