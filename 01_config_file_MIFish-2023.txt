@@ -1,4 +1,4 @@
-##This is the REVAMP config file for Elas02- last modified 10/24/24 ES
+##This is the REVAMP config file for MiFish- last modified 10/24/24 ES
 
 ####################################################
 ##Frequently modified parameters

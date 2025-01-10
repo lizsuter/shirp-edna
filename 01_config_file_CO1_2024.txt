@@ -1,0 +1,28 @@
+##This is the REVAMP config file for Leray et al mlco1 primers- last modified 1/8/25 ES
+
+####################################################
+##Frequently modified parameters
+####################################################
+primerF=GGWACWGGWTGAACWGTWTAYCCYCC
+primerR=TAIACYTCIGGRTGICCRAARAAYCA
+blastLengthCutoff=280 #bp length under which BLAST hits are not considered; The recommendation for the blastLengthCutoff is 90% of the total marker target length
+systemmemoryMB=10000 #MB of total system memory; uses only 70% of max
+locationNTdatabase=/Volumes/easystore/eDNA/eDNA-databases/MIDORI2_UNIQ_NUC_SP_GB263_CO1_BLAST #try path to ref database here rather than NCBI nt
+taxonomyCutoffs=97,95,90,80,70,60 #Percent ID cutoffs for ID to S,G,F,O,C,P
+# failedMerge_useDirection=FORWARD #Use only FORWARD (R1) or REVERSE (R2) reads (OPTIONAL)
+# removeASVsFILE=
+
+###DADA2 Filtering options:
+dada_minlength=100
+dada_phix=TRUE
+dada_trunQ=2
+dada_maxEE1=2
+dada_maxEE2=2
+dada_trimRight=75 #Recommended to look at fastq quality and trim ends of sequence data as needed.
+dada_trimLeft=0
+###
+
+####################################################
+##Infrequently changed default parameters
+####################################################
+blastMode=allIN #options: allIN, allEnvOUT, mostEnvOUT
