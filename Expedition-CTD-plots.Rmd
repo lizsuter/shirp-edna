@@ -207,9 +207,9 @@ Need high resolution coastline data (the included R maps and the oce package are
 
 
 
-Try higher res [GSHHG map from NOAA](https://www.soest.hawaii.edu/pwessel/gshhg/)
-Following [tutorial](https://rpubs.com/MRufino/coastlines)
-Also had to add in [fix](https://gis.stackexchange.com/questions/404385/r-sf-some-edges-are-crossing-in-a-multipolygon-how-to-make-it-valid-when-using)
+Try higher res [GSHHG map from NOAA](https://www.soest.hawaii.edu/pwessel/gshhg/).  
+Following [tutorial](https://rpubs.com/MRufino/coastlines).   
+Also had to add in [fix](https://gis.stackexchange.com/questions/404385/r-sf-some-edges-are-crossing-in-a-multipolygon-how-to-make-it-valid-when-using).  
 ```{r}
 # lets get a box to make a smaller sized objects and facilitate the examples:
 geo.box <- c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9)

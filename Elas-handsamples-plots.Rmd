@@ -20,6 +20,7 @@ output: html_notebook
 # Load packages
 
 ```{r}
+# rm(list = ls())
 library(tidyverse)
 library(phyloseq)
 library(vegan)
@@ -30,22 +31,6 @@ library(fantaxtic)
 library(ggrepel)
 library(paletteer)
 
-
-# library(readxl)
-# library(Biostrings)
-# #library(phangorn)
-# library(readr)
-# library(seqinr)
-# #library(decontam)
-# library(ape)
-# #library(philr)
-# #library(DESeq2)
-# library(compositions);
-# #library(cowplot)
-# library(plotly)
-# library(htmlwidgets)
-# library(withr)
-# library(lubridate)
 ```
 
 #  Import and prepare data
@@ -804,138 +789,58 @@ ggplot(ps2023_whole, aes(x="", y = rel_abun, fill=CommonName)) +
 ```
 
 
-## 10/7/24 CONTINUE EDITING BELOW
-
-
-
-
-
 ## Time Series Plots
 Look at total read abundance and rel abundance for different spp per month. Aggregate sites by bayside (E/W) and type (open water/ bivalve habitat)
 
+**2021**
 ```{r}
 # First group total reads by Species, Habitat_type and Month so there is one point per time point on the plot
-TimeSeries_df <- species_df_reads %>%
+TimeSeries_df_2021 <- ps2021glommed_df %>%
   group_by(Month, Habitat_type, CommonName) %>%
   summarise(TotalReads = sum(Abundance))
-TimeSeries_df
+TimeSeries_df_2021
 ```
 
 
 ```{r}
 #First force the order of Habitat type so it plots in desired order
-TimeSeries_df$Habitat_type_f = factor(TimeSeries_df$Habitat_type, levels=c("OPEN WATER", "CLAM SANCTUARY", "OYSTER REEF"))
+TimeSeries_df_2021$Habitat_type_f = factor(TimeSeries_df_2021$Habitat_type, levels=c("OPEN WATER", "CLAM"))
 
-
-speciestimeseries_comname <- ggplot(TimeSeries_df, aes(x = Month, y = log10(TotalReads), color = CommonName)) +
-  geom_line(aes(color = CommonName), show.legend = FALSE) +
+speciestimeseries_comname_2021 <- ggplot(TimeSeries_df_2021, aes(x = Month, y = log10(TotalReads))) +
+  geom_col(aes(fill = CommonName), show.legend = FALSE) +
+  scale_fill_manual(values = myColors_comname) +
   ylab("Log 10 (Reads)")+
   theme_bw() +
   theme(axis.title.x=element_blank(), legend.title=element_blank()) +
-  scale_x_continuous(breaks=c(7,8,9), labels = c("J","A","S")) +
+  scale_x_continuous(breaks=c(5,6,7,8,9), labels = c("M","J","J","A","S")) +
   facet_grid(Habitat_type_f~CommonName)
 
-speciestimeseries_comname
+speciestimeseries_comname_2021
+ggsave(speciestimeseries_comname_2021, filename = "figures-salzman-etal-elasmos/speciestimeseries_comname_2021.eps", height = 4, width = 10, units = "in")
 ```
 
-
-
-Next
-- check for seasonality of cownose ray. Does it come in in August and outcompete other things? Is it more abundant at the bivalve sites?
-- double check Pelagic sting ray is at the Inlet. Discuss in discussion
-- think of a way of showing low abundance of reads in oyster/ clam shallow samples (except for occasional hit to cownose ray- possible predator of bivalves) - present total reads?
-- emphasize diversity differences between bivalve vs open water sites
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Species Richness
-Count unique species across all stations, grouped by date, for each method, trawl& eDNA (use filtered trawl data so only comparing MiFISh spp to MiFISh spp).
-
-Count total number of species from each method for each date
+**2023**
 ```{r}
-eDNA_richness <- tally(eDNA_uniques, name = "eDNA")
-trawl_richness <- tally(trawl_uniques, name = "trawl")
-
-speciesrichness <- full_join(eDNA_richness, trawl_richness, c("Datecode" = "DATECODE"))
-speciesrichness <- pivot_longer(speciesrichness, !Datecode, names_to = "Method", values_to = "Richness")
-
-speciesrichness$Datecode <- ymd(speciesrichness$Datecode) # convert to date format (better for plotting)
-
-speciesrichness
+# First group total reads by Species, Habitat_type and Month so there is one point per time point on the plot
+TimeSeries_df_2023 <- ps2023glommed_df %>%
+  group_by(Month, Habitat_type, CommonName) %>%
+  summarise(TotalReads = sum(Abundance))
+TimeSeries_df_2023
 ```
 
-
-Plot side-by-side
 ```{r}
-species_richness_plot <- ggplot(speciesrichness, aes(x =Datecode, y = Richness)) +
-  geom_line(aes(color = Method), size = 3) +
+#First force the order of Habitat type so it plots in desired order
+TimeSeries_df_2023$Habitat_type_f = factor(TimeSeries_df_2023$Habitat_type, levels=c("OPEN WATER", "CLAM SANCTUARY", "OYSTER REEF"))
+
+speciestimeseries_comname_2023 <- ggplot(TimeSeries_df_2023, aes(x = Month, y = log10(TotalReads))) +
+  geom_col(aes(fill = CommonName), show.legend = FALSE) +
+  scale_fill_manual(values = myColors_comname) +
+  ylab("Log 10 (Reads)")+
   theme_bw() +
-  xlab("") +
-  ylab("Species Richness")
+  theme(axis.title.x=element_blank(), legend.title=element_blank()) +
+  scale_x_continuous(breaks=c(5,6,7,8,9), labels = c("M","J","J","A","S")) +
+  facet_grid(Habitat_type_f~CommonName)
 
-species_richness_plot
-
-# export plot
-ggsave(filename = "Figures-elasmos/species_richness_plot.eps", plot = species_richness_plot, units = c("in"), width = 4, height = 3, dpi = 300)
+speciestimeseries_comname_2023
+ggsave(speciestimeseries_comname_2023, filename = "figures-salzman-etal-elasmos/speciestimeseries_comname_2023.eps", height = 4, width = 12, units = "in")
 ```
-
-
-
-Sum total number of species across all dates/ stations for entire study
-```{r}
-species_sums_abun_table <- trawl_eDNA_abun_table %>%
-  group_by(CommonName) %>%
-  summarise(CPUE = sum(Trawl_CPUE, na.rm = TRUE), 
-            "Total Length (TL) PUE" = sum(Trawl_TLPUE, na.rm = TRUE), 
-            "TL * Shedding Factor PUE" = sum(Trawl_Allometric_Shedding, na.rm = TRUE), 
-            eDNA = sum(eDNA_RelAbun, na.rm=TRUE)) %>%
-  pivot_longer(!CommonName, names_to = "Method", values_to = "Abundance")
-  
-# turn zeroes to NA so they don't plot 
-species_sums_abun_table <- na_if(species_sums_abun_table,0)
-
-species_sums_abun_table
-```
-
-## Species tally across whole study
-
-For each species, plot side-by-side comparison of abundance (summed over whole study) using each method
-
-```{r}
-# First create a custom color scale to make this pretty
-myColors <- colorRampPalette(brewer.pal(11,"Spectral"))(40)
-names(myColors) <- levels(unique(species_sums_abun_table$CommonName))
-colScale <- scale_colour_manual(name = "CommonName",values = myColors)
-
-species_abun_sum_plot <- ggplot(species_sums_abun_table, aes(x = Abundance, y = reorder(CommonName, Abundance, function(x){sum(x,na.rm = TRUE)}), color = CommonName)) +
-  geom_point(size = 5) +
-  facet_wrap(~factor(Method, levels = c('CPUE','Total Length (TL) PUE','TL * Shedding Factor PUE','eDNA')), scales = "free_x", ncol = 4) +
-  theme_bw() +
-  xlab("Abundance") +
-  ylab("") + 
-  colScale +
-  theme(legend.position = "none")
-
-species_abun_sum_plot
-```
-
-Export plot
-```{r}
-ggsave(filename = "Figures-elasmos/species_abun_sum_plot.eps", plot = species_abun_sum_plot, units = c("in"), width = 10, height = 6, dpi = 300)
-```
-
-
-
-

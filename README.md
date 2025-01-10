@@ -19,6 +19,6 @@ A repo for analyzing eDNA and CTD data from the ShiRP project in Shinnecock Bay,
 
 ### Previews of notebooks (work in progress)...
 
-- [Elas-hansamples-plots](https://htmlpreview.github.io/?)
-- [Expedition-CTD-plots](https://htmlpreview.github.io/?)
-- [Expedition-eDNA-plots](https://htmlpreview.github.io/?)
+- [Elas-handsamples-plots](https://htmlpreview.github.io/?https://github.com/lizsuter/shirp-edna/blob/main/Elas-handsamples-plots.nb.html)
+- [Expedition-CTD-plots](https://htmlpreview.github.io/?https://github.com/lizsuter/shirp-edna/blob/main/Expedition-CTD-plots.nb.html)
+- [Expedition-eDNA-plots](https://htmlpreview.github.io/?https://github.com/lizsuter/shirp-edna/blob/main/Expedition-eDNA-plots.nb.html)
