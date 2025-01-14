@@ -635,24 +635,57 @@ as.data.frame(unique(tax_table(ps2024_trawl_elas)[, ranks[4]]))
 as.data.frame(unique(tax_table(ps2024_trawl_elas)[, ranks[7]]))
 ```
 
+##### Remove wrong tax assignments
+M. henlei is likely M. canis. It is very low abundance but also likely wrong tax assignment because M. henlei is from the Pacific. Remove (it is a small proportion of total reads- won't change much)
+
+
+```{r}
+# ps2024_exp_mifish <-   subset_taxa(ps2024_exp_mifish, !Species == 'Mustelus henlei')
+nrow(tax_table(ps2024_exp_mifish)) # number of taxa left
+as.data.frame(unique(tax_table(ps2024_exp_mifish)[, ranks[4]]))
+as.data.frame(unique(tax_table(ps2024_exp_mifish)[, ranks[7]]))
+
+ps2024_exp_elas <-   subset_taxa(ps2024_exp_elas, !Species == 'Mustelus henlei')
+nrow(tax_table(ps2024_exp_elas)) # number of taxa left
+as.data.frame(unique(tax_table(ps2024_exp_elas)[, ranks[4]]))
+as.data.frame(unique(tax_table(ps2024_exp_elas)[, ranks[7]]))
+
+# ps2024_trawl_mifish <-   subset_taxa(ps2024_trawl_mifish, !Species == 'Mustelus henlei')
+nrow(tax_table(ps2024_trawl_mifish)) # number of taxa left
+as.data.frame(unique(tax_table(ps2024_trawl_mifish)[, ranks[4]]))
+as.data.frame(unique(tax_table(ps2024_trawl_mifish)[, ranks[7]]))
+
+ps2024_trawl_elas <-   subset_taxa(ps2024_trawl_elas, !Species == 'Mustelus henlei')
+nrow(tax_table(ps2024_trawl_elas)) # number of taxa left
+as.data.frame(unique(tax_table(ps2024_trawl_elas)[, ranks[4]]))
+as.data.frame(unique(tax_table(ps2024_trawl_elas)[, ranks[7]]))
+```
+
+
+Other things to keep an eye on:
+
+- For now I aggregated all Brevoortia () as "Menhaden." Later on these should be looked at more closely. Some times the hits are to Gulf menhaden and sometimes to Finescale menhaden but Atlsntic menhaden is the species that *should* be there...
+
+
 #### Summary Diveristy stats- USV vs Trawl
 After QC and curation, these are the number of ASVs left:
 Expedition/MiFish: 1148
-Expedition/Elas02: 1231
+Expedition/Elas02: 1230
 SeptemberTrawl/MiFish: 1414
-SeptemberTrawl/Elas02: 1424
+SeptemberTrawl/Elas02: 1423
 
 After QC and curation, these are the number of unique Orders left:
 Expedition/MiFish: 26
-Expedition/Elas02: 28
+Expedition/Elas02: 18
 SeptemberTrawl/MiFish: 31
 SeptemberTrawl/Elas02: 15
 
 After QC and curation, these are the number of unique Species left:
 Expedition/MiFish: 62
-Expedition/Elas02: 31
+Expedition/Elas02: 30
 SeptemberTrawl/MiFish: 80
-SeptemberTrawl/Elas02: 31
+SeptemberTrawl/Elas02: 30
+
 
 
 ##### Make bar plots of top species detected for entire libraries
@@ -682,24 +715,22 @@ tax_info <- tax_info %>%
 exp_mifish_species_abundance <- exp_mifish_species_abundance %>%
   left_join(tax_info, by = c("ASV" = "ASV"))
 
-# Plot only most abundant
+# Retain only most abundant sp
 exp_mifish_species_abundance <- exp_mifish_species_abundance %>%
   arrange(desc(RelativeAbundance)) %>%
   slice_head(n = 10) # Show top 10 species
 
-# Plot a stacked barplot
-exp_mifish_species_abundance_plot <- ggplot(exp_mifish_species_abundance, aes(x = 1, y = RelativeAbundance, fill = Species)) +
-  geom_bar(stat = "identity") +
-  scale_y_continuous(labels = scales::percent_format()) + # Y-axis as percentages
-  labs(x = NULL, y = "Relative Abundance (%)", title = "Relative Abundance of top 10 Species- Expedition: MiFish Library") +
-  theme_minimal() +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.grid.major.x = element_blank()) +
-  guides(fill = guide_legend(ncol = 2)) # Adjust legend columns if needed
-exp_mifish_species_abundance_plot
+# Remove ASV column
+exp_mifish_species_abundance <- exp_mifish_species_abundance %>% select(-ASV)
 
-ggsave(plot = exp_mifish_species_abundance_plot, filename = "figures-expedition/exp_mifish_species_abundance_plot_all.jpg")
+# Add columns indicating which library and sample type
+exp_mifish_species_abundance$library <- "MiFish"
+exp_mifish_species_abundance$sample_type <- "USV"
 
+
+exp_mifish_species_abundance
 ```
+
 
 Expedition/ Elas
 ```{r}
@@ -729,21 +760,16 @@ exp_elas_species_abundance <- exp_elas_species_abundance %>%
 # Plot only most abundant
 exp_elas_species_abundance <- exp_elas_species_abundance %>%
   arrange(desc(RelativeAbundance)) %>%
-  slice_head(n = 5) # Show top 5 species
+  slice_head(n = 2) # Show top 2 species
 
-# Plot a stacked barplot
-exp_elas_species_abundance_plot <- ggplot(exp_elas_species_abundance, aes(x = 1, y = RelativeAbundance, fill = Species)) +
-  geom_bar(stat = "identity") +
-  scale_y_continuous(labels = scales::percent_format()) + # Y-axis as percentages
-  labs(x = NULL, y = "Relative Abundance (%)", title = "Relative Abundance of top 5 Species- Expedition: Elas02 Library") +
-  theme_minimal() +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.grid.major.x = element_blank()) +
-  guides(fill = guide_legend(ncol = 2)) # Adjust legend columns if needed
-exp_elas_species_abundance_plot
+# Remove ASV column
+exp_elas_species_abundance <- exp_elas_species_abundance %>% select(-ASV)
 
-ggsave(plot = exp_elas_species_abundance_plot, filename = "figures-expedition/exp_elas_species_abundance_plot_all.jpg")
+# Add columns indicating which library and sample type
+exp_elas_species_abundance$library <- "Elas02"
+exp_elas_species_abundance$sample_type <- "USV"
 
-
+exp_elas_species_abundance
 ```
 
 Trawl/ Mifish
@@ -777,22 +803,15 @@ trawl_mifish_species_abundance <- trawl_mifish_species_abundance %>%
   arrange(desc(RelativeAbundance)) %>%
   slice_head(n = 10) # Show top 10 species
 
-# Plot a stacked barplot
-trawl_mifish_species_abundance_plot <- ggplot(trawl_mifish_species_abundance, aes(x = 1, y = RelativeAbundance, fill = Species)) +
-  geom_bar(stat = "identity") +
-  scale_y_continuous(labels = scales::percent_format()) + # Y-axis as percentages
-  labs(x = NULL, y = "Relative Abundance (%)", title = "Relative Abundance of top 10 Species- Sept Trawl Samples: MiFish Library") +
-  theme_minimal() +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.grid.major.x = element_blank()) +
-  guides(fill = guide_legend(ncol = 2)) # Adjust legend columns if needed
+# Remove ASV column
+trawl_mifish_species_abundance <- trawl_mifish_species_abundance %>% select(-ASV)
 
-trawl_mifish_species_abundance_plot
+# Add columns indicating which library and sample type
+trawl_mifish_species_abundance$library <- "MiFish"
+trawl_mifish_species_abundance$sample_type <- "Hand Sample"
 
-ggsave(plot = trawl_mifish_species_abundance_plot, filename = "figures-expedition/trawl_mifish_species_abundance_plot_all.jpg")
-
-
+trawl_mifish_species_abundance
 ```
-
 
 Trawl/ Elas
 ```{r}
@@ -822,23 +841,77 @@ trawl_elas_species_abundance <- trawl_elas_species_abundance %>%
 # Plot only most abundant
 trawl_elas_species_abundance <- trawl_elas_species_abundance %>%
   arrange(desc(RelativeAbundance)) %>%
-  slice_head(n = 5) # Show top 5 species
+  slice_head(n = 2) # Show top 2 species
 
-# Plot a stacked barplot
-trawl_elas_species_abundance_plot <- ggplot(trawl_elas_species_abundance, aes(x = 1, y = RelativeAbundance, fill = Species)) +
-  geom_bar(stat = "identity") +
-  scale_y_continuous(labels = scales::percent_format()) + # Y-axis as percentages
-  labs(x = NULL, y = "Relative Abundance (%)", title = "Relative Abundance of top 5 Species- Sept Trawl Samples: Elas02 Library") +
-  theme_minimal() +
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), panel.grid.major.x = element_blank()) +
-  guides(fill = guide_legend(ncol = 2)) # Adjust legend columns if needed
+# Remove ASV column
+trawl_elas_species_abundance <- trawl_elas_species_abundance %>% select(-ASV)
 
-trawl_elas_species_abundance_plot
+# Add columns indicating which library and sample type
+trawl_elas_species_abundance$library <- "Elas02"
+trawl_elas_species_abundance$sample_type <- "Hand Sample"
 
-ggsave(plot = trawl_elas_species_abundance_plot, filename = "figures-expedition/trawl_elas_species_abundance_plot_all.jpg")
+trawl_elas_species_abundance
+```
 
+Sum what % of total the top species comprise
+```{r}
+sum(exp_mifish_species_abundance$RelativeAbundance)
+sum(trawl_mifish_species_abundance$RelativeAbundance)
+sum(exp_elas_species_abundance$RelativeAbundance)
+sum(trawl_elas_species_abundance$RelativeAbundance)
 
 ```
+
+
+Join the four datasets and add in common names
+```{r}
+most_abund_all4_datasets <- exp_mifish_species_abundance %>%
+  bind_rows(trawl_mifish_species_abundance) %>%
+  bind_rows(exp_elas_species_abundance) %>%
+  bind_rows(trawl_elas_species_abundance)
+
+# add on common names to tax_table
+commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
+most_abund_all4_datasets <- left_join(most_abund_all4_datasets, commonnames, by = "Species")
+
+
+most_abund_all4_datasets
+```
+
+
+
+
+```{r}
+# Fix colors so they remain constant
+myColors_sciname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","orchid1","#FDBF6F","gold1"), commonnames$Species[which(commonnames$Species %in% unique(c(most_abund_all4_datasets$Species, most_abund_all4_datasets$Species)))])
+
+myColors_comname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","orchid1","#FDBF6F","gold1"),commonnames$CommonName[which(commonnames$Species %in% unique(c(most_abund_all4_datasets$Species, most_abund_all4_datasets$Species)))])
+
+myColors_sciname
+myColors_comname
+```
+
+Plot stacked barplot
+```{r}
+# Plot a stacked barplot
+top_species_abundance_plot <- ggplot(most_abund_all4_datasets, aes(x = sample_type, y = RelativeAbundance, fill = CommonName)) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = scales::percent_format()) + 
+  scale_fill_manual(values = myColors_comname) +
+  facet_grid(~library) +
+  labs(x = NULL, y = "Relative Abundance (%)", title = "Relative Abundance of Top Species: Expedition vs. Hand Samples") +
+  theme_minimal() +
+  guides(fill = guide_legend(ncol = 2)) # Adjust legend columns if needed
+
+top_species_abundance_plot
+
+ggsave(plot = top_species_abundance_plot, filename = "figures-expedition/top_species_abundance_plot.jpg")
+
+```
+
+
+
+
 
 
 #### Filter based on Controls
@@ -934,7 +1007,7 @@ ps2024_exp_elas <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
 
 data.frame(otu_table(ps2024_exp_elas)) # and after
 ```
-449 taxa remain.
+448 taxa remain.
 
 Trawl/MiFish-
 ```{r}
@@ -961,7 +1034,7 @@ ps2024_trawl_elas <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
 
 data.frame(otu_table(ps2024_trawl_elas)) # and after
 ```
-237 taxa remain
+236 taxa remain
 
 
 ### Agglomerate by taxonomy
@@ -1090,7 +1163,6 @@ mifish_2024_exp_sample_data_taxbased <- data.frame(sample_data(ps2024_exp_mifish
 
 
 # add on common names to tax_table
-commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
 mifish_2024_exp_tax_table_taxbased <- left_join(mifish_2024_exp_tax_table_taxbased, commonnames, by = "Species")
 
 # view
@@ -1145,9 +1217,9 @@ mifish_2024_trawl_tax_table_taxbased
 mifish_2024_trawl_sample_data_taxbased
 
 # export
-write.csv(mifish_2024_trawl_asv_table_taxbased,"figures-expedition/mifish_2024_trawl_asv_table_taxbased.csv", row.names = TRUE)
-write.csv(mifish_2024_trawl_tax_table_taxbased,"figures-expedition/mifish_2024_trawl_tax_table_taxbased.csv", row.names = FALSE)
-write.csv(mifish_2024_trawl_sample_data_taxbased,"figures-expedition/mifish_2024_trawl_sample_data_taxbased.csv", row.names = TRUE)
+write.csv(mifish_2024_trawl_asv_table_taxbased,"figures-expedition/mifish_Sept2024_trawl_asv_table_taxbased.csv", row.names = TRUE)
+write.csv(mifish_2024_trawl_tax_table_taxbased,"figures-expedition/mifish_Sept2024_trawl_tax_table_taxbased.csv", row.names = FALSE)
+write.csv(mifish_2024_trawl_sample_data_taxbased,"figures-expedition/mifish_Sept2024_trawl_sample_data_taxbased.csv", row.names = TRUE)
 ```
 
 
@@ -1168,9 +1240,9 @@ elas_2024_trawl_tax_table_taxbased
 elas_2024_trawl_sample_data_taxbased
 
 # export
-write.csv(elas_2024_trawl_asv_table_taxbased,"figures-expedition/elas_2024_trawl_asv_table_taxbased.csv", row.names = TRUE)
-write.csv(elas_2024_trawl_tax_table_taxbased,"figures-expedition/elas_2024_trawl_tax_table_taxbased.csv", row.names = FALSE)
-write.csv(elas_2024_trawl_sample_data_taxbased,"figures-expedition/elas_2024_trawl_sample_data_taxbased.csv", row.names = TRUE)
+write.csv(elas_2024_trawl_asv_table_taxbased,"figures-expedition/elas_Sept2024_trawl_asv_table_taxbased.csv", row.names = TRUE)
+write.csv(elas_2024_trawl_tax_table_taxbased,"figures-expedition/elas_Sept2024_trawl_tax_table_taxbased.csv", row.names = FALSE)
+write.csv(elas_2024_trawl_sample_data_taxbased,"figures-expedition/elas_Sept2024_trawl_sample_data_taxbased.csv", row.names = TRUE)
 ```
 
 
@@ -1287,13 +1359,16 @@ ps2024_exp_mifish_posctl_barplot
 ps2024_exp_mifish_posctl_ra_barplot <- plot_bar(ps2024_exp_mifish_glommed_ra_posctl, fill = "Species", title = "2024 Expedition: Positive Controls: Relative Abundance") + 
   scale_y_continuous(name="Relative Abundance")+
   theme(axis.title.x=element_blank())+
-    scale_fill_paletteer_d("MetBrewer::Austria")
+  scale_fill_paletteer_d("MetBrewer::Austria")
 ps2024_exp_mifish_posctl_ra_barplot
 
 
 # save
 ggsave(plot = ps2024_exp_mifish_posctl_barplot, filename = "figures-expedition/2024_exp_mifish_posctl_barplot.eps", width = 7, height = 5, units = "in")
 ggsave(plot = ps2024_exp_mifish_posctl_ra_barplot, filename = "figures-expedition/2024_exp_mifish_posctl_ra_barplot.eps", width = 7, height = 5, units = "in")
+
+ggsave(plot = ps2024_exp_mifish_posctl_barplot, filename = "figures-expedition/2024_exp_mifish_posctl_barplot.jpg", width = 7, height = 5, units = "in")
+ggsave(plot = ps2024_exp_mifish_posctl_ra_barplot, filename = "figures-expedition/2024_exp_mifish_posctl_ra_barplot.jpg", width = 7, height = 5, units = "in")
 
 ```
 
@@ -1341,18 +1416,22 @@ ps2024_trawl_mifish_glommed_ra_posctl <- prune_taxa(taxa_names(ps2024_trawl_mifi
 
 ps2024_trawl_mifish_posctl_barplot <- plot_bar(ps2024_trawl_mifish_glommed_posctl, fill = "Species", title = "2024 Trawl (Sept. only): Positive Controls: Read Abundance") + 
   scale_y_continuous(name="Read Abundance")+
-  theme(axis.title.x=element_blank())
+  theme(axis.title.x=element_blank(), legend.title=element_blank())
+
 ps2024_trawl_mifish_posctl_barplot
 
 ps2024_trawl_mifish_posctl_ra_barplot <- plot_bar(ps2024_trawl_mifish_glommed_ra_posctl, fill = "Species", title = "2024 Trawl (Sept. only): Positive Controls: Relative Abundance") + 
   scale_y_continuous(name="Relative Abundance")+
-  theme(axis.title.x=element_blank())
+  theme(axis.title.x=element_blank(), legend.title=element_blank())
 ps2024_trawl_mifish_posctl_ra_barplot
 
 
 # save
 ggsave(plot = ps2024_trawl_mifish_posctl_barplot, filename = "figures-expedition/2024_trawl_mifish_posctl_barplot.eps", width = 7, height = 5, units = "in")
 ggsave(plot = ps2024_trawl_mifish_posctl_ra_barplot, filename = "figures-expedition/2024_trawl_mifish_posctl_ra_barplot.eps", width = 7, height = 5, units = "in")
+
+ggsave(plot = ps2024_trawl_mifish_posctl_barplot, filename = "figures-expedition/2024_trawl_mifish_posctl_barplot.jpg", width = 7, height = 5, units = "in")
+ggsave(plot = ps2024_trawl_mifish_posctl_ra_barplot, filename = "figures-expedition/2024_trawl_mifish_posctl_ra_barplot.jpg", width = 7, height = 5, units = "in")
 
 ```
 
@@ -1460,6 +1539,8 @@ bubbleplot_comname_2024_expedition_mifish_Bayside
 
 # save
 ggsave(plot = bubbleplot_comname_2024_expedition_mifish_Bayside, filename = "figures-expedition/bubbleplot_comname_2024_expedition_mifish_Bayside.eps", width = 10, height = 6, units = "in")
+
+ggsave(plot = bubbleplot_comname_2024_expedition_mifish_Bayside, filename = "figures-expedition/bubbleplot_comname_2024_expedition_mifish_Bayside.jpg", width = 10, height = 6, units = "in")
 ```
 
 Plot by DayNight
@@ -1585,6 +1666,8 @@ bubbleplot_comname_2024_expedition_elas_Bayside
 
 # save
 ggsave(plot = bubbleplot_comname_2024_expedition_elas_Bayside, filename = "figures-expedition/bubbleplot_comname_2024_expedition_elas_Bayside.eps", width = 8, height = 2.5, units = "in")
+
+ggsave(plot = bubbleplot_comname_2024_expedition_elas_Bayside, filename = "figures-expedition/bubbleplot_comname_2024_expedition_elas_Bayside.jpg", width = 8, height = 2.5, units = "in")
 ```
 
 Plot by DayNight
@@ -1754,57 +1837,7 @@ Run in the console:
 Generates the [MiFish krona plot](krona_files/krona_1.html) and [Elas02 krona plot](krona_files/krona_2.html) as an html file in current working directory
 
 
-Alternatively, stacked barplot (this might be better way to present this)
-### CONTINUE HRE 11/18/24
-```{r}
-barplot_2024_exp_all <- ggplot(ps2024_exp_mifish_whole_forplot, aes(x="", y = rel_abun_percent, fill=`Species-CommonName`)) +
-  geom_bar(stat="identity", width=1) +
-#  coord_polar("y", start=0) +
-  xlab("")+
-  ylab("")+
-  labs(fill = "")+
-  theme_bw() +
-  scale_fill_paletteer_d("MetBrewer::Signac") +
-  theme(axis.title.x=element_blank()) +
-  geom_text(aes(label = round(rel_abun_percent,1)),
-            position = position_stack(vjust = 0.5))
 
-barplot_2024_exp_all
-
-#ggsave(plot = piechart_2024_exp_all, filename = "figures-expedition/piechart_2024_exp_all.eps", width = 12, height = 7, units = "in")
-
-```
-
-#### Do same stacked barplot, by Bayside
-```{r}
-ps2024_exp_bayside_e <- ps2024_exp_mifish_glommed_df %>%
-  filter(Bayside == "E") %>%
-  group_by(Species) %>%
-    summarize(total_reads = sum(Abundance)) %>%
-  mutate(rel_abun = total_reads/sum(across(total_reads))) %>%
-  mutate(rel_abun_percent = rel_abun*100) %>%
-  mutate(csum = rev(cumsum(rev(rel_abun))), 
-         pos = rel_abun/2 + lead(csum, 1),
-         pos = if_else(is.na(pos), rel_abun/2, pos)) %>%
-  left_join(commonnames, by = "Species") %>%
-  mutate(Bayside = "E")
-  
-ps2024_exp_bayside_w <- ps2024_exp_mifish_glommed_df %>%
-  filter(Bayside == "W") %>%
-  group_by(Species) %>%
-    summarize(total_reads = sum(Abundance)) %>%
-  mutate(rel_abun = total_reads/sum(across(total_reads))) %>%
-  mutate(rel_abun_percent = rel_abun*100) %>%
-  mutate(csum = rev(cumsum(rev(rel_abun))), 
-         pos = rel_abun/2 + lead(csum, 1),
-         pos = if_else(is.na(pos), rel_abun/2, pos)) %>%
-  left_join(commonnames, by = "Species") %>%
-  mutate(Bayside = "W")
-
-ps2024_exp_bayside_e
-ps2024_exp_bayside_w
-
-```
 
 ## Replication
 How do replicates compare?
@@ -1834,6 +1867,8 @@ ps2024_exp_ra_barplot_replicates_ra
 
 
 ggsave(plot = ps2024_exp_ra_barplot_replicates_ra, filename = "figures-expedition/barplot_2024_expedition_replicates_sidebyside.eps", width = 12, height = 7, units = "in")
+
+ggsave(plot = ps2024_exp_ra_barplot_replicates_ra, filename = "figures-expedition/barplot_2024_expedition_replicates_sidebyside.jpg", width = 12, height = 7, units = "in")
 ```
 
 - some replicates look very close to each other (~10 of the 17) while others do not. 
@@ -1891,19 +1926,19 @@ Present Presence/ Absence as site occupancy, eg. across all samples from XX habi
 
 ```{r}
 # How many total samples taken in each habitat type?
-Total_samples_habitat <- as.data.frame(sample_metadata_mifish) %>%
+Total_samples_habitat <- as.data.frame(samples_2024_exp_mifish) %>%
   group_by(Habitat) %>%
   count(name = "Habitat_sample_total") %>%
   na.omit()
 
 # in east vs west?
-Total_samples_EW <- as.data.frame(sample_metadata_mifish) %>%
+Total_samples_EW <- as.data.frame(samples_2024_exp_mifish) %>%
   group_by(Bayside) %>%
   count(name = "Bayside_sample_total") %>%
   filter(!Bayside=='Control')
 
 # in day vs night?
-Total_samples_DayNight <- as.data.frame(sample_metadata_mifish) %>%
+Total_samples_DayNight <- as.data.frame(samples_2024_exp_mifish) %>%
   group_by(Night__Day) %>%
   count(name = "Night_day_sample_total") %>%
   na.omit()
@@ -2011,6 +2046,11 @@ ggsave(plot = speciesoccurrence_daynight, filename = "figures-expedition/species
 
 ggsave(plot = speciesoccurrence_bayside, filename = "figures-expedition/speciesoccurrence_bayside.eps", width = 12, height = 7, units = "in")
 
+ggsave(plot = speciesoccurrence_habitat, filename = "figures-expedition/speciesoccurrence_habitat.jpg", width = 12, height = 7, units = "in")
+
+ggsave(plot = speciesoccurrence_daynight, filename = "figures-expedition/speciesoccurrence_daynight.jpg", width = 12, height = 7, units = "in")
+
+ggsave(plot = speciesoccurrence_bayside, filename = "figures-expedition/speciesoccurrence_bayside.jpg", width = 12, height = 7, units = "in")
 
 ```
 
@@ -2018,19 +2058,19 @@ ggsave(plot = speciesoccurrence_bayside, filename = "figures-expedition/specieso
 
 ```{r}
 # How many total samples taken in each habitat type?
-Total_samples_habitat <- as.data.frame(sample_metadata_elas) %>%
+Total_samples_habitat <- as.data.frame(samples_2024_exp_elas) %>%
   group_by(Habitat) %>%
   count(name = "Habitat_sample_total") %>%
   na.omit()
 
 # in east vs west?
-Total_samples_EW <- as.data.frame(sample_metadata_elas) %>%
+Total_samples_EW <- as.data.frame(samples_2024_exp_elas) %>%
   group_by(Bayside) %>%
   count(name = "Bayside_sample_total") %>%
   filter(!Bayside=='Control')
 
 # in day vs night?
-Total_samples_DayNight <- as.data.frame(sample_metadata_elas) %>%
+Total_samples_DayNight <- as.data.frame(samples_2024_exp_elas) %>%
   group_by(Night__Day) %>%
   count(name = "Night_day_sample_total") %>%
   na.omit()
@@ -2147,6 +2187,14 @@ ggsave(plot = speciesoccurrence_daynight, filename = "figures-expedition/species
 
 ggsave(plot = speciesoccurrence_bayside, filename = "figures-expedition/speciesoccurrence_bayside_elas.eps", width = 12, height = 7, units = "in")
 
+
+
+
+ggsave(plot = speciesoccurrence_habitat, filename = "figures-expedition/speciesoccurrence_habitat_elas.jpg", width = 12, height = 7, units = "in")
+
+ggsave(plot = speciesoccurrence_daynight, filename = "figures-expedition/speciesoccurrence_daynight_elas.jpg", width = 12, height = 7, units = "in")
+
+ggsave(plot = speciesoccurrence_bayside, filename = "figures-expedition/speciesoccurrence_bayside_elas.jpg", width = 12, height = 7, units = "in")
 
 ```
 

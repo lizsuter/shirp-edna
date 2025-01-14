@@ -1,4 +1,4 @@
-##This is the REVAMP config file for Leray et al mlco1 primers- last modified 1/8/25 ES
+##This is the REVAMP config file for Leray et al mlco1 primers- last modified 1/13/25 ES
 
 ####################################################
 ##Frequently modified parameters

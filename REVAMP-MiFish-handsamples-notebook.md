@@ -1308,3 +1308,23 @@ MP_ST4_S24_L001 90.7
 ```
 
 
+
+## Jan 10 2025
+Jump back into 2021 and 2022 MiFish librariers- need to run through REVAMP
+
+### 2021 MiFish
+Remove suffix from fastq files: `for file in *; do mv "${file}" "${file/_001/}"; done`
+
+*If needed* remove prefix from file names (if re-running after mistake): `for file in * ; do mv -v "$file" "${file#*_}"; done`
+
+Run REVAMP
+
+```
+conda activate REVAMPenv
+
+revamp.sh -p 01_config_file_MIFish-2024.txt -f 02_figure_config_file_MiFish-2024.txt -s 03_sample_metadata_MiFish-2024.txt -r raw_data/2024-MiFish-U -o results-revamp-2024-MiFish
+```
+
+~Pasting output~
+
+### 1/10 HAVEN'T STARTED ABOVE ON 2021 DATA YET- STILL FIXING SAMPLE METADATA FILE- NEED TO ADD IN LAT/LONG AND SITE COLUMN. ALMOST READY

@@ -1,0 +1,79 @@
+---
+title: "Plots and Analysis and all eDNA Hand Samples: 2020-2024"
+output: html_notebook
+---
+
+
+
+<br/>
+<br/>
+
+ 
+
+# Load packages
+
+```{r}
+# rm(list = ls())
+library(tidyverse)
+library(phyloseq)
+library(decontam)
+library(vegan)
+library(RColorBrewer)
+library(microbiome)
+library(metagMisc)
+library(fantaxtic)
+library(ggrepel)
+library(paletteer)
+library(pals)
+```
+
+#  Import and prepare data
+
+**2020 MiFish data**
+```{r}
+asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2020-MiFIsh/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+asv_taxonomy <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2020-MiFIsh/ASV2Taxonomy/results-revamp-2020-MiFIsh_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2020-MiFIsh/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata) <- sample_metadata$Sample
+sample_metadata <- sample_metadata %>% select(-Sample)
+
+ASV_mifish_2020 = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX_mifish_2020 = tax_table(asv_taxonomy_mat)
+samples_mifish_2020 = sample_data(sample_metadata)
+
+phylo_mifish_2020 <- phyloseq(ASV_mifish_2020, TAX_mifish_2020, samples_mifish_2020)
+
+```
+
+
+**2021 MiFish data** PAUSE- DIDN'T RUN IT THRU REVAMP YET! SAME FOR 2022!!!!
+```{r}
+asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2021-MiFIsh/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+asv_taxonomy <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2021-MiFIsh/ASV2Taxonomy/results-revamp-2021-MiFIsh_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2021-MiFIsh/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata) <- sample_metadata$Sample
+sample_metadata <- sample_metadata %>% select(-Sample)
+
+ASV_mifish_2021 = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX_mifish_2021 = tax_table(asv_taxonomy_mat)
+samples_mifish_2021 = sample_data(sample_metadata)
+
+phylo_mifish_2021 <- phyloseq(ASV_mifish_2021, TAX_mifish_2021, samples_mifish_2021)
+
+```

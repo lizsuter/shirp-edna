@@ -1,4 +1,4 @@
-##This is the REVAMP figure config file modified 1/8/25 ES for CO1 analysis
+##This is the REVAMP figure config file modified 1/13/25 ES for CO1 analysis
 ###Figure options:
 filterPercent=0 # since there are very few spp expected, plot all of them
 pieScale=5.7

@@ -134,7 +134,8 @@ CTD$Time_ET <- with_tz(CTD$Time, tzone = "America/New_York")
 CTD
 
 ```
-Salinity
+Salinity-  
+
 CTD only recorded Conductivity. Need to do a conversion to Salinity based on temperature. Following [1983 Technical Paper from UNESCO, "Algorithms for computation of fundamental properties of seawater"](https://raw.githubusercontent.com/ocefpaf/python-seawater/master/docs/UNESCO-TechPaper44_eo.pdf). Use Excel sheet from [jimbodouglass.blogspot.com](https://jimbodouglass.blogspot.com/2010/11/conductivity-to-salinity-conversion-for.html). Converted to R equation:
 ```{r}
 CTD$Salinity_psu <-with(CTD, {
@@ -407,8 +408,10 @@ key$EndTime <- as.POSIXct(paste(key$`Date (ET)`,key$`End Time (ET)`))
 ```
 
 ## Plot environmental data during sample interval for every sample
-Use lapply to iterate through all samples
-Generate into one pdf
+
+Use lapply to iterate through all samples.  
+Generate into [one pdf](https://drive.google.com/file/d/1qWXSyXHeGVXed7P6-HeHiFYnNbN0jonQ/view?usp=sharing)
+
 ```{r}
 # Define a function to generate plots for each sample
 generate_plot <- function(i) {
