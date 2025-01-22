@@ -2315,3 +2315,242 @@ minLen,rm.phix,truncQ,maxEE-primer1,maxEE-primer2,trimRight,trimLeft
 Current settings:
 100,TRUE,2,2,2,75,0
 ```
+
+
+End of day 1/14/25- STILL having memory issues. Gets about halfway through samples then:
+
+```
+Error: vector memory limit of 16.0 Gb reached, see mem.maxVSize()
+Execution halted
+```
+
+Try splitting sample list in half again?...
+Split into directories `a` and `b`, with samples 
+
+```
+conda activate REVAMPenv
+
+revamp.sh -p 01_config_file_CO1_2024-expedition.txt -f 02_figure_config_file_CO1_2024-expedition.txt -s 03_sample_metadata_CO1-2024-expedition.txt  -r raw_data/2024-CO1-expedition -o results-revamp-2024-CO1-expedition
+```
+
+### NEXT: 
+
+- Figure out memory issue. It's happening with the 2022 MiFish REVAMP analysis too
+	- check out [this thread](https://stackoverflow.com/questions/51248293/error-vector-memory-exhausted-limit-reached-r-3-5-0-macos)
+	- actually i had already changed this parameter on my computer to 100Gb so that's not it. 
+- Next found [this thread](https://github.com/benjjneb/dada2/issues/1894)
+	- Started to think about changing dada2 asset (step 2) in REVAMP but maybe too complicated. Try splitting sample libraries first into a and b. Based on [this](https://benjjneb.github.io/dada2/bigdata_1_2.html) there is a quadratic increase in memory use with additional samples
+
+### Later on
+Think about getting traits or trophic level or something for the network analysis
+
+
+Example using the rfishbase Package in R
+The rfishbase package allows you to query FishBase directly from R for species-level functional traits.
+
+Installation:
+`install.packages("rfishbase")`
+
+Example Usage:
+
+```
+library(rfishbase)
+
+# Query traits for specific species
+traits <- species("Lutjanus griseus", fields = c("Diet", "Length", "Reproductive_mode"))
+print(traits)
+```
+
+
+
+#### Jan 19 2025
+
+Split Expedition CO1 dataset in half, try running...
+
+
+Remove suffix from fastq files: `for file in *; do mv "${file}" "${file/_001/}"; done`
+
+*If needed* remove prefix from file names (if re-running after mistake): `for file in * ; do mv -v "$file" "${file#*_}"; done`
+
+Run REVAMP
+
+```
+conda activate REVAMPenv
+
+revamp.sh -p 01_config_file_CO1_2024-expeditiona.txt -f 02_figure_config_file_CO1_2024-expeditiona.txt -s 03_sample_metadata_CO1-2024-expeditiona.txt  -r raw_data/2024-CO1-expeditiona -o results-revamp-2024-CO1-expeditiona
+```
+
+```
+Running Cutadapt: Sun Jan 19 22:35:14 EST 2025
+Finished Cutadapt: Sun Jan 19 22:49:49 EST 2025
+Sample	Passing Reads	Passing bp
+MP_1_Aug_S1_L002	99.5%	89.0%
+MP_1_Feb_S1_L002	99.5%	89.1%
+MP_1_Jul_S1_L002	99.4%	88.8%
+MP_1_May_S1_L002	99.6%	89.1%
+MP_2_Apr_S1_L002	99.4%	89.0%
+MP_2_Aug_S1_L002	99.5%	89.1%
+MP_2_Feb_S1_L002	99.5%	89.1%
+MP_2_Jan_S1_L001	99.4%	89.1%
+MP_2_Jul_S1_L002	99.5%	89.0%
+MP_2_Jun_S1_L002	99.5%	89.1%
+MP_2_May_S1_L002	99.5%	89.1%
+MP_3_Apr_S1_L002	99.4%	89.0%
+MP_3_Aug_S1_L002	99.5%	89.1%
+MP_3_Feb_S1_L002	99.5%	89.1%
+MP_3_Jul_S1_L002	99.6%	89.2%
+MP_3_Jun_S1_L002	99.5%	89.1%
+MP_3_May_S1_L002	99.4%	89.0%
+MP_4_Apr_S1_L002	99.4%	89.0%
+MP_4_Aug_S1_L002	99.3%	89.0%
+MP_4_Feb_S1_L002	99.5%	89.2%
+MP_4_Jan_S1_L001	99.6%	89.2%
+MP_4_Jul_S1_L002	99.4%	89.0%
+MP_4_Jun_S1_L002	99.5%	89.0%
+MP_4_May_S1_L002	99.5%	89.1%
+MP_5_Apr_S1_L002	99.5%	89.1%
+MP_5_Feb_S1_L002	99.5%	89.1%
+MP_5_Jan_S1_L001	99.5%	89.2%
+MP_5_Jul_S1_L002	99.5%	89.1%
+MP_5_Jun_S1_L002	99.5%	89.1%
+MP_5_May_S1_L002	99.4%	89.0%
+MP_6_Apr_S1_L002	99.5%	89.0%
+MP_6_Feb_S1_L002	99.5%	89.1%
+MP_6_Jun_S1_L002	99.5%	89.1%
+MP_6_May_S1_L002	99.5%	89.1%
+MP_7_Apr_S1_L002	99.5%	89.1%
+MP_7_Aug_S1_L002	99.5%	89.0%
+MP_7_Feb_S1_L002	99.5%	89.1%
+MP_7_Jan_S1_L001	99.4%	89.1%
+MP_7_Jun_S1_L002	99.5%	89.1%
+MP_7_Mar_S1_L002	99.4%	89.0%
+MP_8_Apr_S1_L002	99.5%	89.1%
+MP_8_Feb_S1_L002	99.5%	89.1%
+MP_8_Jul_S1_L002	99.4%	89.1%
+MP_8_May_S1_L002	99.6%	89.2%
+MP_9_Apr_S1_L002	99.5%	89.1%
+MP_9_Aug_S1_L002	99.5%	89.1%
+MP_9_Feb_S1_L002	99.5%	89.1%
+MP_9_Jan_S1_L001	99.4%	89.1%
+MP_9_Jul_S1_L002	99.6%	89.1%
+
+Running DADA2: Mon Jan 20 16:38:35 EST 2025
+Trim and filter in DADA2...
+
+DADA2 Filtering results:
+Sample	% Reads Passing
+MP_1_Aug_S1_L002_R1_trimmed.fq.gz 96.0499
+MP_1_Feb_S1_L002_R1_trimmed.fq.gz 97.3474
+MP_1_Jul_S1_L002_R1_trimmed.fq.gz 95.7996
+MP_1_May_S1_L002_R1_trimmed.fq.gz 96.1549
+MP_2_Apr_S1_L002_R1_trimmed.fq.gz 96.3841
+MP_2_Aug_S1_L002_R1_trimmed.fq.gz 95.8303
+MP_2_Feb_S1_L002_R1_trimmed.fq.gz 96.6984
+MP_2_Jan_S1_L001_R1_trimmed.fq.gz 96.9339
+MP_2_Jul_S1_L002_R1_trimmed.fq.gz 96.4229
+MP_2_Jun_S1_L002_R1_trimmed.fq.gz 95.2875
+MP_2_May_S1_L002_R1_trimmed.fq.gz 96.7067
+MP_3_Apr_S1_L002_R1_trimmed.fq.gz 96.5233
+MP_3_Aug_S1_L002_R1_trimmed.fq.gz 97.0093
+MP_3_Feb_S1_L002_R1_trimmed.fq.gz 96.7262
+MP_3_Jul_S1_L002_R1_trimmed.fq.gz 96.0671
+MP_3_Jun_S1_L002_R1_trimmed.fq.gz 96.8661
+MP_3_May_S1_L002_R1_trimmed.fq.gz 96.7945
+MP_4_Apr_S1_L002_R1_trimmed.fq.gz 96.7744
+MP_4_Aug_S1_L002_R1_trimmed.fq.gz 96.5759
+MP_4_Feb_S1_L002_R1_trimmed.fq.gz 97.1462
+MP_4_Jan_S1_L001_R1_trimmed.fq.gz 96.1823
+MP_4_Jul_S1_L002_R1_trimmed.fq.gz 96.6836
+MP_4_Jun_S1_L002_R1_trimmed.fq.gz 96.1222
+MP_4_May_S1_L002_R1_trimmed.fq.gz 97.0363
+MP_5_Apr_S1_L002_R1_trimmed.fq.gz 96.5772
+MP_5_Feb_S1_L002_R1_trimmed.fq.gz 96.8861
+MP_5_Jan_S1_L001_R1_trimmed.fq.gz 96.8187
+MP_5_Jul_S1_L002_R1_trimmed.fq.gz 96.9432
+MP_5_Jun_S1_L002_R1_trimmed.fq.gz 96.7827
+MP_5_May_S1_L002_R1_trimmed.fq.gz 96.5037
+MP_6_Apr_S1_L002_R1_trimmed.fq.gz 96.2554
+MP_6_Feb_S1_L002_R1_trimmed.fq.gz 97.165
+MP_6_Jun_S1_L002_R1_trimmed.fq.gz 96.8322
+MP_6_May_S1_L002_R1_trimmed.fq.gz 96.0846
+MP_7_Apr_S1_L002_R1_trimmed.fq.gz 94.1786
+MP_7_Aug_S1_L002_R1_trimmed.fq.gz 96.2028
+MP_7_Feb_S1_L002_R1_trimmed.fq.gz 97.3449
+MP_7_Jan_S1_L001_R1_trimmed.fq.gz 97.1507
+MP_7_Jun_S1_L002_R1_trimmed.fq.gz 97.0128
+MP_7_Mar_S1_L002_R1_trimmed.fq.gz 96.9783
+MP_8_Apr_S1_L002_R1_trimmed.fq.gz 96.2397
+MP_8_Feb_S1_L002_R1_trimmed.fq.gz 97.1904
+MP_8_Jul_S1_L002_R1_trimmed.fq.gz 97.1661
+MP_8_May_S1_L002_R1_trimmed.fq.gz 95.8123
+MP_9_Apr_S1_L002_R1_trimmed.fq.gz 96.586
+MP_9_Aug_S1_L002_R1_trimmed.fq.gz 97.0637
+MP_9_Feb_S1_L002_R1_trimmed.fq.gz 97.5194
+MP_9_Jan_S1_L001_R1_trimmed.fq.gz 97.0548
+MP_9_Jul_S1_L002_R1_trimmed.fq.gz 96.5268
+
+
+Learning error, Dereplication, Merge, and ASVs in DADA2...
+Please be patient, may take a while. Messages printed to Rscript log.
+
+
+FINAL DADA2 STATS
+Note: Please check for a failed merge of forward/reverse sequences
+Sample	%Reads Retained
+MP_1_Aug_S1_L002 0.1
+MP_1_Feb_S1_L002 0
+MP_1_Jul_S1_L002 0.2
+MP_1_May_S1_L002 0.1
+MP_2_Apr_S1_L002 0.1
+MP_2_Aug_S1_L002 0
+MP_2_Feb_S1_L002 0.1
+MP_2_Jan_S1_L001 0
+MP_2_Jul_S1_L002 0.2
+MP_2_Jun_S1_L002 0.1
+MP_2_May_S1_L002 0.2
+MP_3_Apr_S1_L002 0
+MP_3_Aug_S1_L002 0
+MP_3_Feb_S1_L002 0
+MP_3_Jul_S1_L002 0.1
+MP_3_Jun_S1_L002 0
+MP_3_May_S1_L002 0
+MP_4_Apr_S1_L002 0
+MP_4_Aug_S1_L002 0
+MP_4_Feb_S1_L002 0
+MP_4_Jan_S1_L001 0
+MP_4_Jul_S1_L002 0
+MP_4_Jun_S1_L002 0.1
+MP_4_May_S1_L002 0.2
+MP_5_Apr_S1_L002 0
+MP_5_Feb_S1_L002 0
+MP_5_Jan_S1_L001 0
+MP_5_Jul_S1_L002 0.1
+MP_5_Jun_S1_L002 0
+MP_5_May_S1_L002 0.2
+MP_6_Apr_S1_L002 0.1
+MP_6_Feb_S1_L002 0.1
+MP_6_Jun_S1_L002 0
+MP_6_May_S1_L002 0
+MP_7_Apr_S1_L002 0
+MP_7_Aug_S1_L002 0
+MP_7_Feb_S1_L002 0
+MP_7_Jan_S1_L001 0
+MP_7_Jun_S1_L002 0
+MP_7_Mar_S1_L002 0
+MP_8_Apr_S1_L002 0.1
+MP_8_Feb_S1_L002 0
+MP_8_Jul_S1_L002 0
+MP_8_May_S1_L002 0
+MP_9_Apr_S1_L002 0
+MP_9_Aug_S1_L002 0.1
+MP_9_Feb_S1_L002 0
+MP_9_Jan_S1_L001 0
+MP_9_Jul_S1_L002 0.1
+
+Do you wish to Proceed? [y/n]
+You have chosen to exit
+
+```
+
+Trim and filter seemed OK but merge failed... take a look at quality after trimming and the merge parameters/ overlap length and run a test (2-3 samples only)
+

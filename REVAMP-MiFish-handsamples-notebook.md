@@ -1,6 +1,8 @@
 ---
 title: "Analysis Pipeline for MiFish/ Elas02/ mlCO1-generated amplicons, 2020-2024, SHiRP Project"
 output: html_notebook
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ### 10/18/2024
@@ -1309,7 +1311,7 @@ MP_ST4_S24_L001 90.7
 
 
 
-## Jan 10 2025
+## Jan 10-15 2025
 Jump back into 2021 and 2022 MiFish librariers- need to run through REVAMP
 
 ### 2021 MiFish
@@ -1322,9 +1324,1468 @@ Run REVAMP
 ```
 conda activate REVAMPenv
 
-revamp.sh -p 01_config_file_MIFish-2024.txt -f 02_figure_config_file_MiFish-2024.txt -s 03_sample_metadata_MiFish-2024.txt -r raw_data/2024-MiFish-U -o results-revamp-2024-MiFish
+revamp.sh -p 01_config_file_MiFish-2021.txt -f 02_figure_config_file_MiFish-2021.txt -s 03_sample_metadata_MiFish-2021.txt -r raw_data/2021-MiFish-U -o results-revamp-2021-MiFish
 ```
 
 ~Pasting output~
 
-### 1/10 HAVEN'T STARTED ABOVE ON 2021 DATA YET- STILL FIXING SAMPLE METADATA FILE- NEED TO ADD IN LAT/LONG AND SITE COLUMN. ALMOST READY
+```
+Running Cutadapt: Wed Jan 15 09:22:16 EST 2025
+Finished Cutadapt: Wed Jan 15 10:07:06 EST 2025
+Sample	Passing Reads	Passing bp
+MP_T1S1_SCmiFish_S2_L002	78.3%	76.5%
+MP_T1S2_SCmiFish_S3_L002	69.0%	72.2%
+MP_T1S3_SCmiFish_S4_L002	89.1%	80.3%
+MP_T1S4_SCmiFish_S5_L002	88.0%	80.1%
+MP_T1S5_SCmiFish_S6_L002	90.2%	80.7%
+MP_T1S6_SCmiFish_S7_L002	71.6%	73.9%
+MP_T1S7_SCmiFish_S8_L002	87.5%	79.8%
+MP_T1S8_SCmiFish_S9_L002	97.1%	83.0%
+MP_T1S9_SCmiFish_S10_L002	92.6%	81.5%
+MP_T1S10_SCmiFish_S11_L002	86.0%	79.3%
+MP_T1S11_SCmiFish_S12_L002	97.9%	82.4%
+MP_T1CTiana_SCmiFish_S13_L002	99.0%	83.0%
+MP_T1CW_SCmiFish_S14_L002	88.0%	79.5%
+MP_T1Blank_SCmiFish_S15_L002	22.8%	23.3%
+MP_T1PosCon_SCmiFish_S16_L002	98.5%	82.9%
+MP_T3S1_SCmiFish_S17_L002	98.7%	82.9%
+MP_T3S2_SCmiFish_S18_L002	97.1%	82.1%
+MP_T3S3_SCmiFish_S19_L002	89.2%	80.1%
+MP_T3S4_SCmiFish_S20_L002	99.1%	83.2%
+MP_T3S5_SCmiFish_S21_L002	99.2%		83.3%
+MP_T3S6_SCmiFish_S22_L002	98.9%	83.3%
+MP_T3S7_SCmiFish_S23_L002	99.3%	83.1%
+MP_T3S8_SCmiFish_S24_L002	90.7%	74.6%
+MP_T3S9_SCmiFish_S25_L002	98.1%	82.7%
+MP_T3S10_SCmiFish_S26_L002	99.0%	83.2%
+MP_T3S11_SCmiFish_S27_L002	99.4%	83.5%
+MP_T3TC_SCmiFish_S28_L002	98.2%	82.8%
+MP_T3WC_SCmiFish_S29_L002	93.3%	75.8%
+MP_T3Blank_SCmiFish_S30_L002	86.6%	9.5%
+MP_T3PosCon_SCmiFish_S31_L002	99.0%	83.1%
+MP_T5S1_SCmiFish_S32_L002	97.0%	82.6%
+MP_T5S2_SCmiFish_S33_L002	93.6%	80.5%
+MP_T5S3_SCmiFish_S34_L002	96.9%	75.3%
+MP_T5S4_SCmiFish_S35_L002	80.4%	77.1%
+MP_T5S5_SCmiFish_S36_L002	85.0%	74.7%
+MP_T5S6_SCmiFish_S37_L002	98.3%	82.9%
+MP_T5S7_SCmiFish_S38_L002	97.5%	75.9%
+MP_T5S8_SCmiFish_S39_L002	90.6%	77.8%
+MP_T5S9_SCmiFish_S40_L002	81.0%	73.1%
+MP_T5S10_SCmiFish_S41_L002	98.8%	82.6%
+MP_T5S11_SCmiFish_S42_L002	81.8%	68.2%
+MP_T5Tiana_SCmiFish_S43_L002	99.0%	83.0%
+MP_T5Wessuck_SCmiFish_S44_L002	95.4%	77.7%
+MP_T5Blank_SCmiFish_S45_L002	71.7%	26.6%
+MP_T5PosCon_SCmiFish_S46_L002	93.1%	72.4%
+MP_T7S1_SCmiFish_S47_L002	96.1%	82.1%
+MP_T7S2_SCmiFish_S48_L002	88.6%	79.8%
+MP_T7S3_SCmiFish_S49_L002	95.2%	82.2%
+MP_T7S4_SCmiFish_S50_L002	98.2%	82.7%
+MP_T7S5_SCmiFish_S51_L002	98.8%	83.0%
+MP_T7S6_SCmiFish_S52_L002	90.7%	80.6%
+MP_T7S7_SCmiFish_S53_L002	74.0%	73.6%
+MP_T7S8_SCmiFish_S54_L002	93.9%	68.8%
+MP_T7S9_SCmiFish_S55_L002	97.3%	76.1%
+MP_T7S10_SCmiFish_S56_L002	91.5%	72.2%
+MP_T7S11_SCmiFish_S57_L002	95.1%	76.4%
+MP_T7Tiana_SCmiFish_S58_L002	98.7%	82.9%
+MP_T7Wessuck_SCmiFish_S59_L002	92.4%	81.0%
+MP_T7Blank_SCmiFish_S60_L002	23.0%	13.7%
+MP_T7PosCon_SCmiFish_S61_L002	94.1%	77.2%
+MP_T9S1_SCmiFish_S62_L002	99.0%	83.1%
+MP_T9S2_SCmiFish_S63_L002	98.4%	82.9%
+MP_T9S3_SCmiFish_S64_L002	92.3%	79.2%
+MP_T9S4_SCmiFish_S65_L002	91.8%	72.7%
+MP_T9S5_SCmiFish_S66_L002	81.9%	71.2%
+MP_T9S6_SCmiFish_S67_L002	94.3%	77.8%
+MP_T9S7_SCmiFish_S68_L002	91.1%	80.6%
+MP_T9S8_SCmiFish_S69_L002	96.8%	82.3%
+MP_T9S9_SCmiFish_S70_L002	92.4%	71.2%
+MP_T9S10_SCmiFish_S71_L002	95.7%	76.6%
+MP_T9S11_SCmiFish_S72_L002	90.1%	79.6%
+MP_T9Tiana_SCmiFish_S73_L002	96.3%	81.4%
+MP_T9Wessuck_SCmiFish_S74_L002	98.9%	82.9%
+MP_T9Blank_SCmiFish_S75_L002	20.3%	33.3%
+MP_T9PosCon_SCmiFish_S76_L002	92.6%	80.6%
+MP_T10S1_SCmiFish_S77_L002	98.9%	83.2%
+MP_T10S2_SCmiFish_S78_L002	78.8%	67.3%
+MP_T10S3_SCmiFish_S79_L002	99.0%	82.8%
+MP_T10S4_SCmiFish_S80_L002	99.2%	83.0%
+MP_T10S5_SCmiFish_S81_L002	99.4%	83.3%
+MP_T10S6_SCmiFish_S82_L002	99.3%	83.2%
+MP_T10S7_SCmiFish_S83_L002	99.1%	83.1%
+MP_T10S8_SCmiFish_S84_L002	98.5%	82.3%
+MP_T10S9_SCmiFish_S85_L002	99.2%	82.7%
+MP_T10S10_SCmiFish_S86_L002	96.9%	82.6%
+MP_T10S11_SCmiFish_S87_L002	98.6%	82.2%
+MP_T10Tiana_SCmiFish_S88_L002	98.6%	82.7%
+MP_T10Wessuck_SCmiFish_S89_L002	96.2%	77.8%
+MP_T10Blank_SCmiFish_S90_L002	78.6%	16.1%
+MP_T10PosCon_SCmiFish_S91_L002	89.7%	73.5%
+MP_JSedge1_SCmiFish_S92_L002	87.9%	67.3%
+MP_JSedge2_SCmiFish_S93_L002	94.6%	73.4%
+MP_JSedge3_SCmiFish_S94_L002	81.5%	75.7%
+MP_JSedge4_SCmiFish_S95_L002	83.5%	75.4%
+MP_JSedge5_SCmiFish_S96_L002	98.9%	83.3%
+MP_JSedge6_SCmiFish_S97_L002	97.3%	81.5%
+MP_JSedge7_SCmiFish_S98_L002	86.2%	79.0%
+MP_JSedge8_SCmiFish_S99_L002	90.0%	80.3%
+MP_JSedge9_SCmiFish_S100_L002	96.8%	82.4%
+MP_JSedge10_SCmiFish_S101_L002	94.0%	79.7%
+MP_JCanal1_SCmiFish_S102_L002	93.8%	81.6%
+MP_JCanal2_SCmiFish_S103_L002	90.6%	77.2%
+MP_JCanal3_SCmiFish_S104_L002	91.7%	80.7%
+MP_JCanal4_SCmiFish_S105_L002	87.8%	79.6%
+MP_JCanal5_SCmiFish_S106_L002	84.8%	72.4%
+MP_JCanal6_SCmiFish_S107_L002	71.3%	73.6%
+MP_JCanal7_SCmiFish_S108_L002	92.3%	77.2%
+MP_JCanal8_SCmiFish_S109_L002	98.6%	83.1%
+MP_Jblank_SCmiFish_S110_L002	53.7%	22.2%
+MP_JPosCon_SCmiFish_S111_L002	97.7%	82.5%
+MP_ASedge1_SCmiFish_S112_L002	86.8%	71.9%
+MP_ASedge2_SCmiFish_S113_L002	90.4%	79.5%
+MP_ASedge3_SCmiFish_S114_L002	89.0%	76.9%
+MP_ASedge4_SCmiFish_S115_L002	90.9%	80.0%
+MP_ASedge5_SCmiFish_S116_L002	93.3%	80.3%
+MP_ASedge6_SCmiFish_S117_L002	78.4%	76.4%
+MP_ASedge7_SCmiFish_S118_L002	79.8%	77.0%
+MP_ASedge8_SCmiFish_S119_L002	92.7%	80.9%
+MP_ASedge9_SCmiFish_S120_L002	94.1%	81.6%
+MP_ASedge10_SCmiFish_S121_L002	90.3%	80.1%
+MP_ACanal1_SCmiFish_S122_L002	93.3%	75.6%
+MP_ACanal2_SCmiFish_S123_L002	85.5%	75.1%
+MP_ACanal3_SCmiFish_S124_L002	92.8%	73.0%
+MP_ACanal4_SCmiFish_S125_L002	84.9%	73.5%
+MP_ACanal5_SCmiFish_S126_L002	83.7%	77.9%
+MP_ACanal6_SCmiFish_S127_L002	86.6%	72.4%
+MP_ACanal7_SCmiFish_S128_L002	88.6%	75.0%
+MP_ACanal8_SCmiFish_S129_L002	96.7%	71.8%
+MP_Ablank_SCmiFish_S130_L002	59.2%	8.7%
+MP_APosCon_SCmiFish_S131_L002	99.1%	83.3%
+MP_SSedge1_SCmiFish_S132_L002	91.1%	78.8%
+MP_SSedge2_SCmiFish_S133_L002	87.9%	77.5%
+MP_SSedge3_SCmiFish_S134_L002	99.3%	83.5%
+MP_SSedge4_SCmiFish_S135_L002	99.2%	83.2%
+MP_SSedge5_SCmiFish_S136_L002	83.7%	77.5%
+MP_SSedge6_SCmiFish_S137_L002	91.0%	80.8%
+MP_SSedge7_SCmiFish_S138_L002	86.2%	72.8%
+MP_SSedge8_SCmiFish_S139_L002	85.1%	78.8%
+MP_SSedge9_SCmiFish_S140_L002	95.5%	74.5%
+MP_SSedge10_SCmiFish_S141_L002	84.8%	76.7%
+MP_SCanal1_SCmiFish_S142_L002	91.9%	80.9%
+MP_SCanal2_SCmiFish_S143_L002	99.4%	83.3%
+MP_SCanal3_SCmiFish_S144_L002	91.8%	80.7%
+MP_SCanal4_SCmiFish_S145_L002	81.9%	77.3%
+MP_SCanal5_SCmiFish_S146_L002	98.8%	82.8%
+MP_SCanal6_SCmiFish_S147_L002	98.7%	83.2%
+MP_SCanal7_SCmiFish_S148_L002	86.6%	79.3%
+MP_SCanal8_SCmiFish_S149_L002	88.9%	76.5%
+MP_Sblank_SCmiFish_S150_L002	45.1%	8.7%
+MP_SPosCon_SCmiFish_S151_L002	99.1%	83.0%
+```
+
+
+```
+Running DADA2: Wed Jan 15 10:08:21 EST 2025
+Trim and filter in DADA2...
+
+DADA2 Filtering results:
+Sample	% Reads Passing
+MP_T1S1_SCmiFish_S2_L002_R1_trimmed.fq.gz 98.0108
+MP_T1S2_SCmiFish_S3_L002_R1_trimmed.fq.gz 95.6706
+MP_T1S3_SCmiFish_S4_L002_R1_trimmed.fq.gz 97.7527
+MP_T1S4_SCmiFish_S5_L002_R1_trimmed.fq.gz 98.0107
+MP_T1S5_SCmiFish_S6_L002_R1_trimmed.fq.gz 97.6269
+MP_T1S6_SCmiFish_S7_L002_R1_trimmed.fq.gz 97.9926
+MP_T1S7_SCmiFish_S8_L002_R1_trimmed.fq.gz 97.7284
+MP_T1S8_SCmiFish_S9_L002_R1_trimmed.fq.gz 97.9734
+MP_T1S9_SCmiFish_S10_L002_R1_trimmed.fq.gz 97.5925
+MP_T1S10_SCmiFish_S11_L002_R1_trimmed.fq.gz 97.9588
+MP_T1S11_SCmiFish_S12_L002_R1_trimmed.fq.gz 95.0854
+MP_T1CTiana_SCmiFish_S13_L002_R1_trimmed.fq.gz 96.89
+MP_T1CW_SCmiFish_S14_L002_R1_trimmed.fq.gz 95.8667
+MP_T1Blank_SCmiFish_S15_L002_R1_trimmed.fq.gz 42.9892
+MP_T1PosCon_SCmiFish_S16_L002_R1_trimmed.fq.gz 96.9781
+MP_T3S1_SCmiFish_S17_L002_R1_trimmed.fq.gz 96.6626
+MP_T3S2_SCmiFish_S18_L002_R1_trimmed.fq.gz 94.9782
+MP_T3S3_SCmiFish_S19_L002_R1_trimmed.fq.gz 97.0189
+MP_T3S4_SCmiFish_S20_L002_R1_trimmed.fq.gz 97.6101
+MP_T3S5_SCmiFish_S21_L002_R1_trimmed.fq.gz 97.8685
+MP_T3S6_SCmiFish_S22_L002_R1_trimmed.fq.gz 97.9615
+MP_T3S7_SCmiFish_S23_L002_R1_trimmed.fq.gz 96.4886
+MP_T3S8_SCmiFish_S24_L002_R1_trimmed.fq.gz 78.0555
+MP_T3S9_SCmiFish_S25_L002_R1_trimmed.fq.gz 96.9694
+MP_T3S10_SCmiFish_S26_L002_R1_trimmed.fq.gz 97.3475
+MP_T3S11_SCmiFish_S27_L002_R1_trimmed.fq.gz 97.8116
+MP_T3TC_SCmiFish_S28_L002_R1_trimmed.fq.gz 96.8144
+MP_T3WC_SCmiFish_S29_L002_R1_trimmed.fq.gz 79.9042
+MP_T3Blank_SCmiFish_S30_L002_R1_trimmed.fq.gz 0.227592
+MP_T3PosCon_SCmiFish_S31_L002_R1_trimmed.fq.gz 97.1472
+MP_T5S1_SCmiFish_S32_L002_R1_trimmed.fq.gz 97.2576
+MP_T5S2_SCmiFish_S33_L002_R1_trimmed.fq.gz 93.7299
+MP_T5S3_SCmiFish_S34_L002_R1_trimmed.fq.gz 74.8482
+MP_T5S4_SCmiFish_S35_L002_R1_trimmed.fq.gz 97.0872
+MP_T5S5_SCmiFish_S36_L002_R1_trimmed.fq.gz 85.0477
+MP_T5S6_SCmiFish_S37_L002_R1_trimmed.fq.gz 97.3984
+MP_T5S7_SCmiFish_S38_L002_R1_trimmed.fq.gz 76.467
+MP_T5S8_SCmiFish_S39_L002_R1_trimmed.fq.gz 88.2748
+MP_T5S9_SCmiFish_S40_L002_R1_trimmed.fq.gz 84.0968
+MP_T5S10_SCmiFish_S41_L002_R1_trimmed.fq.gz 95.5717
+MP_T5S11_SCmiFish_S42_L002_R1_trimmed.fq.gz 70.3844
+MP_T5Tiana_SCmiFish_S43_L002_R1_trimmed.fq.gz 96.9409
+MP_T5Wessuck_SCmiFish_S44_L002_R1_trimmed.fq.gz 82.861
+MP_T5Blank_SCmiFish_S45_L002_R1_trimmed.fq.gz 14.6564
+MP_T5PosCon_SCmiFish_S46_L002_R1_trimmed.fq.gz 70.5207
+MP_T7S1_SCmiFish_S47_L002_R1_trimmed.fq.gz 96.555
+MP_T7S2_SCmiFish_S48_L002_R1_trimmed.fq.gz 96.5036
+MP_T7S3_SCmiFish_S49_L002_R1_trimmed.fq.gz 97.8581
+MP_T7S4_SCmiFish_S50_L002_R1_trimmed.fq.gz 96.8855
+MP_T7S5_SCmiFish_S51_L002_R1_trimmed.fq.gz 96.5705
+MP_T7S6_SCmiFish_S52_L002_R1_trimmed.fq.gz 97.0688
+MP_T7S7_SCmiFish_S53_L002_R1_trimmed.fq.gz 94.3907
+MP_T7S8_SCmiFish_S54_L002_R1_trimmed.fq.gz 61.7463
+MP_T7S9_SCmiFish_S55_L002_R1_trimmed.fq.gz 76.553
+MP_T7S10_SCmiFish_S56_L002_R1_trimmed.fq.gz 72.2134
+MP_T7S11_SCmiFish_S57_L002_R1_trimmed.fq.gz 80.0875
+MP_T7Tiana_SCmiFish_S58_L002_R1_trimmed.fq.gz 96.7033
+MP_T7Wessuck_SCmiFish_S59_L002_R1_trimmed.fq.gz 96.5202
+MP_T7Blank_SCmiFish_S60_L002_R1_trimmed.fq.gz 18.0129
+MP_T7PosCon_SCmiFish_S61_L002_R1_trimmed.fq.gz 83.0258
+MP_T9S1_SCmiFish_S62_L002_R1_trimmed.fq.gz 96.9267
+MP_T9S2_SCmiFish_S63_L002_R1_trimmed.fq.gz 96.9059
+MP_T9S3_SCmiFish_S64_L002_R1_trimmed.fq.gz 90.5129
+MP_T9S4_SCmiFish_S65_L002_R1_trimmed.fq.gz 72.6061
+MP_T9S5_SCmiFish_S66_L002_R1_trimmed.fq.gz 77.7491
+MP_T9S6_SCmiFish_S67_L002_R1_trimmed.fq.gz 83.7635
+MP_T9S7_SCmiFish_S68_L002_R1_trimmed.fq.gz 96.6119
+MP_T9S8_SCmiFish_S69_L002_R1_trimmed.fq.gz 96.8475
+MP_T9S9_SCmiFish_S70_L002_R1_trimmed.fq.gz 68.6219
+MP_T9S10_SCmiFish_S71_L002_R1_trimmed.fq.gz 79.6841
+MP_T9S11_SCmiFish_S72_L002_R1_trimmed.fq.gz 94.5396
+MP_T9Tiana_SCmiFish_S73_L002_R1_trimmed.fq.gz 93.6929
+MP_T9Wessuck_SCmiFish_S74_L002_R1_trimmed.fq.gz 96.4189
+MP_T9Blank_SCmiFish_S75_L002_R1_trimmed.fq.gz 86.7907
+MP_T9PosCon_SCmiFish_S76_L002_R1_trimmed.fq.gz 95.1412
+MP_T10S1_SCmiFish_S77_L002_R1_trimmed.fq.gz 97.606
+MP_T10S2_SCmiFish_S78_L002_R1_trimmed.fq.gz 69.5779
+MP_T10S3_SCmiFish_S79_L002_R1_trimmed.fq.gz 96.1206
+MP_T10S4_SCmiFish_S80_L002_R1_trimmed.fq.gz 96.3274
+MP_T10S5_SCmiFish_S81_L002_R1_trimmed.fq.gz 97.4706
+MP_T10S6_SCmiFish_S82_L002_R1_trimmed.fq.gz 96.9266
+MP_T10S7_SCmiFish_S83_L002_R1_trimmed.fq.gz 96.9408
+MP_T10S8_SCmiFish_S84_L002_R1_trimmed.fq.gz 94.8257
+MP_T10S9_SCmiFish_S85_L002_R1_trimmed.fq.gz 95.3202
+MP_T10S10_SCmiFish_S86_L002_R1_trimmed.fq.gz 97.2322
+MP_T10S11_SCmiFish_S87_L002_R1_trimmed.fq.gz 94.4268
+MP_T10Tiana_SCmiFish_S88_L002_R1_trimmed.fq.gz 96.0803
+MP_T10Wessuck_SCmiFish_S89_L002_R1_trimmed.fq.gz 82.2324
+MP_T10Blank_SCmiFish_S90_L002_R1_trimmed.fq.gz 0.0146715
+MP_T10PosCon_SCmiFish_S91_L002_R1_trimmed.fq.gz 75.697
+MP_JSedge1_SCmiFish_S92_L002_R1_trimmed.fq.gz 64.2038
+MP_JSedge2_SCmiFish_S93_L002_R1_trimmed.fq.gz 72.1072
+MP_JSedge3_SCmiFish_S94_L002_R1_trimmed.fq.gz 90.9392
+MP_JSedge4_SCmiFish_S95_L002_R1_trimmed.fq.gz 88.1995
+MP_JSedge5_SCmiFish_S96_L002_R1_trimmed.fq.gz 98.0742
+MP_JSedge6_SCmiFish_S97_L002_R1_trimmed.fq.gz 92.6261
+MP_JSedge7_SCmiFish_S98_L002_R1_trimmed.fq.gz 96.3438
+MP_JSedge8_SCmiFish_S99_L002_R1_trimmed.fq.gz 96.2689
+MP_JSedge9_SCmiFish_S100_L002_R1_trimmed.fq.gz 96.4865
+MP_JSedge10_SCmiFish_S101_L002_R1_trimmed.fq.gz 90.5637
+MP_JCanal1_SCmiFish_S102_L002_R1_trimmed.fq.gz 97.2323
+MP_JCanal2_SCmiFish_S103_L002_R1_trimmed.fq.gz 85.7835
+MP_JCanal3_SCmiFish_S104_L002_R1_trimmed.fq.gz 96.104
+MP_JCanal4_SCmiFish_S105_L002_R1_trimmed.fq.gz 95.7212
+MP_JCanal5_SCmiFish_S106_L002_R1_trimmed.fq.gz 77.5153
+MP_JCanal6_SCmiFish_S107_L002_R1_trimmed.fq.gz 96.787
+MP_JCanal7_SCmiFish_S108_L002_R1_trimmed.fq.gz 84.0273
+MP_JCanal8_SCmiFish_S109_L002_R1_trimmed.fq.gz 97.2183
+MP_Jblank_SCmiFish_S110_L002_R1_trimmed.fq.gz 11.6406
+MP_JPosCon_SCmiFish_S111_L002_R1_trimmed.fq.gz 95.8301
+MP_ASedge1_SCmiFish_S112_L002_R1_trimmed.fq.gz 74.6728
+MP_ASedge2_SCmiFish_S113_L002_R1_trimmed.fq.gz 93.465
+MP_ASedge3_SCmiFish_S114_L002_R1_trimmed.fq.gz 86.3332
+MP_ASedge4_SCmiFish_S115_L002_R1_trimmed.fq.gz 94.4644
+MP_ASedge5_SCmiFish_S116_L002_R1_trimmed.fq.gz 92.9757
+MP_ASedge6_SCmiFish_S117_L002_R1_trimmed.fq.gz 97.2698
+MP_ASedge7_SCmiFish_S118_L002_R1_trimmed.fq.gz 97.5658
+MP_ASedge8_SCmiFish_S119_L002_R1_trimmed.fq.gz 95.7803
+MP_ASedge9_SCmiFish_S120_L002_R1_trimmed.fq.gz 97.0265
+MP_ASedge10_SCmiFish_S121_L002_R1_trimmed.fq.gz 95.4799
+MP_ACanal1_SCmiFish_S122_L002_R1_trimmed.fq.gz 78.3698
+MP_ACanal2_SCmiFish_S123_L002_R1_trimmed.fq.gz 84.8463
+MP_ACanal3_SCmiFish_S124_L002_R1_trimmed.fq.gz 73.1868
+MP_ACanal4_SCmiFish_S125_L002_R1_trimmed.fq.gz 80.3322
+MP_ACanal5_SCmiFish_S126_L002_R1_trimmed.fq.gz 95.6167
+MP_ACanal6_SCmiFish_S127_L002_R1_trimmed.fq.gz 75.2779
+MP_ACanal7_SCmiFish_S128_L002_R1_trimmed.fq.gz 81.3099
+MP_ACanal8_SCmiFish_S129_L002_R1_trimmed.fq.gz 65.6391
+MP_Ablank_SCmiFish_S130_L002_R1_trimmed.fq.gz 1.82174
+MP_APosCon_SCmiFish_S131_L002_R1_trimmed.fq.gz 97.6882
+MP_SSedge1_SCmiFish_S132_L002_R1_trimmed.fq.gz 90.3139
+MP_SSedge2_SCmiFish_S133_L002_R1_trimmed.fq.gz 89.9913
+MP_SSedge3_SCmiFish_S134_L002_R1_trimmed.fq.gz 97.9103
+MP_SSedge4_SCmiFish_S135_L002_R1_trimmed.fq.gz 97.1558
+MP_SSedge5_SCmiFish_S136_L002_R1_trimmed.fq.gz 94.5201
+MP_SSedge6_SCmiFish_S137_L002_R1_trimmed.fq.gz 97.38
+MP_SSedge7_SCmiFish_S138_L002_R1_trimmed.fq.gz 77.3907
+MP_SSedge8_SCmiFish_S139_L002_R1_trimmed.fq.gz 97.1412
+MP_SSedge9_SCmiFish_S140_L002_R1_trimmed.fq.gz 74.9136
+MP_SSedge10_SCmiFish_S141_L002_R1_trimmed.fq.gz 90.4953
+MP_SCanal1_SCmiFish_S142_L002_R1_trimmed.fq.gz 96.3548
+MP_SCanal2_SCmiFish_S143_L002_R1_trimmed.fq.gz 97.0031
+MP_SCanal3_SCmiFish_S144_L002_R1_trimmed.fq.gz 95.7524
+MP_SCanal4_SCmiFish_S145_L002_R1_trimmed.fq.gz 94.7309
+MP_SCanal5_SCmiFish_S146_L002_R1_trimmed.fq.gz 95.9106
+MP_SCanal6_SCmiFish_S147_L002_R1_trimmed.fq.gz 97.5418
+MP_SCanal7_SCmiFish_S148_L002_R1_trimmed.fq.gz 96.7193
+MP_SCanal8_SCmiFish_S149_L002_R1_trimmed.fq.gz 84.9719
+MP_Sblank_SCmiFish_S150_L002_R1_trimmed.fq.gz 6.25857
+MP_SPosCon_SCmiFish_S151_L002_R1_trimmed.fq.gz 97.1665
+
+```
+
+```
+FINAL DADA2 STATS
+Note: Please check for a failed merge of forward/reverse sequences
+Sample	%Reads Retained
+MP_T1S1_SCmiFish_S2_L002 88.8
+MP_T1S2_SCmiFish_S3_L002 82.4
+MP_T1S3_SCmiFish_S4_L002 88.4
+MP_T1S4_SCmiFish_S5_L002 86.8
+MP_T1S5_SCmiFish_S6_L002 88
+MP_T1S6_SCmiFish_S7_L002 44.2
+MP_T1S7_SCmiFish_S8_L002 73.4
+MP_T1S8_SCmiFish_S9_L002 89.2
+MP_T1S9_SCmiFish_S10_L002 86.6
+MP_T1S10_SCmiFish_S11_L002 84.7
+MP_T1S11_SCmiFish_S12_L002 81.9
+MP_T1CTiana_SCmiFish_S13_L002 57.7
+MP_T1CW_SCmiFish_S14_L002 82.6
+MP_T1Blank_SCmiFish_S15_L002 42.3
+MP_T1PosCon_SCmiFish_S16_L002 79
+MP_T3S1_SCmiFish_S17_L002 56.4
+MP_T3S2_SCmiFish_S18_L002 79.6
+MP_T3S3_SCmiFish_S19_L002 78.5
+MP_T3S4_SCmiFish_S20_L002 0.3
+MP_T3S5_SCmiFish_S21_L002 46.1
+MP_T3S6_SCmiFish_S22_L002 52.1
+MP_T3S7_SCmiFish_S23_L002 72.2
+MP_T3S8_SCmiFish_S24_L002 57.7
+MP_T3S9_SCmiFish_S25_L002 0.2
+MP_T3S10_SCmiFish_S26_L002 63.9
+MP_T3S11_SCmiFish_S27_L002 65.1
+MP_T3TC_SCmiFish_S28_L002 43.2
+MP_T3WC_SCmiFish_S29_L002 61.4
+MP_T3Blank_SCmiFish_S30_L002 0.1
+MP_T3PosCon_SCmiFish_S31_L002 51.6
+MP_T5S1_SCmiFish_S32_L002 54.9
+MP_T5S2_SCmiFish_S33_L002 71.2
+MP_T5S3_SCmiFish_S34_L002 60.8
+MP_T5S4_SCmiFish_S35_L002 77.2
+MP_T5S5_SCmiFish_S36_L002 72.8
+MP_T5S6_SCmiFish_S37_L002 35.1
+MP_T5S7_SCmiFish_S38_L002 65.6
+MP_T5S8_SCmiFish_S39_L002 74.3
+MP_T5S9_SCmiFish_S40_L002 72.8
+MP_T5S10_SCmiFish_S41_L002 51.2
+MP_T5S11_SCmiFish_S42_L002 62.6
+MP_T5Tiana_SCmiFish_S43_L002 24.3
+MP_T5Wessuck_SCmiFish_S44_L002 70.6
+MP_T5Blank_SCmiFish_S45_L002 1
+MP_T5PosCon_SCmiFish_S46_L002 64.9
+MP_T7S1_SCmiFish_S47_L002 74.8
+MP_T7S2_SCmiFish_S48_L002 78.6
+MP_T7S3_SCmiFish_S49_L002 82.1
+MP_T7S4_SCmiFish_S50_L002 11.3
+MP_T7S5_SCmiFish_S51_L002 73.8
+MP_T7S6_SCmiFish_S52_L002 86.2
+MP_T7S7_SCmiFish_S53_L002 79.7
+MP_T7S8_SCmiFish_S54_L002 51.3
+MP_T7S9_SCmiFish_S55_L002 66
+MP_T7S10_SCmiFish_S56_L002 62.9
+MP_T7S11_SCmiFish_S57_L002 68.6
+MP_T7Tiana_SCmiFish_S58_L002 56.6
+MP_T7Wessuck_SCmiFish_S59_L002 85.7
+MP_T7Blank_SCmiFish_S60_L002 17.8
+MP_T7PosCon_SCmiFish_S61_L002 60.1
+MP_T9S1_SCmiFish_S62_L002 71.1
+MP_T9S2_SCmiFish_S63_L002 49.6
+MP_T9S3_SCmiFish_S64_L002 72.3
+MP_T9S4_SCmiFish_S65_L002 60.8
+MP_T9S5_SCmiFish_S66_L002 65.1
+MP_T9S6_SCmiFish_S67_L002 74.8
+MP_T9S7_SCmiFish_S68_L002 75.7
+MP_T9S8_SCmiFish_S69_L002 80.3
+MP_T9S9_SCmiFish_S70_L002 57.3
+MP_T9S10_SCmiFish_S71_L002 70
+MP_T9S11_SCmiFish_S72_L002 82.8
+MP_T9Tiana_SCmiFish_S73_L002 87
+MP_T9Wessuck_SCmiFish_S74_L002 68.8
+MP_T9Blank_SCmiFish_S75_L002 61.5
+MP_T9PosCon_SCmiFish_S76_L002 84.2
+MP_T10S1_SCmiFish_S77_L002 80.7
+MP_T10S2_SCmiFish_S78_L002 58.5
+MP_T10S3_SCmiFish_S79_L002 68.2
+MP_T10S4_SCmiFish_S80_L002 47.7
+MP_T10S5_SCmiFish_S81_L002 28.9
+MP_T10S6_SCmiFish_S82_L002 52
+MP_T10S7_SCmiFish_S83_L002 45
+MP_T10S8_SCmiFish_S84_L002 63.8
+MP_T10S9_SCmiFish_S85_L002 41.6
+MP_T10S10_SCmiFish_S86_L002 50.9
+MP_T10S11_SCmiFish_S87_L002 74.1
+MP_T10Tiana_SCmiFish_S88_L002 45.2
+MP_T10Wessuck_SCmiFish_S89_L002 75.2
+MP_T10Blank_SCmiFish_S90_L002 0
+MP_T10PosCon_SCmiFish_S91_L002 68.4
+MP_JSedge1_SCmiFish_S92_L002 53.7
+MP_JSedge2_SCmiFish_S93_L002 60.1
+MP_JSedge3_SCmiFish_S94_L002 71.5
+MP_JSedge4_SCmiFish_S95_L002 66
+MP_JSedge5_SCmiFish_S96_L002 26.4
+MP_JSedge6_SCmiFish_S97_L002 67.4
+MP_JSedge7_SCmiFish_S98_L002 82.3
+MP_JSedge8_SCmiFish_S99_L002 74.5
+MP_JSedge9_SCmiFish_S100_L002 78.1
+MP_JSedge10_SCmiFish_S101_L002 67
+MP_JCanal1_SCmiFish_S102_L002 68.2
+MP_JCanal2_SCmiFish_S103_L002 59.3
+MP_JCanal3_SCmiFish_S104_L002 72.8
+MP_JCanal4_SCmiFish_S105_L002 70.7
+MP_JCanal5_SCmiFish_S106_L002 58.9
+MP_JCanal6_SCmiFish_S107_L002 77
+MP_JCanal7_SCmiFish_S108_L002 64.6
+MP_JCanal8_SCmiFish_S109_L002 41.6
+MP_Jblank_SCmiFish_S110_L002 11.6
+MP_JPosCon_SCmiFish_S111_L002 83.9
+MP_ASedge1_SCmiFish_S112_L002 60.8
+MP_ASedge2_SCmiFish_S113_L002 78.7
+MP_ASedge3_SCmiFish_S114_L002 68.7
+MP_ASedge4_SCmiFish_S115_L002 74.9
+MP_ASedge5_SCmiFish_S116_L002 70.2
+MP_ASedge6_SCmiFish_S117_L002 76.5
+MP_ASedge7_SCmiFish_S118_L002 85.3
+MP_ASedge8_SCmiFish_S119_L002 80.7
+MP_ASedge9_SCmiFish_S120_L002 76.6
+MP_ASedge10_SCmiFish_S121_L002 72.8
+MP_ACanal1_SCmiFish_S122_L002 55
+MP_ACanal2_SCmiFish_S123_L002 51.9
+MP_ACanal3_SCmiFish_S124_L002 47.1
+MP_ACanal4_SCmiFish_S125_L002 61.2
+MP_ACanal5_SCmiFish_S126_L002 67.2
+MP_ACanal6_SCmiFish_S127_L002 52
+MP_ACanal7_SCmiFish_S128_L002 51.4
+MP_ACanal8_SCmiFish_S129_L002 39.3
+MP_Ablank_SCmiFish_S130_L002 1.5
+MP_APosCon_SCmiFish_S131_L002 87
+MP_SSedge1_SCmiFish_S132_L002 79.8
+MP_SSedge2_SCmiFish_S133_L002 74.1
+MP_SSedge3_SCmiFish_S134_L002 41
+MP_SSedge4_SCmiFish_S135_L002 46.9
+MP_SSedge5_SCmiFish_S136_L002 79.5
+MP_SSedge6_SCmiFish_S137_L002 84.2
+MP_SSedge7_SCmiFish_S138_L002 63.5
+MP_SSedge8_SCmiFish_S139_L002 82.7
+MP_SSedge9_SCmiFish_S140_L002 64
+MP_SSedge10_SCmiFish_S141_L002 75.5
+MP_SCanal1_SCmiFish_S142_L002 76.5
+MP_SCanal2_SCmiFish_S143_L002 52.1
+MP_SCanal3_SCmiFish_S144_L002 70.3
+MP_SCanal4_SCmiFish_S145_L002 74
+MP_SCanal5_SCmiFish_S146_L002 64.2
+MP_SCanal6_SCmiFish_S147_L002 40.2
+MP_SCanal7_SCmiFish_S148_L002 74.1
+MP_SCanal8_SCmiFish_S149_L002 73.2
+MP_Sblank_SCmiFish_S150_L002 5.7
+MP_SPosCon_SCmiFish_S151_L002 0
+```
+
+Some of the controls failed to merge. Also this is a relatively low number- not sure what happened with the quality here compared to other years.
+
+Finished blast, figures, etc on morning on 1/16.  Start 2022...
+
+
+### 2022 MiFish
+1/16/25
+
+Remove suffix from fastq files: 
+`for file in *; do mv "${file}" "${file/_001/}"; done`
+
+*If needed* remove prefix from file names (if re-running after mistake): `for file in * ; do mv -v "$file" "${file#*_}"; done`
+
+Run REVAMP
+
+```
+conda activate REVAMPenv
+
+revamp.sh -p 01_config_file_MiFish-2022.txt -f 02_figure_config_file_MiFish-2022.txt -s 03_sample_metadata_MiFish-2022.txt -r raw_data/2022-MiFish-U -o results-revamp-2022-MiFish
+```
+
+~Pasting output~
+
+```
+Running Cutadapt: Thu Jan 16 08:53:53 EST 2025
+Finished Cutadapt: Thu Jan 16 09:21:54 EST 2025
+Sample	Passing Reads	Passing bp
+MP_T1S1_S1_L002	99.3%	76.5%
+MP_T1S2_S1_L002	99.3%	76.6%
+MP_T1S3_S1_L002	99.2%	76.5%
+MP_T1S4_S1_L002	99.3%	76.5%
+MP_T1S5_S1_L002	99.4%	76.8%
+MP_T1S6_S1_L002	99.2%	76.6%
+MP_T1S7_S1_L002	99.3%	76.4%
+MP_T1S8_S1_L002	99.2%	76.6%
+MP_T1S9_S1_L002	99.2%	76.6%
+MP_T1S10_S1_L002	99.2%	76.7%
+MP_T1S11_S1_L002	99.3%	81.4%
+MP_T1Tiana_S1_L002	99.2%	76.9%
+MP_T1Wessuck_S1_L002	99.0%	84.1%
+MP_T1Blank_S1_L002	98.8%	76.3%
+MP_T1PosCon_S1_L002	99.2%	77.3%
+MP_T3S1_S1_L002	98.2%	82.1%
+MP_T3S2_S1_L002	99.1%	84.2%
+MP_T3S3_S1_L002	99.1%	77.7%
+MP_T3S4_S1_L002	98.9%	76.4%
+MP_T3S5_S1_L002	99.3%	76.7%
+MP_T3S6_S1_L002	99.0%	84.9%
+MP_T3S7_S1_L002	99.2%	76.7%
+MP_T3S8_S1_L002	99.3%	76.6%
+MP_T3S9_S1_L002	99.0%	85.5%
+MP_T3S10_S1_L002	99.2%	78.7%
+MP_T3S11_S1_L002	99.2%	76.5%
+MP_T3Tiana_S1_L002	99.2%	76.5%
+MP_T3Wessuck_S1_L002	98.8%	86.9%
+MP_T3Blank_S1_L002	98.7%	89.1%
+MP_T3PosCon_S1_L002	99.1%	81.9%
+MP_T5S1_S1_L002	99.1%	77.2%
+MP_T5S2_S1_L002	99.2%	77.6%
+MP_T5S3_S1_L002	99.3%	76.9%
+MP_T5S4_S1_L002	99.2%	78.8%
+MP_T5S5_S1_L002	99.1%	76.7%
+MP_T5S6_S2_L002	99.1%	77.0%
+MP_T5S7_S2_L002	99.1%	76.9%
+MP_T5S8_S2_L002	99.1%	78.6%
+MP_T5S9_S2_L002	99.1%	76.4%
+MP_T5S10_S2_L002	99.1%	76.5%
+MP_T5S11_S2_L002	99.3%	76.6%
+MP_T5Tiana_S2_L002	99.2%	80.6%
+MP_T5Wessuck_S2_L002	99.0%	85.2%
+MP_T5Blank_S2_L002	99.3%	87.6%
+MP_T5PosCon_S2_L002	99.0%	84.4%
+MP_JSedge1_S2_L002	99.0%	79.2%
+MP_JSedge2_S2_L002	99.1%	77.3%
+MP_JSedge3_S2_L002	99.1%	76.5%
+MP_JSedge4_S2_L002	99.1%	76.8%
+MP_JSedge5_S2_L002	99.2%	77.0%
+MP_JSedge6_S2_L002	98.9%	84.3%
+MP_JSedge7_S2_L002	99.3%	76.5%
+MP_JSedge8_S2_L002	99.3%	76.5%
+MP_JSedge9_S2_L002	99.2%	76.5%
+MP_JSedge10_S2_L002	99.3%	76.6%
+MP_JCanal1_S2_L002	99.3%	76.4%
+MP_JCanal2_S2_L002	99.2%	76.4%
+MP_JCanal3_S2_L002	99.2%	76.6%
+MP_JCanal4_S2_L002	99.2%	76.5%
+MP_JCanal5_S2_L002	99.2%	76.4%
+MP_JCanal6_S2_L002	99.2%	76.6%
+MP_JCanal7_S2_L002	99.3%	76.5%
+MP_JCanal8_S2_L002	99.1%	76.5%
+MP_JBlank_S2_L002	98.8%	89.2%
+MP_JPosCon_S2_L002	99.0%	77.6%
+MP_ASedge1_S2_L002	99.2%	78.3%
+MP_ASedge2_S2_L002	98.2%	81.4%
+MP_ASedge3_S2_L002	99.3%	77.9%
+MP_ASedge4_S2_L002	98.7%	80.5%
+MP_ASedge5_S2_L002	99.0%	77.2%
+MP_ASedge6_S3_L002	99.4%	77.0%
+MP_ASedge7_S3_L002	98.8%	84.5%
+MP_ASedge8_S3_L002	99.3%	76.7%
+MP_ASedge9_S3_L002	99.2%	76.7%
+MP_ASedge10_S3_L002	99.1%	85.7%
+MP_ACanal1_S3_L002	99.2%	76.7%
+MP_ACanal2_S3_L002	99.3%	76.7%
+MP_ACanal3_S3_L002	98.9%	76.6%
+MP_ACanal4_S3_L002	98.8%	87.1%
+MP_ACanal5_S3_L002	98.8%	86.4%
+MP_ACanal6_S3_L002	99.1%	78.8%
+MP_ACanal7_S3_L002	99.1%	76.6%
+MP_ACanal8_S3_L002	99.2%	76.7%
+MP_ABlank_S3_L002	99.3%	76.7%
+MP_APosCon_S3_L002	99.2%	76.4%
+MP_OSedge1_S3_L002	99.1%	78.4%
+MP_OSedge2_S3_L002	99.2%	77.2%
+MP_OSedge3_S3_L002	99.2%	76.7%
+MP_OSedge4_S3_L002	99.3%	76.7%
+MP_OSedge5_S3_L002	99.2%	76.8%
+MP_OSedge6_S3_L002	99.2%	76.5%
+MP_OSedge7_S3_L002	99.3%	76.6%
+MP_OSedge8_S3_L002	99.2%	76.7%
+MP_OSedge9_S3_L002	99.1%	76.7%
+MP_OSedge10_S3_L002	99.3%	81.1%
+MP_OCanal1_S3_L002	99.1%	82.9%
+MP_OCanal2_S3_L002	99.0%	84.4%
+MP_OCanal3_S3_L002	99.1%	80.0%
+MP_OCanal4_S3_L002	99.2%	76.7%
+MP_OCanal5_S3_L002	99.2%	76.6%
+MP_OCanal6_S3_L002	99.2%	79.9%
+MP_OCanal7_S3_L002	99.0%	85.6%
+MP_OCanal8_S3_L002	99.3%	77.0%
+MP_OBlank_S3_L002	99.3%	76.5%
+MP_OPosCon_S3_L002	99.2%	76.4%
+```
+
+
+```
+Running DADA2: Thu Jan 16 09:23:30 EST 2025
+Trim and filter in DADA2...
+
+DADA2 Filtering results:
+Sample	% Reads Passing
+MP_T1S1_S1_L002_R1_trimmed.fq.gz 95.5671
+MP_T1S2_S1_L002_R1_trimmed.fq.gz 95.8112
+MP_T1S3_S1_L002_R1_trimmed.fq.gz 95.1466
+MP_T1S4_S1_L002_R1_trimmed.fq.gz 95.5066
+MP_T1S5_S1_L002_R1_trimmed.fq.gz 94.9663
+MP_T1S6_S1_L002_R1_trimmed.fq.gz 95.4935
+MP_T1S7_S1_L002_R1_trimmed.fq.gz 95.4629
+MP_T1S8_S1_L002_R1_trimmed.fq.gz 95.1516
+MP_T1S9_S1_L002_R1_trimmed.fq.gz 95.2038
+MP_T1S10_S1_L002_R1_trimmed.fq.gz 95.8484
+MP_T1S11_S1_L002_R1_trimmed.fq.gz 94.4359
+MP_T1Tiana_S1_L002_R1_trimmed.fq.gz 95.3668
+MP_T1Wessuck_S1_L002_R1_trimmed.fq.gz 93.8949
+MP_T1Blank_S1_L002_R1_trimmed.fq.gz 94.2946
+MP_T1PosCon_S1_L002_R1_trimmed.fq.gz 95.335
+MP_T3S1_S1_L002_R1_trimmed.fq.gz 94.9347
+MP_T3S2_S1_L002_R1_trimmed.fq.gz 94.5204
+MP_T3S3_S1_L002_R1_trimmed.fq.gz 95.5019
+MP_T3S4_S1_L002_R1_trimmed.fq.gz 95.1486
+MP_T3S5_S1_L002_R1_trimmed.fq.gz 95.8559
+MP_T3S6_S1_L002_R1_trimmed.fq.gz 93.5246
+MP_T3S7_S1_L002_R1_trimmed.fq.gz 94.6912
+MP_T3S8_S1_L002_R1_trimmed.fq.gz 95.7906
+MP_T3S9_S1_L002_R1_trimmed.fq.gz 94.1828
+MP_T3S10_S1_L002_R1_trimmed.fq.gz 95.3743
+MP_T3S11_S1_L002_R1_trimmed.fq.gz 95.5627
+MP_T3Tiana_S1_L002_R1_trimmed.fq.gz 95.733
+MP_T3Wessuck_S1_L002_R1_trimmed.fq.gz 93.2999
+MP_T3Blank_S1_L002_R1_trimmed.fq.gz 93.017
+MP_T3PosCon_S1_L002_R1_trimmed.fq.gz 94.4357
+MP_T5S1_S1_L002_R1_trimmed.fq.gz 95.3293
+MP_T5S2_S1_L002_R1_trimmed.fq.gz 95.6406
+MP_T5S3_S1_L002_R1_trimmed.fq.gz 95.3351
+MP_T5S4_S1_L002_R1_trimmed.fq.gz 95.3099
+MP_T5S5_S1_L002_R1_trimmed.fq.gz 94.7868
+MP_T5S6_S2_L002_R1_trimmed.fq.gz 95.9622
+MP_T5S7_S2_L002_R1_trimmed.fq.gz 94.7347
+MP_T5S8_S2_L002_R1_trimmed.fq.gz 95.4269
+MP_T5S9_S2_L002_R1_trimmed.fq.gz 95.4253
+MP_T5S10_S2_L002_R1_trimmed.fq.gz 94.9797
+MP_T5S11_S2_L002_R1_trimmed.fq.gz 96.0023
+MP_T5Tiana_S2_L002_R1_trimmed.fq.gz 95.2405
+MP_T5Wessuck_S2_L002_R1_trimmed.fq.gz 94.1371
+MP_T5Blank_S2_L002_R1_trimmed.fq.gz 95.5076
+MP_T5PosCon_S2_L002_R1_trimmed.fq.gz 94.69
+MP_JSedge1_S2_L002_R1_trimmed.fq.gz 93.717
+MP_JSedge2_S2_L002_R1_trimmed.fq.gz 95.0827
+MP_JSedge3_S2_L002_R1_trimmed.fq.gz 95.7996
+MP_JSedge4_S2_L002_R1_trimmed.fq.gz 95.6578
+MP_JSedge5_S2_L002_R1_trimmed.fq.gz 95.4225
+MP_JSedge6_S2_L002_R1_trimmed.fq.gz 94.4062
+MP_JSedge7_S2_L002_R1_trimmed.fq.gz 95.8379
+MP_JSedge8_S2_L002_R1_trimmed.fq.gz 95.677
+MP_JSedge9_S2_L002_R1_trimmed.fq.gz 95.1243
+MP_JSedge10_S2_L002_R1_trimmed.fq.gz 95.5617
+MP_JCanal1_S2_L002_R1_trimmed.fq.gz 95.4929
+MP_JCanal2_S2_L002_R1_trimmed.fq.gz 95.3524
+MP_JCanal3_S2_L002_R1_trimmed.fq.gz 94.8775
+MP_JCanal4_S2_L002_R1_trimmed.fq.gz 95.0288
+MP_JCanal5_S2_L002_R1_trimmed.fq.gz 95.1585
+MP_JCanal6_S2_L002_R1_trimmed.fq.gz 95.5764
+MP_JCanal7_S2_L002_R1_trimmed.fq.gz 94.7775
+MP_JCanal8_S2_L002_R1_trimmed.fq.gz 95.5419
+MP_JBlank_S2_L002_R1_trimmed.fq.gz 92.9287
+MP_JPosCon_S2_L002_R1_trimmed.fq.gz 94.4203
+MP_ASedge1_S2_L002_R1_trimmed.fq.gz 95.5118
+MP_ASedge2_S2_L002_R1_trimmed.fq.gz 94.803
+MP_ASedge3_S2_L002_R1_trimmed.fq.gz 95.3213
+MP_ASedge4_S2_L002_R1_trimmed.fq.gz 94.833
+MP_ASedge5_S2_L002_R1_trimmed.fq.gz 94.7399
+MP_ASedge6_S3_L002_R1_trimmed.fq.gz 95.3584
+MP_ASedge7_S3_L002_R1_trimmed.fq.gz 93.2398
+MP_ASedge8_S3_L002_R1_trimmed.fq.gz 95.5482
+MP_ASedge9_S3_L002_R1_trimmed.fq.gz 95.2804
+MP_ASedge10_S3_L002_R1_trimmed.fq.gz 94.1047
+MP_ACanal1_S3_L002_R1_trimmed.fq.gz 95.6464
+MP_ACanal2_S3_L002_R1_trimmed.fq.gz 94.9742
+MP_ACanal3_S3_L002_R1_trimmed.fq.gz 95.5846
+MP_ACanal4_S3_L002_R1_trimmed.fq.gz 93.285
+MP_ACanal5_S3_L002_R1_trimmed.fq.gz 93.3198
+MP_ACanal6_S3_L002_R1_trimmed.fq.gz 95.2078
+MP_ACanal7_S3_L002_R1_trimmed.fq.gz 95.4344
+MP_ACanal8_S3_L002_R1_trimmed.fq.gz 95.4709
+MP_ABlank_S3_L002_R1_trimmed.fq.gz 95.1952
+MP_APosCon_S3_L002_R1_trimmed.fq.gz 95.4005
+MP_OSedge1_S3_L002_R1_trimmed.fq.gz 94.4453
+MP_OSedge2_S3_L002_R1_trimmed.fq.gz 95.6405
+MP_OSedge3_S3_L002_R1_trimmed.fq.gz 93.9056
+MP_OSedge4_S3_L002_R1_trimmed.fq.gz 95.4704
+MP_OSedge5_S3_L002_R1_trimmed.fq.gz 95.2922
+MP_OSedge6_S3_L002_R1_trimmed.fq.gz 95.2632
+MP_OSedge7_S3_L002_R1_trimmed.fq.gz 96.0149
+MP_OSedge8_S3_L002_R1_trimmed.fq.gz 95.5119
+MP_OSedge9_S3_L002_R1_trimmed.fq.gz 95.1833
+MP_OSedge10_S3_L002_R1_trimmed.fq.gz 95.2598
+MP_OCanal1_S3_L002_R1_trimmed.fq.gz 94.617
+MP_OCanal2_S3_L002_R1_trimmed.fq.gz 92.844
+MP_OCanal3_S3_L002_R1_trimmed.fq.gz 94.5612
+MP_OCanal4_S3_L002_R1_trimmed.fq.gz 95.2645
+MP_OCanal5_S3_L002_R1_trimmed.fq.gz 95.7472
+MP_OCanal6_S3_L002_R1_trimmed.fq.gz 94.8708
+MP_OCanal7_S3_L002_R1_trimmed.fq.gz 94.1261
+MP_OCanal8_S3_L002_R1_trimmed.fq.gz 95.542
+MP_OBlank_S3_L002_R1_trimmed.fq.gz 94.0629
+MP_OPosCon_S3_L002_R1_trimmed.fq.gz 95.2757
+```
+
+
+#### 1/17/25
+
+Getting memory issue. From dada2 log:  
+
+```
+Loading required package: Rcpp
+Warning message:
+package ‘Rcpp’ was built under R version 4.4.1 
+Read 105 items
+Warning message:
+Removed 10565 rows containing missing values or values outside the scale range
+(`geom_tile()`). 
+null device 
+          1 
+Warning message:
+Removed 14310 rows containing missing values or values outside the scale range
+(`geom_tile()`). 
+null device 
+          1 
+null device 
+          1 
+null device 
+          1 
+Loading required package: Rcpp
+Warning message:
+package ‘Rcpp’ was built under R version 4.4.1 
+Read 105 items
+DADA2 - Learning error Running
+3191607369 total bases in 20641697 reads from 59 samples will be used for learning the error rates.
+3157049030 total bases in 20351271 reads from 58 samples will be used for learning the error rates.
+Warning messages:
+1: In scale_y_log10() : log-10 transformation introduced infinite values.
+2: In scale_y_log10() : log-10 transformation introduced infinite values.
+null device 
+          1 
+Warning messages:
+1: In scale_y_log10() : log-10 transformation introduced infinite values.
+2: In scale_y_log10() : log-10 transformation introduced infinite values.
+null device 
+          1 
+DADA2 - Dereplication Running
+Dereplicating sequence entries in Fastq file: MP_T1S1_S1_L002_R1_filtered.fq.gz
+Encountered 58216 unique sequences from 396208 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S2_S1_L002_R1_filtered.fq.gz
+Encountered 45419 unique sequences from 313595 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S3_S1_L002_R1_filtered.fq.gz
+Encountered 33713 unique sequences from 202452 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S4_S1_L002_R1_filtered.fq.gz
+Encountered 41717 unique sequences from 319482 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S5_S1_L002_R1_filtered.fq.gz
+Encountered 56841 unique sequences from 408056 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S6_S1_L002_R1_filtered.fq.gz
+Encountered 44179 unique sequences from 316537 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S7_S1_L002_R1_filtered.fq.gz
+Encountered 53161 unique sequences from 371663 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S8_S1_L002_R1_filtered.fq.gz
+Encountered 44603 unique sequences from 304901 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S9_S1_L002_R1_filtered.fq.gz
+Encountered 51561 unique sequences from 369324 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S10_S1_L002_R1_filtered.fq.gz
+Encountered 25791 unique sequences from 162488 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S11_S1_L002_R1_filtered.fq.gz
+Encountered 58288 unique sequences from 386156 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1Tiana_S1_L002_R1_filtered.fq.gz
+Encountered 53403 unique sequences from 416549 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1Wessuck_S1_L002_R1_filtered.fq.gz
+Encountered 113073 unique sequences from 448058 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1Blank_S1_L002_R1_filtered.fq.gz
+Encountered 15966 unique sequences from 86719 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1PosCon_S1_L002_R1_filtered.fq.gz
+Encountered 46786 unique sequences from 371676 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S1_S1_L002_R1_filtered.fq.gz
+Encountered 40034 unique sequences from 206915 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S2_S1_L002_R1_filtered.fq.gz
+Encountered 118956 unique sequences from 473105 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S3_S1_L002_R1_filtered.fq.gz
+Encountered 57414 unique sequences from 369427 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S4_S1_L002_R1_filtered.fq.gz
+Encountered 41617 unique sequences from 274988 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S5_S1_L002_R1_filtered.fq.gz
+Encountered 64864 unique sequences from 469555 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S6_S1_L002_R1_filtered.fq.gz
+Encountered 82203 unique sequences from 298106 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S7_S1_L002_R1_filtered.fq.gz
+Encountered 71636 unique sequences from 501728 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S8_S1_L002_R1_filtered.fq.gz
+Encountered 54747 unique sequences from 398416 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S9_S1_L002_R1_filtered.fq.gz
+Encountered 84381 unique sequences from 321964 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S10_S1_L002_R1_filtered.fq.gz
+Encountered 43238 unique sequences from 268618 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S11_S1_L002_R1_filtered.fq.gz
+Encountered 39574 unique sequences from 311518 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3Tiana_S1_L002_R1_filtered.fq.gz
+Encountered 17297 unique sequences from 114535 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3Wessuck_S1_L002_R1_filtered.fq.gz
+Encountered 130290 unique sequences from 350763 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3Blank_S1_L002_R1_filtered.fq.gz
+Encountered 67895 unique sequences from 146192 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3PosCon_S1_L002_R1_filtered.fq.gz
+Encountered 63905 unique sequences from 383693 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S1_S1_L002_R1_filtered.fq.gz
+Encountered 52965 unique sequences from 334560 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S2_S1_L002_R1_filtered.fq.gz
+Encountered 55295 unique sequences from 343123 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S3_S1_L002_R1_filtered.fq.gz
+Encountered 62777 unique sequences from 434440 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S4_S1_L002_R1_filtered.fq.gz
+Encountered 70488 unique sequences from 438236 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S5_S1_L002_R1_filtered.fq.gz
+Encountered 62439 unique sequences from 407608 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S6_S2_L002_R1_filtered.fq.gz
+Encountered 32933 unique sequences from 221667 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S7_S2_L002_R1_filtered.fq.gz
+Encountered 61168 unique sequences from 342354 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S8_S2_L002_R1_filtered.fq.gz
+Encountered 44197 unique sequences from 263636 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S9_S2_L002_R1_filtered.fq.gz
+Encountered 55724 unique sequences from 380785 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S10_S2_L002_R1_filtered.fq.gz
+Encountered 46672 unique sequences from 285772 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S11_S2_L002_R1_filtered.fq.gz
+Encountered 29691 unique sequences from 222735 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5Tiana_S2_L002_R1_filtered.fq.gz
+Encountered 65691 unique sequences from 370939 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5Wessuck_S2_L002_R1_filtered.fq.gz
+Encountered 222755 unique sequences from 821829 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5Blank_S2_L002_R1_filtered.fq.gz
+Encountered 37388 unique sequences from 175330 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5PosCon_S2_L002_R1_filtered.fq.gz
+Encountered 203518 unique sequences from 887262 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JSedge1_S2_L002_R1_filtered.fq.gz
+Encountered 55798 unique sequences from 283282 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JSedge2_S2_L002_R1_filtered.fq.gz
+Encountered 49299 unique sequences from 357491 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JSedge3_S2_L002_R1_filtered.fq.gz
+Encountered 57420 unique sequences from 411097 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JSedge4_S2_L002_R1_filtered.fq.gz
+Encountered 40662 unique sequences from 268785 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JSedge5_S2_L002_R1_filtered.fq.gz
+Encountered 46266 unique sequences from 326237 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JSedge6_S2_L002_R1_filtered.fq.gz
+Encountered 200054 unique sequences from 845351 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JSedge7_S2_L002_R1_filtered.fq.gz
+Encountered 43218 unique sequences from 356585 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JSedge8_S2_L002_R1_filtered.fq.gz
+Encountered 44823 unique sequences from 331940 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JSedge9_S2_L002_R1_filtered.fq.gz
+Encountered 28301 unique sequences from 183276 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JSedge10_S2_L002_R1_filtered.fq.gz
+Encountered 44624 unique sequences from 329105 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JCanal1_S2_L002_R1_filtered.fq.gz
+Encountered 51263 unique sequences from 359035 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JCanal2_S2_L002_R1_filtered.fq.gz
+Encountered 37808 unique sequences from 263288 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JCanal3_S2_L002_R1_filtered.fq.gz
+Encountered 47635 unique sequences from 342136 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JCanal4_S2_L002_R1_filtered.fq.gz
+Encountered 42237 unique sequences from 290426 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JCanal5_S2_L002_R1_filtered.fq.gz
+Encountered 57262 unique sequences from 408055 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JCanal6_S2_L002_R1_filtered.fq.gz
+Encountered 37805 unique sequences from 235030 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JCanal7_S2_L002_R1_filtered.fq.gz
+Encountered 46121 unique sequences from 297048 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JCanal8_S2_L002_R1_filtered.fq.gz
+Encountered 48095 unique sequences from 355480 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JBlank_S2_L002_R1_filtered.fq.gz
+Encountered 65057 unique sequences from 152851 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_JPosCon_S2_L002_R1_filtered.fq.gz
+Encountered 56771 unique sequences from 385670 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ASedge1_S2_L002_R1_filtered.fq.gz
+Encountered 39612 unique sequences from 275457 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ASedge2_S2_L002_R1_filtered.fq.gz
+Encountered 95155 unique sequences from 509791 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ASedge3_S2_L002_R1_filtered.fq.gz
+Encountered 46001 unique sequences from 323431 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ASedge4_S2_L002_R1_filtered.fq.gz
+Encountered 60202 unique sequences from 390032 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ASedge5_S2_L002_R1_filtered.fq.gz
+Encountered 45839 unique sequences from 293579 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ASedge6_S3_L002_R1_filtered.fq.gz
+Encountered 115819 unique sequences from 869711 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ASedge7_S3_L002_R1_filtered.fq.gz
+Encountered 74707 unique sequences from 258842 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ASedge8_S3_L002_R1_filtered.fq.gz
+Encountered 56118 unique sequences from 382148 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ASedge9_S3_L002_R1_filtered.fq.gz
+Encountered 57184 unique sequences from 380948 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ASedge10_S3_L002_R1_filtered.fq.gz
+Encountered 77125 unique sequences from 283369 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ACanal1_S3_L002_R1_filtered.fq.gz
+Encountered 27104 unique sequences from 161609 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ACanal2_S3_L002_R1_filtered.fq.gz
+Encountered 36051 unique sequences from 262710 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ACanal3_S3_L002_R1_filtered.fq.gz
+Encountered 23572 unique sequences from 132052 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ACanal4_S3_L002_R1_filtered.fq.gz
+Encountered 178642 unique sequences from 488332 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ACanal5_S3_L002_R1_filtered.fq.gz
+Encountered 138974 unique sequences from 439539 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ACanal6_S3_L002_R1_filtered.fq.gz
+Encountered 77306 unique sequences from 454880 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ACanal7_S3_L002_R1_filtered.fq.gz
+Encountered 62823 unique sequences from 393665 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ACanal8_S3_L002_R1_filtered.fq.gz
+Encountered 56485 unique sequences from 361152 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_ABlank_S3_L002_R1_filtered.fq.gz
+Encountered 29601 unique sequences from 146217 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_APosCon_S3_L002_R1_filtered.fq.gz
+Encountered 55475 unique sequences from 481475 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OSedge1_S3_L002_R1_filtered.fq.gz
+Encountered 68969 unique sequences from 440661 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OSedge2_S3_L002_R1_filtered.fq.gz
+Encountered 68936 unique sequences from 427799 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OSedge3_S3_L002_R1_filtered.fq.gz
+Encountered 68518 unique sequences from 383936 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OSedge4_S3_L002_R1_filtered.fq.gz
+Encountered 58122 unique sequences from 394855 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OSedge5_S3_L002_R1_filtered.fq.gz
+Encountered 58151 unique sequences from 388815 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OSedge6_S3_L002_R1_filtered.fq.gz
+Encountered 47521 unique sequences from 329823 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OSedge7_S3_L002_R1_filtered.fq.gz
+Encountered 31955 unique sequences from 225175 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OSedge8_S3_L002_R1_filtered.fq.gz
+Encountered 35093 unique sequences from 210959 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OSedge9_S3_L002_R1_filtered.fq.gz
+Encountered 38771 unique sequences from 253220 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OSedge10_S3_L002_R1_filtered.fq.gz
+Encountered 35946 unique sequences from 184321 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OCanal1_S3_L002_R1_filtered.fq.gz
+Encountered 82526 unique sequences from 296908 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OCanal2_S3_L002_R1_filtered.fq.gz
+Encountered 100057 unique sequences from 365644 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OCanal3_S3_L002_R1_filtered.fq.gz
+Encountered 66966 unique sequences from 379095 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OCanal4_S3_L002_R1_filtered.fq.gz
+Encountered 71255 unique sequences from 474240 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OCanal5_S3_L002_R1_filtered.fq.gz
+Encountered 30333 unique sequences from 172997 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OCanal6_S3_L002_R1_filtered.fq.gz
+Encountered 85101 unique sequences from 496291 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OCanal7_S3_L002_R1_filtered.fq.gz
+Encountered 151912 unique sequences from 507705 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OCanal8_S3_L002_R1_filtered.fq.gz
+Encountered 67347 unique sequences from 419656 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OBlank_S3_L002_R1_filtered.fq.gz
+Encountered 783 unique sequences from 2630 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_OPosCon_S3_L002_R1_filtered.fq.gz
+Encountered 38586 unique sequences from 251608 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S1_S1_L002_R2_filtered.fq.gz
+Encountered 58921 unique sequences from 396208 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S2_S1_L002_R2_filtered.fq.gz
+Encountered 46338 unique sequences from 313595 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S3_S1_L002_R2_filtered.fq.gz
+Encountered 33073 unique sequences from 202452 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S4_S1_L002_R2_filtered.fq.gz
+Encountered 42844 unique sequences from 319482 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S5_S1_L002_R2_filtered.fq.gz
+Encountered 63382 unique sequences from 408056 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S6_S1_L002_R2_filtered.fq.gz
+Encountered 45266 unique sequences from 316537 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S7_S1_L002_R2_filtered.fq.gz
+Encountered 54129 unique sequences from 371663 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S8_S1_L002_R2_filtered.fq.gz
+Encountered 45028 unique sequences from 304901 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S9_S1_L002_R2_filtered.fq.gz
+Encountered 51287 unique sequences from 369324 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S10_S1_L002_R2_filtered.fq.gz
+Encountered 25545 unique sequences from 162488 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1S11_S1_L002_R2_filtered.fq.gz
+Encountered 60244 unique sequences from 386156 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1Tiana_S1_L002_R2_filtered.fq.gz
+Encountered 51882 unique sequences from 416549 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1Wessuck_S1_L002_R2_filtered.fq.gz
+Encountered 117247 unique sequences from 448058 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1Blank_S1_L002_R2_filtered.fq.gz
+Encountered 14710 unique sequences from 86719 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T1PosCon_S1_L002_R2_filtered.fq.gz
+Encountered 48565 unique sequences from 371676 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S1_S1_L002_R2_filtered.fq.gz
+Encountered 42217 unique sequences from 206915 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S2_S1_L002_R2_filtered.fq.gz
+Encountered 125148 unique sequences from 473105 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S3_S1_L002_R2_filtered.fq.gz
+Encountered 60998 unique sequences from 369427 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S4_S1_L002_R2_filtered.fq.gz
+Encountered 42419 unique sequences from 274988 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S5_S1_L002_R2_filtered.fq.gz
+Encountered 66081 unique sequences from 469555 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S6_S1_L002_R2_filtered.fq.gz
+Encountered 84949 unique sequences from 298106 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S7_S1_L002_R2_filtered.fq.gz
+Encountered 68899 unique sequences from 501728 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S8_S1_L002_R2_filtered.fq.gz
+Encountered 53392 unique sequences from 398416 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S9_S1_L002_R2_filtered.fq.gz
+Encountered 92861 unique sequences from 321964 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S10_S1_L002_R2_filtered.fq.gz
+Encountered 45584 unique sequences from 268618 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3S11_S1_L002_R2_filtered.fq.gz
+Encountered 40525 unique sequences from 311518 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3Tiana_S1_L002_R2_filtered.fq.gz
+Encountered 17162 unique sequences from 114535 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3Wessuck_S1_L002_R2_filtered.fq.gz
+Encountered 131049 unique sequences from 350763 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3Blank_S1_L002_R2_filtered.fq.gz
+Encountered 69856 unique sequences from 146192 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T3PosCon_S1_L002_R2_filtered.fq.gz
+Encountered 69229 unique sequences from 383693 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S1_S1_L002_R2_filtered.fq.gz
+Encountered 53490 unique sequences from 334560 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S2_S1_L002_R2_filtered.fq.gz
+Encountered 57129 unique sequences from 343123 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S3_S1_L002_R2_filtered.fq.gz
+Encountered 64883 unique sequences from 434440 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S4_S1_L002_R2_filtered.fq.gz
+Encountered 70944 unique sequences from 438236 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S5_S1_L002_R2_filtered.fq.gz
+Encountered 59868 unique sequences from 407608 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S6_S2_L002_R2_filtered.fq.gz
+Encountered 32353 unique sequences from 221667 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S7_S2_L002_R2_filtered.fq.gz
+Encountered 56368 unique sequences from 342354 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S8_S2_L002_R2_filtered.fq.gz
+Encountered 44764 unique sequences from 263636 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S9_S2_L002_R2_filtered.fq.gz
+Encountered 54622 unique sequences from 380785 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S10_S2_L002_R2_filtered.fq.gz
+Encountered 43836 unique sequences from 285772 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5S11_S2_L002_R2_filtered.fq.gz
+Encountered 29671 unique sequences from 222735 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5Tiana_S2_L002_R2_filtered.fq.gz
+Encountered 67771 unique sequences from 370939 total sequences read.
+Dereplicating sequence entries in Fastq file: MP_T5Wessuck_S2_L002_R2_filtered.fq.gz
+Error: vector memory limit of 16.0 Gb reached, see mem.maxVSize()
+Execution halted
+```
+
+
+- Found [this thread](https://stackoverflow.com/questions/51248293/error-vector-memory-exhausted-limit-reached-r-3-5-0-macos)
+	- actually i had already changed this parameter on my computer to 100Gb. Next found this thread- https://github.com/benjjneb/dada2/issues/1894
+- Started to think about changing dada2 asset in REVAMP but maybe too complicated. 
+- Instead try splitting sample libraries first into a and b. Based on [this](https://benjjneb.github.io/dada2/bigdata_1_2.html) there is a major quadratic increase in memory use with additional samples
+	- Split cutadapt results and metadata files into two. Then run a and b seaprately:
+
+##### 2022 MiFish a
+```
+conda activate REVAMPenv
+
+revamp.sh -p 01_config_file_MiFish-2022a.txt -f 02_figure_config_file_MiFish-2022a.txt -s 03_sample_metadata_MiFish-2022a.txt -r raw_data/2022-MiFish-Ua -o results-revamp-2022-MiFisha
+
+```
+
+```
+
+Running Cutadapt: Fri Jan 17 10:09:55 EST 2025
+Finished Cutadapt: Fri Jan 17 10:20:05 EST 2025
+Sample	Passing Reads	Passing bp
+MP_ABlank_S3_L002	99.3%	76.7%
+MP_ACanal1_S3_L002	99.2%	76.7%
+MP_ACanal2_S3_L002	99.3%	76.7%
+MP_ACanal3_S3_L002	98.9%	76.6%
+MP_ACanal4_S3_L002	98.8%	87.1%
+MP_ACanal5_S3_L002	98.8%	86.4%
+MP_ACanal6_S3_L002	99.1%	78.8%
+MP_ACanal7_S3_L002	99.1%	76.6%
+MP_ACanal8_S3_L002	99.2%	76.7%
+MP_APosCon_S3_L002	99.2%	76.4%
+MP_ASedge1_S2_L002	99.2%	78.3%
+MP_ASedge10_S3_L002	99.1%	85.7%
+MP_ASedge2_S2_L002	98.2%	81.4%
+MP_ASedge3_S2_L002	99.3%	77.9%
+MP_ASedge4_S2_L002	98.7%	80.5%
+MP_ASedge5_S2_L002	99.0%	77.2%
+MP_ASedge6_S3_L002	99.4%	77.0%
+MP_ASedge7_S3_L002	98.8%	84.5%
+MP_ASedge8_S3_L002	99.3%	76.7%
+MP_ASedge9_S3_L002	99.2%	76.7%
+MP_JBlank_S2_L002	98.8%	89.2%
+MP_JCanal1_S2_L002	99.3%	76.4%
+MP_JCanal2_S2_L002	99.2%	76.4%
+MP_JCanal3_S2_L002	99.2%	76.6%
+MP_JCanal4_S2_L002	99.2%	76.5%
+MP_JCanal5_S2_L002	99.2%	76.4%
+MP_JCanal6_S2_L002	99.2%	76.6%
+MP_JCanal7_S2_L002	99.3%	76.5%
+MP_JCanal8_S2_L002	99.1%	76.5%
+MP_JPosCon_S2_L002	99.0%	77.6%
+MP_JSedge1_S2_L002	99.0%	79.2%
+MP_JSedge10_S2_L002	99.3%	76.6%
+MP_JSedge2_S2_L002	99.1%	77.3%
+MP_JSedge3_S2_L002	99.1%	76.5%
+MP_JSedge4_S2_L002	99.1%	76.8%
+MP_JSedge5_S2_L002	99.2%	77.0%
+MP_JSedge6_S2_L002	98.9%	84.3%
+MP_JSedge7_S2_L002	99.3%	76.5%
+MP_JSedge8_S2_L002	99.3%	76.5%
+MP_JSedge9_S2_L002	99.2%	76.5%
+MP_OBlank_S3_L002	99.3%	76.5%
+MP_OCanal1_S3_L002	99.1%	82.9%
+MP_OCanal2_S3_L002	99.0%	84.4%
+MP_OCanal3_S3_L002	99.1%	80.0%
+MP_OCanal4_S3_L002	99.2%	76.7%
+MP_OCanal5_S3_L002	99.2%	76.6%
+MP_OCanal6_S3_L002	99.2%	79.9%
+MP_OCanal7_S3_L002	99.0%	85.6%
+MP_OCanal8_S3_L002	99.3%	77.0%
+MP_OPosCon_S3_L002	99.2%	76.4%
+MP_OSedge1_S3_L002	99.1%	78.4%
+MP_OSedge10_S3_L002	99.3%	81.1%
+MP_OSedge2_S3_L002	99.2%	77.2%
+```
+
+```
+DADA2 Filtering results:
+Sample	% Reads Passing
+MP_ABlank_S3_L002_R1_trimmed.fq.gz 95.1952
+MP_ACanal1_S3_L002_R1_trimmed.fq.gz 95.6464
+MP_ACanal2_S3_L002_R1_trimmed.fq.gz 94.9742
+MP_ACanal3_S3_L002_R1_trimmed.fq.gz 95.5846
+MP_ACanal4_S3_L002_R1_trimmed.fq.gz 93.285
+MP_ACanal5_S3_L002_R1_trimmed.fq.gz 93.3198
+MP_ACanal6_S3_L002_R1_trimmed.fq.gz 95.2078
+MP_ACanal7_S3_L002_R1_trimmed.fq.gz 95.4344
+MP_ACanal8_S3_L002_R1_trimmed.fq.gz 95.4709
+MP_APosCon_S3_L002_R1_trimmed.fq.gz 95.4005
+MP_ASedge1_S2_L002_R1_trimmed.fq.gz 95.5118
+MP_ASedge10_S3_L002_R1_trimmed.fq.gz 94.1047
+MP_ASedge2_S2_L002_R1_trimmed.fq.gz 94.803
+MP_ASedge3_S2_L002_R1_trimmed.fq.gz 95.3213
+MP_ASedge4_S2_L002_R1_trimmed.fq.gz 94.833
+MP_ASedge5_S2_L002_R1_trimmed.fq.gz 94.7399
+MP_ASedge6_S3_L002_R1_trimmed.fq.gz 95.3584
+MP_ASedge7_S3_L002_R1_trimmed.fq.gz 93.2398
+MP_ASedge8_S3_L002_R1_trimmed.fq.gz 95.5482
+MP_ASedge9_S3_L002_R1_trimmed.fq.gz 95.2804
+MP_JBlank_S2_L002_R1_trimmed.fq.gz 92.9287
+MP_JCanal1_S2_L002_R1_trimmed.fq.gz 95.4929
+MP_JCanal2_S2_L002_R1_trimmed.fq.gz 95.3524
+MP_JCanal3_S2_L002_R1_trimmed.fq.gz 94.8775
+MP_JCanal4_S2_L002_R1_trimmed.fq.gz 95.0288
+MP_JCanal5_S2_L002_R1_trimmed.fq.gz 95.1585
+MP_JCanal6_S2_L002_R1_trimmed.fq.gz 95.5764
+MP_JCanal7_S2_L002_R1_trimmed.fq.gz 94.7775
+MP_JCanal8_S2_L002_R1_trimmed.fq.gz 95.5419
+MP_JPosCon_S2_L002_R1_trimmed.fq.gz 94.4203
+MP_JSedge1_S2_L002_R1_trimmed.fq.gz 93.717
+MP_JSedge10_S2_L002_R1_trimmed.fq.gz 95.5617
+MP_JSedge2_S2_L002_R1_trimmed.fq.gz 95.0827
+MP_JSedge3_S2_L002_R1_trimmed.fq.gz 95.7996
+MP_JSedge4_S2_L002_R1_trimmed.fq.gz 95.6578
+MP_JSedge5_S2_L002_R1_trimmed.fq.gz 95.4225
+MP_JSedge6_S2_L002_R1_trimmed.fq.gz 94.4062
+MP_JSedge7_S2_L002_R1_trimmed.fq.gz 95.8379
+MP_JSedge8_S2_L002_R1_trimmed.fq.gz 95.677
+MP_JSedge9_S2_L002_R1_trimmed.fq.gz 95.1243
+MP_OBlank_S3_L002_R1_trimmed.fq.gz 94.0629
+MP_OCanal1_S3_L002_R1_trimmed.fq.gz 94.617
+MP_OCanal2_S3_L002_R1_trimmed.fq.gz 92.844
+MP_OCanal3_S3_L002_R1_trimmed.fq.gz 94.5612
+MP_OCanal4_S3_L002_R1_trimmed.fq.gz 95.2645
+MP_OCanal5_S3_L002_R1_trimmed.fq.gz 95.7472
+MP_OCanal6_S3_L002_R1_trimmed.fq.gz 94.8708
+MP_OCanal7_S3_L002_R1_trimmed.fq.gz 94.1261
+MP_OCanal8_S3_L002_R1_trimmed.fq.gz 95.542
+MP_OPosCon_S3_L002_R1_trimmed.fq.gz 95.2757
+MP_OSedge1_S3_L002_R1_trimmed.fq.gz 94.4453
+MP_OSedge10_S3_L002_R1_trimmed.fq.gz 95.2598
+MP_OSedge2_S3_L002_R1_trimmed.fq.gz 95.6405
+
+```
+
+```
+FINAL DADA2 STATS
+Note: Please check for a failed merge of forward/reverse sequences
+Sample	%Reads Retained
+MP_ABlank_S3_L002 85.1
+MP_ACanal1_S3_L002 86
+MP_ACanal2_S3_L002 84.8
+MP_ACanal3_S3_L002 84.8
+MP_ACanal4_S3_L002 60.8
+MP_ACanal5_S3_L002 68.2
+MP_ACanal6_S3_L002 84.3
+MP_ACanal7_S3_L002 83.1
+MP_ACanal8_S3_L002 76.2
+MP_APosCon_S3_L002 80.4
+MP_ASedge1_S2_L002 86.6
+MP_ASedge10_S3_L002 72.2
+MP_ASedge2_S2_L002 78
+MP_ASedge3_S2_L002 76.2
+MP_ASedge4_S2_L002 86.7
+MP_ASedge5_S2_L002 81.2
+MP_ASedge6_S3_L002 74.6
+MP_ASedge7_S3_L002 74.6
+MP_ASedge8_S3_L002 77.6
+MP_ASedge9_S3_L002 85.1
+MP_JBlank_S2_L002 64.6
+MP_JCanal1_S2_L002 81.6
+MP_JCanal2_S2_L002 84.9
+MP_JCanal3_S2_L002 84.7
+MP_JCanal4_S2_L002 84.9
+MP_JCanal5_S2_L002 85.5
+MP_JCanal6_S2_L002 86.1
+MP_JCanal7_S2_L002 83.1
+MP_JCanal8_S2_L002 85.3
+MP_JPosCon_S2_L002 83.1
+MP_JSedge1_S2_L002 79.1
+MP_JSedge10_S2_L002 86
+MP_JSedge2_S2_L002 84.7
+MP_JSedge3_S2_L002 81.4
+MP_JSedge4_S2_L002 83.9
+MP_JSedge5_S2_L002 85.1
+MP_JSedge6_S2_L002 72.9
+MP_JSedge7_S2_L002 85.5
+MP_JSedge8_S2_L002 84.9
+MP_JSedge9_S2_L002 83.2
+MP_OBlank_S3_L002 91.4
+MP_OCanal1_S3_L002 67.1
+MP_OCanal2_S3_L002 72.6
+MP_OCanal3_S3_L002 82.3
+MP_OCanal4_S3_L002 82.6
+MP_OCanal5_S3_L002 79.7
+MP_OCanal6_S3_L002 83.5
+MP_OCanal7_S3_L002 68.5
+MP_OCanal8_S3_L002 76.9
+MP_OPosCon_S3_L002 85.8
+MP_OSedge1_S3_L002 80.8
+MP_OSedge10_S3_L002 83.2
+MP_OSedge2_S3_L002 81.9
+
+```
+
+#### Jan 19 2025
+
+Running from home. The above finished but I forgot my other external drive which has the blast database. So for now, get up to `dada2_Finished=TRUE
+` in `progress.txt` for both data subsets, `a`, and `b` from 2022. Then run blast steps for both back at my office.
+
+##### 2022 Mifish b
+Remove suffix from fastq files: 
+`for file in *; do mv "${file}" "${file/_001/}"; done`
+
+*If needed* remove prefix from file names (if re-running after mistake): `for file in * ; do mv -v "$file" "${file#*_}"; done`
+
+Run REVAMP'
+
+```
+conda activate REVAMPenv
+
+revamp.sh -p 01_config_file_MiFish-2022b.txt -f 02_figure_config_file_MiFish-2022b.txt -s 03_sample_metadata_MiFish-2022b.txt -r raw_data/2022-MiFish-Ub -o results-revamp-2022-MiFishb
+
+```
+
+
+```
+
+Running Cutadapt: Sun Jan 19 11:58:29 EST 2025
+Finished Cutadapt: Sun Jan 19 12:07:27 EST 2025
+Sample	Passing Reads	Passing bp
+MP_OSedge3_S3_L002	99.2%	76.7%
+MP_OSedge4_S3_L002	99.3%	76.7%
+MP_OSedge5_S3_L002	99.2%	76.8%
+MP_OSedge6_S3_L002	99.2%	76.5%
+MP_OSedge7_S3_L002	99.3%	76.6%
+MP_OSedge8_S3_L002	99.2%	76.7%
+MP_OSedge9_S3_L002	99.1%	76.7%
+MP_T1Blank_S1_L002	98.8%	76.3%
+MP_T1PosCon_S1_L002	99.2%	77.3%
+MP_T1S1_S1_L002	99.3%	76.5%
+MP_T1S10_S1_L002	99.2%	76.7%
+MP_T1S11_S1_L002	99.3%	81.4%
+MP_T1S2_S1_L002	99.3%	76.6%
+MP_T1S3_S1_L002	99.2%	76.5%
+MP_T1S4_S1_L002	99.3%	76.5%
+MP_T1S5_S1_L002	99.4%	76.8%
+MP_T1S6_S1_L002	99.2%	76.6%
+MP_T1S7_S1_L002	99.3%	76.4%
+MP_T1S8_S1_L002	99.2%	76.6%
+MP_T1S9_S1_L002	99.2%	76.6%
+MP_T1Tiana_S1_L002	99.2%	76.9%
+MP_T1Wessuck_S1_L002	99.0%	84.1%
+MP_T3Blank_S1_L002	98.7%	89.1%
+MP_T3PosCon_S1_L002	99.1%	81.9%
+MP_T3S1_S1_L002	98.2%	82.1%
+MP_T3S10_S1_L002	99.2%	78.7%
+MP_T3S11_S1_L002	99.2%	76.5%
+MP_T3S2_S1_L002	99.1%	84.2%
+MP_T3S3_S1_L002	99.1%	77.7%
+MP_T3S4_S1_L002	98.9%	76.4%
+MP_T3S5_S1_L002	99.3%	76.7%
+MP_T3S6_S1_L002	99.0%	84.9%
+MP_T3S7_S1_L002	99.2%	76.7%
+MP_T3S8_S1_L002	99.3%	76.6%
+MP_T3S9_S1_L002	99.0%	85.5%
+MP_T3Tiana_S1_L002	99.2%	76.5%
+MP_T3Wessuck_S1_L002	98.8%	86.9%
+MP_T5Blank_S2_L002	99.3%	87.6%
+MP_T5PosCon_S2_L002	99.0%	84.4%
+MP_T5S1_S1_L002	99.1%	77.2%
+MP_T5S10_S2_L002	99.1%	76.5%
+MP_T5S11_S2_L002	99.3%	76.6%
+MP_T5S2_S1_L002	99.2%	77.6%
+MP_T5S3_S1_L002	99.3%	76.9%
+MP_T5S4_S1_L002	99.2%	78.8%
+MP_T5S5_S1_L002	99.1%	76.7%
+MP_T5S6_S2_L002	99.1%	77.0%
+MP_T5S7_S2_L002	99.1%	76.9%
+MP_T5S8_S2_L002	99.1%	78.6%
+MP_T5S9_S2_L002	99.1%	76.4%
+MP_T5Tiana_S2_L002	99.2%	80.6%
+MP_T5Wessuck_S2_L002	99.0%	85.2%
+```
+
+```
+Running DADA2: Sun Jan 19 12:09:58 EST 2025
+Trim and filter in DADA2...
+
+DADA2 Filtering results:
+Sample	% Reads Passing
+MP_OSedge3_S3_L002_R1_trimmed.fq.gz 93.9056
+MP_OSedge4_S3_L002_R1_trimmed.fq.gz 95.4704
+MP_OSedge5_S3_L002_R1_trimmed.fq.gz 95.2922
+MP_OSedge6_S3_L002_R1_trimmed.fq.gz 95.2632
+MP_OSedge7_S3_L002_R1_trimmed.fq.gz 96.0149
+MP_OSedge8_S3_L002_R1_trimmed.fq.gz 95.5119
+MP_OSedge9_S3_L002_R1_trimmed.fq.gz 95.1833
+MP_T1Blank_S1_L002_R1_trimmed.fq.gz 94.2946
+MP_T1PosCon_S1_L002_R1_trimmed.fq.gz 95.335
+MP_T1S1_S1_L002_R1_trimmed.fq.gz 95.5671
+MP_T1S10_S1_L002_R1_trimmed.fq.gz 95.8484
+MP_T1S11_S1_L002_R1_trimmed.fq.gz 94.4359
+MP_T1S2_S1_L002_R1_trimmed.fq.gz 95.8112
+MP_T1S3_S1_L002_R1_trimmed.fq.gz 95.1466
+MP_T1S4_S1_L002_R1_trimmed.fq.gz 95.5066
+MP_T1S5_S1_L002_R1_trimmed.fq.gz 94.9663
+MP_T1S6_S1_L002_R1_trimmed.fq.gz 95.4935
+MP_T1S7_S1_L002_R1_trimmed.fq.gz 95.4629
+MP_T1S8_S1_L002_R1_trimmed.fq.gz 95.1516
+MP_T1S9_S1_L002_R1_trimmed.fq.gz 95.2038
+MP_T1Tiana_S1_L002_R1_trimmed.fq.gz 95.3668
+MP_T1Wessuck_S1_L002_R1_trimmed.fq.gz 93.8949
+MP_T3Blank_S1_L002_R1_trimmed.fq.gz 93.017
+MP_T3PosCon_S1_L002_R1_trimmed.fq.gz 94.4357
+MP_T3S1_S1_L002_R1_trimmed.fq.gz 94.9347
+MP_T3S10_S1_L002_R1_trimmed.fq.gz 95.3743
+MP_T3S11_S1_L002_R1_trimmed.fq.gz 95.5627
+MP_T3S2_S1_L002_R1_trimmed.fq.gz 94.5204
+MP_T3S3_S1_L002_R1_trimmed.fq.gz 95.5019
+MP_T3S4_S1_L002_R1_trimmed.fq.gz 95.1486
+MP_T3S5_S1_L002_R1_trimmed.fq.gz 95.8559
+MP_T3S6_S1_L002_R1_trimmed.fq.gz 93.5246
+MP_T3S7_S1_L002_R1_trimmed.fq.gz 94.6912
+MP_T3S8_S1_L002_R1_trimmed.fq.gz 95.7906
+MP_T3S9_S1_L002_R1_trimmed.fq.gz 94.1828
+MP_T3Tiana_S1_L002_R1_trimmed.fq.gz 95.733
+MP_T3Wessuck_S1_L002_R1_trimmed.fq.gz 93.2999
+MP_T5Blank_S2_L002_R1_trimmed.fq.gz 95.5076
+MP_T5PosCon_S2_L002_R1_trimmed.fq.gz 94.69
+MP_T5S1_S1_L002_R1_trimmed.fq.gz 95.3293
+MP_T5S10_S2_L002_R1_trimmed.fq.gz 94.9797
+MP_T5S11_S2_L002_R1_trimmed.fq.gz 96.0023
+MP_T5S2_S1_L002_R1_trimmed.fq.gz 95.6406
+MP_T5S3_S1_L002_R1_trimmed.fq.gz 95.3351
+MP_T5S4_S1_L002_R1_trimmed.fq.gz 95.3099
+MP_T5S5_S1_L002_R1_trimmed.fq.gz 94.7868
+MP_T5S6_S2_L002_R1_trimmed.fq.gz 95.9622
+MP_T5S7_S2_L002_R1_trimmed.fq.gz 94.7347
+MP_T5S8_S2_L002_R1_trimmed.fq.gz 95.4269
+MP_T5S9_S2_L002_R1_trimmed.fq.gz 95.4253
+MP_T5Tiana_S2_L002_R1_trimmed.fq.gz 95.2405
+MP_T5Wessuck_S2_L002_R1_trimmed.fq.gz 94.1371
+```
+
+```
+FINAL DADA2 STATS
+Note: Please check for a failed merge of forward/reverse sequences
+Sample	%Reads Retained
+MP_OSedge3_S3_L002 82.2
+MP_OSedge4_S3_L002 84
+MP_OSedge5_S3_L002 77.7
+MP_OSedge6_S3_L002 84
+MP_OSedge7_S3_L002 86.2
+MP_OSedge8_S3_L002 86.1
+MP_OSedge9_S3_L002 76.2
+MP_T1Blank_S1_L002 86.7
+MP_T1PosCon_S1_L002 85
+MP_T1S1_S1_L002 85.4
+MP_T1S10_S1_L002 87.1
+MP_T1S11_S1_L002 86.1
+MP_T1S2_S1_L002 86.2
+MP_T1S3_S1_L002 83.9
+MP_T1S4_S1_L002 86.4
+MP_T1S5_S1_L002 87
+MP_T1S6_S1_L002 84.8
+MP_T1S7_S1_L002 86.4
+MP_T1S8_S1_L002 84.2
+MP_T1S9_S1_L002 84.3
+MP_T1Tiana_S1_L002 84.1
+MP_T1Wessuck_S1_L002 75.6
+MP_T3Blank_S1_L002 65.1
+MP_T3PosCon_S1_L002 82.3
+MP_T3S1_S1_L002 83
+MP_T3S10_S1_L002 84.3
+MP_T3S11_S1_L002 81.1
+MP_T3S2_S1_L002 70.5
+MP_T3S3_S1_L002 86.6
+MP_T3S4_S1_L002 85.2
+MP_T3S5_S1_L002 84.2
+MP_T3S6_S1_L002 74.7
+MP_T3S7_S1_L002 79.8
+MP_T3S8_S1_L002 83.4
+MP_T3S9_S1_L002 72.4
+MP_T3Tiana_S1_L002 88.6
+MP_T3Wessuck_S1_L002 59.1
+MP_T5Blank_S2_L002 87.7
+MP_T5PosCon_S2_L002 66.3
+MP_T5S1_S1_L002 80.8
+MP_T5S10_S2_L002 83.1
+MP_T5S11_S2_L002 86.3
+MP_T5S2_S1_L002 77
+MP_T5S3_S1_L002 86.7
+MP_T5S4_S1_L002 83.3
+MP_T5S5_S1_L002 84
+MP_T5S6_S2_L002 85.4
+MP_T5S7_S2_L002 79.9
+MP_T5S8_S2_L002 82.7
+MP_T5S9_S2_L002 86
+MP_T5Tiana_S2_L002 85.9
+MP_T5Wessuck_S2_L002 65.7
+
+
+```
+
+
+Still to do:
+
+- run REVAMP starting at blast step on each of 2022a and 2022b. Link to MiFish reference library on my other hard drive 
+- clean up all years in R

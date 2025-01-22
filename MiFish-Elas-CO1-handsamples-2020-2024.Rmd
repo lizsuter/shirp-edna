@@ -28,8 +28,8 @@ library(pals)
 ```
 
 #  Import and prepare data
-
-**2020 MiFish data**
+## MiFish
+### 2020 MiFish data
 ```{r}
 asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2020-MiFIsh/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
 row.names(asv_count) <- asv_count$x
@@ -54,7 +54,7 @@ phylo_mifish_2020 <- phyloseq(ASV_mifish_2020, TAX_mifish_2020, samples_mifish_2
 ```
 
 
-**2021 MiFish data** PAUSE- DIDN'T RUN IT THRU REVAMP YET! SAME FOR 2022!!!!
+### 2021 MiFish data
 ```{r}
 asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2021-MiFIsh/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
 row.names(asv_count) <- asv_count$x
@@ -77,3 +77,796 @@ samples_mifish_2021 = sample_data(sample_metadata)
 phylo_mifish_2021 <- phyloseq(ASV_mifish_2021, TAX_mifish_2021, samples_mifish_2021)
 
 ```
+
+### 2022 MiFish data
+Analyzed in two batches. Import a and b, then join into one table-
+```{r}
+asv_counta <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2022-MiFisha/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+asv_countb <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2022-MiFishb/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+
+# ASV numbers are unique to each of the subsets of data, a and b. Marker into ASV name to indicate whether it's from library a or b
+asv_counta <- asv_counta %>% mutate(x = paste0(x, "_a"))
+asv_countb <- asv_countb %>% mutate(x = paste0(x, "_b"))
+
+asv_count <- full_join(asv_counta, asv_countb)
+
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+asv_taxonomya <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2022-MiFisha/ASV2Taxonomy/results-revamp-2022-MiFisha_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+asv_taxonomyb <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2022-MiFishb/ASV2Taxonomy/results-revamp-2022-MiFishb_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+
+# ASV numbers are unique to each of the subsets of data, a and b. Marker into ASV name to indicate whether it's from library a or b
+asv_taxonomya <- asv_taxonomya %>% mutate(ASV = paste0(ASV, "_a"))
+asv_taxonomyb <- asv_taxonomyb %>% mutate(ASV = paste0(ASV, "_b"))
+
+asv_taxonomy <- full_join(asv_taxonomya, asv_taxonomyb)
+
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadataa <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2022-MiFisha/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadatab <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2022-MiFishb/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+
+sample_metadata <- full_join(sample_metadataa, sample_metadatab)
+
+row.names(sample_metadata) <- sample_metadata$Sample
+sample_metadata <- sample_metadata %>% select(-Sample)
+
+ASV_mifish_2022 = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX_mifish_2022 = tax_table(asv_taxonomy_mat)
+samples_mifish_2022 = sample_data(sample_metadata)
+
+# set NAs to zeroes
+ASV_mifish_2022[is.na(ASV_mifish_2022)] <- 0
+
+
+
+phylo_mifish_2022 <- phyloseq(ASV_mifish_2022, TAX_mifish_2022, samples_mifish_2022)
+
+```
+
+
+### 2023 MiFish data
+```{r}
+asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-MiFIsh/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+asv_taxonomy <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-MiFIsh/ASV2Taxonomy/results-revamp-2023-MiFIsh_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-MiFIsh/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata) <- sample_metadata$Sample
+sample_metadata <- sample_metadata %>% select(-Sample)
+
+ASV_mifish_2023 = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX_mifish_2023 = tax_table(asv_taxonomy_mat)
+samples_mifish_2023 = sample_data(sample_metadata)
+
+phylo_mifish_2023 <- phyloseq(ASV_mifish_2023, TAX_mifish_2023, samples_mifish_2023)
+
+```
+
+### 2024 MiFish data
+```{r}
+asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+asv_taxonomy <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh/ASV2Taxonomy/results-revamp-2024-MiFIsh_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata) <- sample_metadata$Sample
+sample_metadata <- sample_metadata %>% select(-Sample)
+
+ASV_mifish_2024 = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX_mifish_2024 = tax_table(asv_taxonomy_mat)
+samples_mifish_2024 = sample_data(sample_metadata)
+
+phylo_mifish_2024 <- phyloseq(ASV_mifish_2024, TAX_mifish_2024, samples_mifish_2024)
+
+```
+
+## Elas02
+### 2021 data
+```{r}
+asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2021-Elas02/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+asv_taxonomy <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2021-Elas02/ASV2Taxonomy/results-revamp-2021-Elas02_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2021-Elas02/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata) <- sample_metadata$Sample
+sample_metadata <- sample_metadata %>% select(-Sample)
+
+ASV_elas_2021 = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX_elas_2021 = tax_table(asv_taxonomy_mat)
+samples_elas_2021 = sample_data(sample_metadata)
+
+phylo_elas_2021 <- phyloseq(ASV_elas_2021, TAX_elas_2021, samples_elas_2021)
+
+```
+
+### 2023 data
+```{r}
+asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-Elas02/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+asv_taxonomy <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-Elas02/ASV2Taxonomy/results-revamp-2023-Elas02_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-Elas02/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata) <- sample_metadata$Sample
+sample_metadata <- sample_metadata %>% select(-Sample)
+
+ASV_elas_2023 = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX_elas_2023 = tax_table(asv_taxonomy_mat)
+samples_elas_2023 = sample_data(sample_metadata)
+
+phylo_elas_2023 <- phyloseq(ASV_elas_2023, TAX_elas_2023, samples_elas_2023)
+
+```
+
+
+### 2024 data
+```{r}
+asv_count <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+asv_taxonomy <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02/ASV2Taxonomy/results-revamp-2024-Elas02_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata) <- sample_metadata$Sample
+sample_metadata <- sample_metadata %>% select(-Sample)
+
+ASV_elas_2024 = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX_elas_2024 = tax_table(asv_taxonomy_mat)
+samples_elas_2024 = sample_data(sample_metadata)
+
+phylo_elas_2024 <- phyloseq(ASV_elas_2024, TAX_elas_2024, samples_elas_2024)
+
+```
+
+
+
+# Filtering & QC
+## How many taxa before filtering
+First change names of phyloseq objects. Retain `phylo_XX_XX`, which is the unfiltered object. Make new objects, `ps_XX_XX`, which will be what remains after the following filtering steps:
+```{r}
+ps_mifish_2020 <- phylo_mifish_2020
+ps_mifish_2021 <- phylo_mifish_2021
+ps_mifish_2022 <- phylo_mifish_2022
+ps_mifish_2023 <- phylo_mifish_2023
+ps_mifish_2024 <- phylo_mifish_2024
+
+ps_elas_2021 <- phylo_elas_2021
+ps_elas_2023 <- phylo_elas_2023
+ps_elas_2024 <- phylo_elas_2024
+
+# How many taxa before filtering?
+nrow(tax_table(phylo_mifish_2020)) 
+nrow(tax_table(phylo_mifish_2021)) 
+nrow(tax_table(phylo_mifish_2022)) # this number is misleading because I had to do the dada2 step in two subsets, then append the tables, so some of these ASVs very likely should overlap
+nrow(tax_table(phylo_mifish_2023)) 
+nrow(tax_table(phylo_mifish_2024)) 
+
+nrow(tax_table(phylo_elas_2021)) 
+nrow(tax_table(phylo_elas_2023)) 
+nrow(tax_table(phylo_elas_2024)) 
+
+```
+
+
+
+## Replace NA in taxa list with next highest annotated taxon
+```{r}
+
+tax_table(ps_mifish_2020) <- tax_table(fantaxtic::name_na_taxa(ps_mifish_2020, include_rank = T))
+tax_table(ps_mifish_2021) <- tax_table(fantaxtic::name_na_taxa(ps_mifish_2021, include_rank = T))
+tax_table(ps_mifish_2022) <- tax_table(fantaxtic::name_na_taxa(ps_mifish_2022, include_rank = T))
+tax_table(ps_mifish_2023) <- tax_table(fantaxtic::name_na_taxa(ps_mifish_2023, include_rank = T))
+tax_table(ps_mifish_2024) <- tax_table(fantaxtic::name_na_taxa(ps_mifish_2024, include_rank = T))
+
+
+tax_table(ps_elas_2021) <- tax_table(fantaxtic::name_na_taxa(ps_elas_2021, include_rank = T))
+tax_table(ps_elas_2023) <- tax_table(fantaxtic::name_na_taxa(ps_elas_2023, include_rank = T))
+tax_table(ps_elas_2024) <- tax_table(fantaxtic::name_na_taxa(ps_elas_2024, include_rank = T))
+
+
+
+```
+
+
+## Remove prokaryotes
+check
+```{r}
+unique(tax_table(ps_mifish_2020)[, "Kingdom"])
+unique(tax_table(ps_mifish_2021)[, "Kingdom"])
+unique(tax_table(ps_mifish_2022)[, "Kingdom"])
+unique(tax_table(ps_mifish_2023)[, "Kingdom"])
+unique(tax_table(ps_mifish_2024)[, "Kingdom"])
+
+unique(tax_table(ps_elas_2021)[, "Kingdom"])
+unique(tax_table(ps_elas_2023)[, "Kingdom"])
+unique(tax_table(ps_elas_2024)[, "Kingdom"])
+```
+
+remove
+```{r}
+#ps_mifish_2020 <- subset_taxa(ps_mifish_2020, !Kingdom == 'Bacteria')
+ps_mifish_2021 <- subset_taxa(ps_mifish_2021, !Kingdom == 'Bacteria')
+ps_mifish_2022 <- subset_taxa(ps_mifish_2022, !(Kingdom %in% c("Bacteria", "Archaea"))) # 2022 also had archaea
+ps_mifish_2023 <- subset_taxa(ps_mifish_2023, !Kingdom == 'Bacteria')
+ps_mifish_2024 <- subset_taxa(ps_mifish_2024, !Kingdom == 'Bacteria')
+
+
+# no prokaryotes are in elas objects
+
+```
+
+
+check
+```{r}
+unique(tax_table(ps_mifish_2020)[, "Kingdom"])
+unique(tax_table(ps_mifish_2021)[, "Kingdom"])
+unique(tax_table(ps_mifish_2022)[, "Kingdom"])
+unique(tax_table(ps_mifish_2023)[, "Kingdom"])
+unique(tax_table(ps_mifish_2024)[, "Kingdom"])
+
+unique(tax_table(ps_elas_2021)[, "Kingdom"])
+unique(tax_table(ps_elas_2023)[, "Kingdom"])
+unique(tax_table(ps_elas_2024)[, "Kingdom"])
+```
+
+
+## Remove non-marine mammals
+
+check unique classes
+```{r}
+unique(tax_table(ps_mifish_2020)[, "Class"])
+unique(tax_table(ps_mifish_2021)[, "Class"])
+unique(tax_table(ps_mifish_2022)[, "Class"])
+unique(tax_table(ps_mifish_2023)[, "Class"])
+unique(tax_table(ps_mifish_2024)[, "Class"])
+
+unique(tax_table(ps_elas_2021)[, "Class"])
+unique(tax_table(ps_elas_2023)[, "Class"])
+unique(tax_table(ps_elas_2024)[, "Class"])
+```
+
+all ps objects have Mammalia
+
+
+Check whether these are contamination (eg. human, dog, etc) or something we want to keep (whales, dolphins, etc)
+```{r}
+unique(tax_table(ps_mifish_2020)[tax_table(ps_mifish_2020)[, "Class"] == "Mammalia", "Species"])
+unique(tax_table(ps_mifish_2021)[tax_table(ps_mifish_2021)[, "Class"] == "Mammalia", "Species"])
+unique(tax_table(ps_mifish_2022)[tax_table(ps_mifish_2022)[, "Class"] == "Mammalia", "Species"])
+unique(tax_table(ps_mifish_2023)[tax_table(ps_mifish_2023)[, "Class"] == "Mammalia", "Species"])
+unique(tax_table(ps_mifish_2024)[tax_table(ps_mifish_2024)[, "Class"] == "Mammalia", "Species"])
+
+
+unique(tax_table(ps_elas_2021)[tax_table(ps_elas_2021)[, "Class"] == "Mammalia", "Species"])
+unique(tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Class"] == "Mammalia", "Species"])
+unique(tax_table(ps_elas_2024)[tax_table(ps_elas_2024)[, "Class"] == "Mammalia", "Species"])
+
+
+```
+
+Summary:
+MiFish:
+2020 - remove all mammals
+2021 - remove all mammals (although Puma yagouaroundi is very interesting...)
+2022 - retain Tursiops truncatus and Unknown Delphinidae (Family), remove rest of mammals
+2023 - remove all mammals
+2024 - remove all mammals
+
+Elas02:
+remove all mammals from all 3 datasets
+
+```{r}
+ps_mifish_2020 <- subset_taxa(ps_mifish_2020, !Class == 'Mammalia')
+ps_mifish_2021 <- subset_taxa(ps_mifish_2021, !Class == 'Mammalia')
+ps_mifish_2022 <- subset_taxa(ps_mifish_2022, !Species == 'Homo sapiens' & !Species == 'Felis catus' & !Species == 'Bos taurus' & !Species == 'Canis lupus' & !Species == 'Sus scrofa' & !Species == 'Unknown Bovidae (Family)' & !Species == 'Unknown Bos (Genus)' & !Species == 'Unknown Hominidae (Family)' & !Species == 'Unknown Felidae (Family)' & !Species == 'Unknown Primates (Order)')
+ps_mifish_2023 <- subset_taxa(ps_mifish_2023, !Class == 'Mammalia')
+ps_mifish_2024 <- subset_taxa(ps_mifish_2024, !Class == 'Mammalia')
+
+ps_elas_2021 <- subset_taxa(ps_elas_2021, !Class == 'Mammalia')
+ps_elas_2023 <- subset_taxa(ps_elas_2023, !Class == 'Mammalia')
+ps_elas_2024 <- subset_taxa(ps_elas_2024, !Class == 'Mammalia')
+
+```
+
+## Remove the classes Aves and Zygnemophyceae
+
+Zygnemophyceae are green algae, cam remove all
+
+Check which Aves were detected
+```{r}
+
+#unique(tax_table(ps_mifish_2020)[tax_table(ps_mifish_2020)[, "Class"] == "Aves", "Species"]) # none detected in 2020
+unique(tax_table(ps_mifish_2021)[tax_table(ps_mifish_2021)[, "Class"] == "Aves", "Species"])
+unique(tax_table(ps_mifish_2022)[tax_table(ps_mifish_2022)[, "Class"] == "Aves", "Species"])
+unique(tax_table(ps_mifish_2023)[tax_table(ps_mifish_2023)[, "Class"] == "Aves", "Species"])
+unique(tax_table(ps_mifish_2024)[tax_table(ps_mifish_2024)[, "Class"] == "Aves", "Species"])
+
+
+unique(tax_table(ps_elas_2021)[tax_table(ps_elas_2021)[, "Class"] == "Aves", "Species"])
+unique(tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Class"] == "Aves", "Species"])
+unique(tax_table(ps_elas_2024)[tax_table(ps_elas_2024)[, "Class"] == "Aves", "Species"])
+
+```
+
+Turkey, cormorant, chicken, gulls, common parakeet, common myna, song sparrow...
+Some of these are interesting but also some are possible contamination. Remove all since they are not the target of the study
+
+Also remove Actinopteri from Elas02 libraries
+
+```{r}
+ps_mifish_2020 <- subset_taxa(ps_mifish_2020, !Class == 'Aves')
+ps_mifish_2021 <- subset_taxa(ps_mifish_2021, !Class == 'Aves')
+ps_mifish_2022 <- subset_taxa(ps_mifish_2022, !Class == 'Aves' & !Class == 'Zygnemophyceae')
+ps_mifish_2023 <- subset_taxa(ps_mifish_2023, !Class == 'Aves')
+ps_mifish_2024 <- subset_taxa(ps_mifish_2024, !Class == 'Aves')
+
+ps_elas_2021 <- subset_taxa(ps_elas_2021, !Class == 'Aves' & !Class == 'Actinopteri')
+ps_elas_2023 <- subset_taxa(ps_elas_2023, !Class == 'Aves' & !Class == 'Actinopteri')
+ps_elas_2024 <- subset_taxa(ps_elas_2024, !Class == 'Aves' & !Class == 'Actinopteri')
+```
+
+check
+```{r}
+unique(tax_table(ps_mifish_2020)[, "Class"])
+unique(tax_table(ps_mifish_2021)[, "Class"])
+unique(tax_table(ps_mifish_2022)[, "Class"])
+unique(tax_table(ps_mifish_2023)[, "Class"])
+unique(tax_table(ps_mifish_2024)[, "Class"])
+
+unique(tax_table(ps_elas_2021)[, "Class"])
+unique(tax_table(ps_elas_2023)[, "Class"])
+unique(tax_table(ps_elas_2024)[, "Class"])
+```
+
+
+
+## Remove incorrect annotations
+check unique species
+```{r}
+data.frame(unique(tax_table(ps_mifish_2020)[, "Species"]))
+data.frame(unique(tax_table(ps_mifish_2021)[, "Species"]))
+data.frame(unique(tax_table(ps_mifish_2022)[, "Species"]))
+data.frame(unique(tax_table(ps_mifish_2023)[, "Species"]))
+data.frame(unique(tax_table(ps_mifish_2024)[, "Species"]))
+
+data.frame(unique(tax_table(ps_elas_2021)[, "Species"]))
+data.frame(unique(tax_table(ps_elas_2023)[, "Species"]))
+data.frame(unique(tax_table(ps_elas_2024)[, "Species"]))
+```
+
+### Change all menhaden to genus-level annotation
+
+There is something going on with menhaden. The regional species should be Atlantic menhaden (B. tyrannus) but we frequently get Finescale and Gulf menhaden. Retain all at genus level for now and look into phylogenetics later (if it can even be resolved with this short amplicon)
+
+```{r}
+tax_table(ps_mifish_2020)[tax_table(ps_mifish_2020)[, "Genus"] == "Brevoortia", "Species"] <- "Unknown Brevoortia (Genus)"
+tax_table(ps_mifish_2021)[tax_table(ps_mifish_2021)[, "Genus"] == "Brevoortia", "Species"] <- "Unknown Brevoortia (Genus)"
+tax_table(ps_mifish_2022)[tax_table(ps_mifish_2022)[, "Genus"] == "Brevoortia", "Species"] <- "Unknown Brevoortia (Genus)"
+tax_table(ps_mifish_2023)[tax_table(ps_mifish_2023)[, "Genus"] == "Brevoortia", "Species"] <- "Unknown Brevoortia (Genus)"
+tax_table(ps_mifish_2024)[tax_table(ps_mifish_2024)[, "Genus"] == "Brevoortia", "Species"] <- "Unknown Brevoortia (Genus)"
+
+```
+
+check
+```{r}
+unique(tax_table(ps_mifish_2020)[tax_table(ps_mifish_2020)[, "Genus"] == "Brevoortia","Species"])
+unique(tax_table(ps_mifish_2021)[tax_table(ps_mifish_2021)[, "Genus"] == "Brevoortia","Species"])
+unique(tax_table(ps_mifish_2022)[tax_table(ps_mifish_2022)[, "Genus"] == "Brevoortia","Species"])
+unique(tax_table(ps_mifish_2023)[tax_table(ps_mifish_2023)[, "Genus"] == "Brevoortia","Species"])
+unique(tax_table(ps_mifish_2024)[tax_table(ps_mifish_2024)[, "Genus"] == "Brevoortia","Species"])
+
+```
+### Change Mustelus species
+
+check
+```{r}
+unique(tax_table(ps_elas_2021)[tax_table(ps_elas_2021)[, "Genus"] == "Mustelus","Species"])
+unique(tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Genus"] == "Mustelus","Species"])
+unique(tax_table(ps_elas_2024)[tax_table(ps_elas_2024)[, "Genus"] == "Mustelus","Species"])
+
+```
+
+Mustelus mosis, Mustelus henlei, and Mustelus griseus are likely incorrect (these are Asian/Arabian/Pacific species). 
+
+Change to Unknown Mustelus (Genus)
+```{r}
+tax_table(ps_elas_2021)[tax_table(ps_elas_2021)[, "Species"] %in% c("Mustelus mosis", "Mustelus henlei", "Mustelus griseus")] <- "Unknown Mustelus (Genus)"
+
+tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Species"] %in% c("Mustelus mosis", "Mustelus henlei", "Mustelus griseus")] <- "Unknown Mustelus (Genus)"
+
+tax_table(ps_elas_2024)[tax_table(ps_elas_2024)[, "Species"] %in% c("Mustelus mosis", "Mustelus henlei", "Mustelus griseus")] <- "Unknown Mustelus (Genus)"
+
+```
+
+check
+```{r}
+unique(tax_table(ps_elas_2021)[tax_table(ps_elas_2021)[, "Genus"] == "Mustelus","Species"])
+unique(tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Genus"] == "Mustelus","Species"])
+unique(tax_table(ps_elas_2024)[tax_table(ps_elas_2024)[, "Genus"] == "Mustelus","Species"])
+
+```
+
+### Change Pteroplatytrygon sp.
+check
+```{r}
+#unique(tax_table(ps_elas_2021)[tax_table(ps_elas_2021)[, "Genus"] == "Pteroplatytrygon","Species"])
+unique(tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Genus"] == "Pteroplatytrygon","Species"])
+#unique(tax_table(ps_elas_2024)[tax_table(ps_elas_2024)[, "Genus"] == "Pteroplatytrygon","Species"])
+
+```
+
+
+There is only one possible species, put in regional species name, violacea
+
+
+
+```{r}
+
+tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Genus"] == "Pteroplatytrygon", "Species"] <- "Pteroplatytrygon violacea"
+
+```
+
+check
+```{r}
+unique(tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Genus"] == "Pteroplatytrygon","Species"])
+
+```
+
+
+
+## Add in Common Names
+Import
+```{r}
+commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
+
+```
+Append common names
+```{r}
+# Extract, update, tax_table- MiFish 2020
+taxonomy_mifish_2020 <- as.data.frame(tax_table(ps_mifish_2020)) %>%
+  rownames_to_column("ASV") %>%
+  left_join(commonnames, by = "Species") 
+row.names(taxonomy_mifish_2020) <- taxonomy_mifish_2020$ASV
+taxonomy_mifish_2020 <- taxonomy_mifish_2020 %>% select(-ASV)
+# Update the phyloseq object
+tax_table(ps_mifish_2020) <- as.matrix(taxonomy_mifish_2020)
+
+# 2021
+taxonomy_mifish_2021 <- as.data.frame(tax_table(ps_mifish_2021)) %>%
+  rownames_to_column("ASV") %>%
+  left_join(commonnames, by = "Species") 
+row.names(taxonomy_mifish_2021) <- taxonomy_mifish_2021$ASV
+taxonomy_mifish_2021 <- taxonomy_mifish_2021 %>% select(-ASV)
+tax_table(ps_mifish_2021) <- as.matrix(taxonomy_mifish_2021)
+
+# 2022
+taxonomy_mifish_2022 <- as.data.frame(tax_table(ps_mifish_2022)) %>%
+  rownames_to_column("ASV") %>%
+  left_join(commonnames, by = "Species") 
+row.names(taxonomy_mifish_2022) <- taxonomy_mifish_2022$ASV
+taxonomy_mifish_2022 <- taxonomy_mifish_2022 %>% select(-ASV)
+tax_table(ps_mifish_2022) <- as.matrix(taxonomy_mifish_2022)
+
+# 2023
+taxonomy_mifish_2023 <- as.data.frame(tax_table(ps_mifish_2023)) %>%
+  rownames_to_column("ASV") %>%
+  left_join(commonnames, by = "Species") 
+row.names(taxonomy_mifish_2023) <- taxonomy_mifish_2023$ASV
+taxonomy_mifish_2023 <- taxonomy_mifish_2023 %>% select(-ASV)
+tax_table(ps_mifish_2023) <- as.matrix(taxonomy_mifish_2023)
+
+# 2024
+taxonomy_mifish_2024 <- as.data.frame(tax_table(ps_mifish_2024)) %>%
+  rownames_to_column("ASV") %>%
+  left_join(commonnames, by = "Species") 
+row.names(taxonomy_mifish_2024) <- taxonomy_mifish_2024$ASV
+taxonomy_mifish_2024 <- taxonomy_mifish_2024 %>% select(-ASV)
+tax_table(ps_mifish_2024) <- as.matrix(taxonomy_mifish_2024)
+
+# Elas
+#2021
+taxonomy_elas_2021 <- as.data.frame(tax_table(ps_elas_2021)) %>%
+  rownames_to_column("ASV") %>%
+  left_join(commonnames, by = "Species") 
+row.names(taxonomy_elas_2021) <- taxonomy_elas_2021$ASV
+taxonomy_elas_2021 <- taxonomy_elas_2021 %>% select(-ASV)
+tax_table(ps_elas_2021) <- as.matrix(taxonomy_elas_2021)
+
+#2023
+taxonomy_elas_2023 <- as.data.frame(tax_table(ps_elas_2023)) %>%
+  rownames_to_column("ASV") %>%
+  left_join(commonnames, by = "Species") 
+row.names(taxonomy_elas_2023) <- taxonomy_elas_2023$ASV
+taxonomy_elas_2023 <- taxonomy_elas_2023 %>% select(-ASV)
+tax_table(ps_elas_2023) <- as.matrix(taxonomy_elas_2023)
+
+#2024
+taxonomy_elas_2024 <- as.data.frame(tax_table(ps_elas_2024)) %>%
+  rownames_to_column("ASV") %>%
+  left_join(commonnames, by = "Species") 
+row.names(taxonomy_elas_2024) <- taxonomy_elas_2024$ASV
+taxonomy_elas_2024 <- taxonomy_elas_2024 %>% select(-ASV)
+tax_table(ps_elas_2024) <- as.matrix(taxonomy_elas_2024)
+
+```
+
+Check for missing (NA) common names
+(If there are, update commonnames database)
+```{r}
+#tax_table(ps_mifish_2020)[is.na(tax_table(ps_mifish_2020)[, "CommonName"])]
+#tax_table(ps_mifish_2021)[is.na(tax_table(ps_mifish_2021)[, "CommonName"])]
+#tax_table(ps_mifish_2022)[is.na(tax_table(ps_mifish_2022)[, "CommonName"])]
+#tax_table(ps_mifish_2023)[is.na(tax_table(ps_mifish_2023)[, "CommonName"])]
+#tax_table(ps_mifish_2024)[is.na(tax_table(ps_mifish_2024)[, "CommonName"])]
+
+
+#tax_table(ps_elas_2021)[is.na(tax_table(ps_elas_2021)[, "CommonName"])]
+#tax_table(ps_elas_2023)[is.na(tax_table(ps_elas_2023)[, "CommonName"])]
+#tax_table(ps_elas_2024)[is.na(tax_table(ps_elas_2024)[, "CommonName"])]
+
+```
+
+## Remove Low Abundant ASVs
+
+Based on some analysis in the `Expedition-eDNA-plots.Rmd` notebook, remove ASVs that have <500 reads in a sample
+```{r}
+data.frame(otu_table(ps_mifish_2020)) # compare before
+ps_mifish_2020 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps_mifish_2020,
+  minabund = 500,
+  relabund = FALSE)
+data.frame(otu_table(ps_mifish_2020)) # and after
+
+data.frame(otu_table(ps_mifish_2021)) # compare before
+ps_mifish_2021 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps_mifish_2021,
+  minabund = 500,
+  relabund = FALSE)
+data.frame(otu_table(ps_mifish_2021)) # and after
+
+data.frame(otu_table(ps_mifish_2022)) # compare before
+ps_mifish_2022 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps_mifish_2022,
+  minabund = 500,
+  relabund = FALSE)
+data.frame(otu_table(ps_mifish_2022)) # and after
+
+data.frame(otu_table(ps_mifish_2023)) # compare before
+ps_mifish_2023 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps_mifish_2023,
+  minabund = 500,
+  relabund = FALSE)
+data.frame(otu_table(ps_mifish_2023)) # and after
+
+data.frame(otu_table(ps_mifish_2024)) # compare before
+ps_mifish_2024 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps_mifish_2024,
+  minabund = 500,
+  relabund = FALSE)
+data.frame(otu_table(ps_mifish_2024)) # and after
+
+
+
+
+data.frame(otu_table(ps_elas_2021)) # compare before
+ps_elas_2021 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps_elas_2021,
+  minabund = 500,
+  relabund = FALSE)
+data.frame(otu_table(ps_elas_2021)) # and after
+
+data.frame(otu_table(ps_elas_2023)) # compare before
+ps_elas_2023 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps_elas_2023,
+  minabund = 500,
+  relabund = FALSE)
+data.frame(otu_table(ps_elas_2023)) # and after
+
+data.frame(otu_table(ps_elas_2024)) # compare before
+ps_elas_2024 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps_elas_2024,
+  minabund = 500,
+  relabund = FALSE)
+data.frame(otu_table(ps_elas_2024)) # and after
+```
+
+
+## Remove Low Effort Samples
+
+Plot bar plots of total sequence reads across all samples
+```{r}
+plot_bar(ps_mifish_2020)
+plot_bar(ps_mifish_2021)
+plot_bar(ps_mifish_2022)
+plot_bar(ps_mifish_2023)
+plot_bar(ps_mifish_2024)
+
+
+plot_bar(ps_elas_2021)
+plot_bar(ps_elas_2023)
+plot_bar(ps_elas_2024)
+
+```
+
+Cut out any sample with <15,000 reads from all libraries
+
+
+```{r}
+ps_mifish_2020 <- prune_samples(sample_sums(ps_mifish_2020)>=25000,ps_mifish_2020)
+ps_mifish_2021 <- prune_samples(sample_sums(ps_mifish_2021)>=25000,ps_mifish_2021)
+ps_mifish_2022 <- prune_samples(sample_sums(ps_mifish_2022)>=25000,ps_mifish_2022)
+ps_mifish_2023 <- prune_samples(sample_sums(ps_mifish_2023)>=25000,ps_mifish_2023)
+ps_mifish_2024 <- prune_samples(sample_sums(ps_mifish_2024)>=25000,ps_mifish_2024)
+
+
+ps_elas_2021 <- prune_samples(sample_sums(ps_elas_2021)>=25000,ps_elas_2021)
+ps_elas_2023 <- prune_samples(sample_sums(ps_elas_2023)>=25000,ps_elas_2023)
+ps_elas_2024 <- prune_samples(sample_sums(ps_elas_2024)>=25000,ps_elas_2024)
+
+```
+
+Plot again to check
+```{r}
+plot_bar(ps_mifish_2020)
+plot_bar(ps_mifish_2021)
+plot_bar(ps_mifish_2022)
+plot_bar(ps_mifish_2023)
+plot_bar(ps_mifish_2024)
+
+
+plot_bar(ps_elas_2021)
+plot_bar(ps_elas_2023)
+plot_bar(ps_elas_2024)
+
+```
+
+
+## Agglomerate 
+```{r}
+ps_mifish_2020_glommed <- tax_glom(ps_mifish_2020, "Species-CommonName")
+ps_mifish_2021_glommed <- tax_glom(ps_mifish_2021, "Species-CommonName")
+ps_mifish_2022_glommed <- tax_glom(ps_mifish_2022, "Species-CommonName")
+ps_mifish_2023_glommed <- tax_glom(ps_mifish_2023, "Species-CommonName")
+ps_mifish_2024_glommed <- tax_glom(ps_mifish_2024, "Species-CommonName")
+
+ps_elas_2021_glommed <- tax_glom(ps_elas_2021, "Species-CommonName")
+ps_elas_2023_glommed <- tax_glom(ps_elas_2023, "Species-CommonName")
+ps_elas_2024_glommed <- tax_glom(ps_elas_2024, "Species-CommonName")
+
+
+```
+
+check glommed data tables
+```{r}
+data.frame(tax_table(ps_mifish_2020_glommed))
+data.frame(tax_table(ps_mifish_2021_glommed))
+data.frame(tax_table(ps_mifish_2022_glommed))
+data.frame(tax_table(ps_mifish_2023_glommed))
+data.frame(tax_table(ps_mifish_2024_glommed))
+
+data.frame(tax_table(ps_elas_2021_glommed))
+data.frame(tax_table(ps_elas_2023_glommed))
+data.frame(tax_table(ps_elas_2024_glommed))
+
+
+```
+
+
+## krona plots
+MUST PASTE inTO the console:
+NOTE- this function doesn't allow you to name Krona files. I went in manually in `krona_files` and names them myself to share with collaborators
+```{r}
+source('https://raw.githubusercontent.com/markschl/embed_krona/master/embed_krona.R')
+
+mifish_2020_krona <- plot_krona(ps_mifish_2020_glommed) # gets written as krona_files/krona_3.html
+mifish_2021_krona <- plot_krona(ps_mifish_2021_glommed) 
+mifish_2022_krona <- plot_krona(ps_mifish_2022_glommed) 
+mifish_2023_krona <- plot_krona(ps_mifish_2023_glommed) 
+mifish_2024_krona <- plot_krona(ps_mifish_2024_glommed) 
+
+elas_2021_krona <- plot_krona(ps_elas_2021_glommed) 
+elas_2023_krona <- plot_krona(ps_elas_2023_glommed) 
+elas_2024_krona <- plot_krona(ps_elas_2024_glommed) 
+
+```
+
+## Export tables
+```{r}
+mifish_2020_glommed_asv_table <- data.frame(otu_table(ps_mifish_2020_glommed))
+mifish_2020_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2020_glommed)), var = "1stRepresentative_ASV")
+mifish_2020_glommed_sample_data <- data.frame(sample_data(ps_mifish_2020_glommed))
+write.csv(mifish_2020_glommed_asv_table,"filtered_data/mifish_2020_glommed_asv_table.csv", row.names = TRUE)
+write.csv(mifish_2020_glommed_tax_table,"filtered_data/mifish_2020_glommed_tax_table.csv", row.names = FALSE)
+write.csv(mifish_2020_glommed_sample_data,"filtered_data/mifish_2020_glommed_sample_data.csv", row.names = TRUE)
+
+mifish_2021_glommed_asv_table <- data.frame(otu_table(ps_mifish_2021_glommed))
+mifish_2021_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2021_glommed)), var = "1stRepresentative_ASV")
+mifish_2021_glommed_sample_data <- data.frame(sample_data(ps_mifish_2021_glommed))
+write.csv(mifish_2021_glommed_asv_table,"filtered_data/mifish_2021_glommed_asv_table.csv", row.names = TRUE)
+write.csv(mifish_2021_glommed_tax_table,"filtered_data/mifish_2021_glommed_tax_table.csv", row.names = FALSE)
+write.csv(mifish_2021_glommed_sample_data,"filtered_data/mifish_2021_glommed_sample_data.csv", row.names = TRUE)
+
+
+
+mifish_2022_glommed_asv_table <- data.frame(otu_table(ps_mifish_2022_glommed))
+mifish_2022_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2022_glommed)), var = "1stRepresentative_ASV")
+mifish_2022_glommed_sample_data <- data.frame(sample_data(ps_mifish_2022_glommed))
+write.csv(mifish_2022_glommed_asv_table,"filtered_data/mifish_2022_glommed_asv_table.csv", row.names = TRUE)
+write.csv(mifish_2022_glommed_tax_table,"filtered_data/mifish_2022_glommed_tax_table.csv", row.names = FALSE)
+write.csv(mifish_2022_glommed_sample_data,"filtered_data/mifish_2022_glommed_sample_data.csv", row.names = TRUE)
+
+
+mifish_2023_glommed_asv_table <- data.frame(otu_table(ps_mifish_2023_glommed))
+mifish_2023_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2023_glommed)), var = "1stRepresentative_ASV")
+mifish_2023_glommed_sample_data <- data.frame(sample_data(ps_mifish_2023_glommed))
+write.csv(mifish_2023_glommed_asv_table,"filtered_data/mifish_2023_glommed_asv_table.csv", row.names = TRUE)
+write.csv(mifish_2023_glommed_tax_table,"filtered_data/mifish_2023_glommed_tax_table.csv", row.names = FALSE)
+write.csv(mifish_2023_glommed_sample_data,"filtered_data/mifish_2023_glommed_sample_data.csv", row.names = TRUE)
+
+
+
+
+mifish_2024_glommed_asv_table <- data.frame(otu_table(ps_mifish_2024_glommed))
+mifish_2024_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2024_glommed)), var = "1stRepresentative_ASV")
+mifish_2024_glommed_sample_data <- data.frame(sample_data(ps_mifish_2024_glommed))
+write.csv(mifish_2024_glommed_asv_table,"filtered_data/mifish_2024_glommed_asv_table.csv", row.names = TRUE)
+write.csv(mifish_2024_glommed_tax_table,"filtered_data/mifish_2024_glommed_tax_table.csv", row.names = FALSE)
+write.csv(mifish_2024_glommed_sample_data,"filtered_data/mifish_2024_glommed_sample_data.csv", row.names = TRUE)
+
+
+
+elas_2021_glommed_asv_table <- data.frame(otu_table(ps_elas_2021_glommed))
+elas_2021_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2021_glommed)), var = "1stRepresentative_ASV")
+elas_2021_glommed_sample_data <- data.frame(sample_data(ps_elas_2021_glommed))
+write.csv(elas_2021_glommed_asv_table,"filtered_data/elas_2021_glommed_asv_table.csv", row.names = TRUE)
+write.csv(elas_2021_glommed_tax_table,"filtered_data/elas_2021_glommed_tax_table.csv", row.names = FALSE)
+write.csv(elas_2021_glommed_sample_data,"filtered_data/elas_2021_glommed_sample_data.csv", row.names = TRUE)
+
+elas_2023_glommed_asv_table <- data.frame(otu_table(ps_elas_2023_glommed))
+elas_2023_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2023_glommed)), var = "1stRepresentative_ASV")
+elas_2023_glommed_sample_data <- data.frame(sample_data(ps_elas_2023_glommed))
+write.csv(elas_2023_glommed_asv_table,"filtered_data/elas_2023_glommed_asv_table.csv", row.names = TRUE)
+write.csv(elas_2023_glommed_tax_table,"filtered_data/elas_2023_glommed_tax_table.csv", row.names = FALSE)
+write.csv(elas_2023_glommed_sample_data,"filtered_data/elas_2023_glommed_sample_data.csv", row.names = TRUE)
+
+elas_2024_glommed_asv_table <- data.frame(otu_table(ps_elas_2024_glommed))
+elas_2024_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2024_glommed)), var = "1stRepresentative_ASV")
+elas_2024_glommed_sample_data <- data.frame(sample_data(ps_elas_2024_glommed))
+write.csv(elas_2024_glommed_asv_table,"filtered_data/elas_2024_glommed_asv_table.csv", row.names = TRUE)
+write.csv(elas_2024_glommed_tax_table,"filtered_data/elas_2024_glommed_tax_table.csv", row.names = FALSE)
+write.csv(elas_2024_glommed_sample_data,"filtered_data/elas_2024_glommed_sample_data.csv", row.names = TRUE)
+```
+

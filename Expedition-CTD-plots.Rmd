@@ -12,6 +12,7 @@ output: html_notebook
 library(tidyverse)
 library(sf)
 library(gridExtra)
+library(ggrepel)
 ```
 
 ## Import Sample Key with times
@@ -295,11 +296,89 @@ ggsave("figures-expedition/Deployment03track.jpg", plot = Deployment03map, width
 ggsave("figures-expedition/Deployment04track.jpg", plot = Deployment04map, width = 7, height = 4, units = "in")
 ggsave("figures-expedition/Deployment05track.jpg", plot = Deployment05map, width = 7, height = 4, units = "in")
 ggsave("figures-expedition/Deployment06track.jpg", plot = Deployment06map, width = 7, height = 4, units = "in")
+```
+
+
+```{r}
 ggsave("figures-expedition/Deployment07track.jpg", plot = Deployment07map, width = 7, height = 4, units = "in")
 ggsave("figures-expedition/Deployment08track.jpg", plot = Deployment08map, width = 7, height = 4, units = "in")
 
 ```
 
+# Map stations with some sampling characteristics
+Get lat/long from eDNA samples from single column, `Coordinates`
+```{r}
+key <- key %>%
+              separate(Coordinates, into = c("Lat", "Long"), sep = ", ")
+key$Lat <- as.numeric(key$Lat)
+key$Long <- as.numeric(key$Long)
+
+key
+```
+
+Basic map of all samples 
+```{r}
+shinnbay_map +
+  geom_point(data = key, aes(y = Lat, x = Long))
+```
+
+When re-sampling a site, the coordinates might have been slightly different (by 0.001 degrees- for example). Take the average coordinate for each station from every time it was sampled. Also count how many time a station was sampled
+
+```{r}
+station_summary <- key %>%
+  group_by(`Station ID`) %>%
+  summarise(
+    station_count = n(),                     # Count the number of entries
+    avg_Lat = mean(Lat, na.rm = TRUE),       # Calculate average Latitude
+    avg_Long = mean(Long, na.rm = TRUE),     # Calculate average Longitude
+    Site_type = first(`Site Type`)           # Retain site type for each station
+  ) 
+station_summary
+```
+
+## Plot map with sampling frequency
+```{r}
+sample_frequency_map <- shinnbay_map +
+  geom_point(data = station_summary, aes(y = avg_Lat, x = avg_Long, color = station_count), size = 4) +
+  theme(legend.title = element_blank()) +
+  scale_color_viridis_c(option = "viridis", direction = 1, 
+                      breaks = seq(1, 10, by = 1)) +
+  xlab(NULL) +
+  ylab(NULL) 
+  
+sample_frequency_map
+ggsave("figures-expedition/sample_frequency_map.eps", plot = sample_frequency_map, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/sample_frequency_map.jpg", plot = sample_frequency_map, width = 7, height = 4, units = "in")
+```
+
+## Plot map with site type
+
+```{r}
+sample_type_map <- shinnbay_map +
+  geom_point(data = station_summary, aes(y = avg_Lat, x = avg_Long, color = Site_type), size = 4) +
+  theme(legend.title = element_blank()) +
+  scale_color_brewer(palette = "Set3") +
+  xlab(NULL) +
+  ylab(NULL) 
+  
+sample_type_map
+ggsave("figures-expedition/sample_type_map.eps", plot = sample_type_map, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/sample_type_map.jpg", plot = sample_type_map, width = 7, height = 4, units = "in")
+```
+
+## Plot map with station ID names
+
+```{r}
+station_ID_map <- shinnbay_map +
+  geom_label_repel(data = station_summary, aes(y = avg_Lat, x = avg_Long, label = `Station ID`), size = 4, fill = "lightblue", color = "black") +
+  xlab(NULL) +
+  ylab(NULL) 
+  
+station_ID_map
+
+ggsave("figures-expedition/station_ID_map.eps", plot = station_ID_map, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/station_ID_map.jpg", plot = station_ID_map, width = 7, height = 4, units = "in")
+```
 
 # Map environmental data
 Temperature
