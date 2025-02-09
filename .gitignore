@@ -4,9 +4,12 @@
 .Ruserdata
 figures-salzman-etal-elasmos/
 figures-expedition/
+figures*/
 raw_data/
+filtered_data/
 results*/
 retired/
 *.RData
 menhaden/
 VertUprimerAnalysis/
+
