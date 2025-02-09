@@ -1,0 +1,636 @@
+---
+title: "2024 Mifish Elas02 CO1 plots"
+output: html_notebook
+---
+
+
+Notebook for making plots from 2024 eDNA data (trawl and hand samples only- not expedition)
+
+Import data tables generated with [/MiFish-Elas-CO1-handsamples-2020-2024.nb.html](MiFish-Elas-CO1-handsamples-2020-2024 notebook)
+
+# Load packages
+
+```{r}
+# rm(list = ls())
+library(tidyverse)
+library(phyloseq)
+library(vegan)
+library(RColorBrewer)
+library(microbiome)
+library(metagMisc)
+library(fantaxtic)
+library(ggrepel)
+library(paletteer)
+library(pals)
+library(compositions)
+library(hms)
+library(ggvegan)
+```
+
+#  Import cleand up data tables
+## Mifish-
+```{r}
+asv_count_mifish <- read.csv("filtered_data/mifish_2024_glommed_asv_table.csv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_mifish) <- asv_count_mifish$X
+asv_count_mifish <- asv_count_mifish %>% select(-X)
+asv_count_mifish_mat <- as.matrix(asv_count_mifish)
+
+asv_taxonomy_mifish <- read.csv("filtered_data/mifish_2024_glommed_tax_table.csv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy_mifish) <- asv_taxonomy_mifish$X1stRepresentative_ASV
+asv_taxonomy_mifish <- asv_taxonomy_mifish %>% select(-X1stRepresentative_ASV)
+asv_taxonomy_mifish_mat <- as.matrix(asv_taxonomy_mifish)
+
+sample_metadata_mifish <- read.csv("filtered_data/mifish_2024_sample_data.csv", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata_mifish) <- sample_metadata_mifish$X
+sample_metadata_mifish <- sample_metadata_mifish %>% select(-X)
+
+
+ASV_2024_mifish = otu_table(asv_count_mifish_mat, taxa_are_rows = TRUE)
+TAX_2024_mifish = tax_table(asv_taxonomy_mifish_mat)
+samples_2024_mifish = sample_data(sample_metadata_mifish)
+
+phylo_2024_mifish <- phyloseq(ASV_2024_mifish, TAX_2024_mifish, samples_2024_mifish)
+
+```
+
+
+## Elas02
+```{r}
+asv_count_elas <- read.csv("filtered_data/elas_2024_glommed_asv_table.csv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_elas) <- asv_count_elas$X
+asv_count_elas <- asv_count_elas %>% select(-X)
+asv_count_elas_mat <- as.matrix(asv_count_elas)
+
+asv_taxonomy_elas <- read.csv("filtered_data/elas_2024_glommed_tax_table.csv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy_elas) <- asv_taxonomy_elas$X1stRepresentative_ASV
+asv_taxonomy_elas <- asv_taxonomy_elas %>% select(-X1stRepresentative_ASV)
+asv_taxonomy_elas_mat <- as.matrix(asv_taxonomy_elas)
+
+sample_metadata_elas <- read.csv("filtered_data/elas_2024_sample_data.csv", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata_elas) <- sample_metadata_elas$X
+sample_metadata_elas <- sample_metadata_elas %>% select(-X)
+
+
+ASV_2024_elas = otu_table(asv_count_elas_mat, taxa_are_rows = TRUE)
+TAX_2024_elas = tax_table(asv_taxonomy_elas_mat)
+samples_2024_elas = sample_data(sample_metadata_elas)
+
+phylo_2024_elas <- phyloseq(ASV_2024_elas, TAX_2024_elas, samples_2024_elas)
+
+```
+
+## Common names
+Import common names database and set color scheme
+```{r}
+commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
+
+myColors_sciname <- setNames(commonnames$Color, commonnames$Species)
+myColors_comname <- setNames(commonnames$Color, commonnames$CommonName)
+myColors_Sci_comname <- setNames(commonnames$Color, commonnames$Species.CommonName)
+
+
+head(myColors_sciname)
+head(myColors_comname)
+head(myColors_Sci_comname)
+```
+
+
+# Plot positive controls
+Note- there are no Elas-2 positive controls, just MiFish
+
+Filter them out into new ps object:
+```{r}
+# Make new df with positive controls and remove ASVs that are not represented
+ps2024_mifish_posctl <- subset_samples(phylo_2024_mifish, controls=="positive")
+
+# Use metagMisc to remove ASV rows with 0 abundance for all positive samples
+ps2024_mifish_posctl <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+  ps2024_mifish_posctl,
+  minabund = 0,
+  relabund = FALSE)
+
+# Make a rel abun ps object also
+ps2024_mifish_posctl_ra <- microbiome::transform(ps2024_mifish_posctl, transform = "compositional")
+```
+
+Plot rel abun in pos ctls
+```{r}
+mifish_posctl_barplot <- plot_bar(ps2024_mifish_posctl, fill = "CommonName", x = "replicates", title = "2024 Hand Samples: Positive Controls") + 
+  scale_y_continuous(name="Read Abundance")+
+  theme_minimal() +
+  theme(axis.title.x=element_blank(), legend.title = element_blank())+ 
+  scale_fill_manual(values = myColors_comname) 
+mifish_posctl_barplot
+
+mifish_posctl_barplot_ra <- plot_bar(ps2024_mifish_posctl_ra, fill = "CommonName", x = "replicates", title = "2024 Hand Samples: Positive Controls") + 
+  scale_y_continuous(name="Read Abundance")+
+  theme_minimal() +
+  theme(axis.title.x=element_blank(), legend.title = element_blank()) + 
+  scale_fill_manual(values = myColors_comname) 
+mifish_posctl_barplot_ra
+
+ggsave(plot = mifish_posctl_barplot_ra, filename = "figures-2024eDNA/mifish_posctl_barplot_ra.jpg", width = 7, height = 4, units = "in")
+
+```
+
+
+## Bubble Plots
+### Prepare data
+Remove pos controls, glom by Species.CommonName, and convert to dataframe
+#### Mifish
+```{r}
+phylo_2024_mifish_glommed <- tax_glom(phylo_2024_mifish, "Species.CommonName")
+mifish_df <- subset_samples(phylo_2024_mifish_glommed, !controls %in% c("positive"))
+mifish_df <- psmelt(mifish_df)
+
+#relative abund ps object
+phylo_2024_mifish_glommed_ra <- tax_glom(phylo_2024_mifish, "Species.CommonName")
+mifish_df_ra <- subset_samples(phylo_2024_mifish_glommed_ra, !controls %in% c("positive")) 
+mifish_df_ra <- microbiome::transform(mifish_df_ra, transform = "compositional") 
+mifish_df_ra <- psmelt(mifish_df_ra)
+
+# replace zeroes in the table with NA
+mifish_df[mifish_df == 0] <- NA
+mifish_df_ra[mifish_df_ra == 0] <- NA
+
+# and remove rows with NAs (so they don't appear as small dots in plot)
+mifish_df <-  filter(mifish_df, !is.na(Abundance))
+mifish_df_ra <-  filter(mifish_df_ra, !is.na(Abundance))
+
+
+# and view
+mifish_df
+mifish_df_ra
+```
+
+
+#### Elas
+```{r}
+phylo_2024_elas_glommed <- tax_glom(phylo_2024_elas, "Species.CommonName")
+elas_df <- subset_samples(phylo_2024_elas_glommed, !controls %in% c("positive"))
+elas_df <- psmelt(elas_df)
+
+#relative abund ps object
+phylo_2024_elas_glommed_ra <- tax_glom(phylo_2024_elas, "Species.CommonName")
+elas_df_ra <- subset_samples(phylo_2024_elas_glommed_ra, !controls %in% c("positive")) 
+elas_df_ra <- microbiome::transform(elas_df_ra, transform = "compositional") 
+elas_df_ra <- psmelt(elas_df_ra)
+
+# replace zeroes in the table with NA
+elas_df[elas_df == 0] <- NA
+elas_df_ra[elas_df_ra == 0] <- NA
+
+# and remove rows with NAs (so they don't appear as small dots in plot)
+elas_df <-  filter(elas_df, !is.na(Abundance))
+elas_df_ra <-  filter(elas_df_ra, !is.na(Abundance))
+
+
+# and view
+elas_df
+elas_df_ra
+```
+
+### Prepare for plot
+
+#### Remove controls from dataframes
+```{r}
+mifish_df <- mifish_df %>% filter(is.na(controls))
+mifish_df_ra <- mifish_df_ra %>% filter(is.na(controls))
+
+elas_df <- elas_df %>% filter(is.na(controls))
+elas_df_ra <- elas_df_ra %>% filter(is.na(controls))
+```
+
+
+#### Sort levels
+
+```{r}
+# sort station numbers
+sitelevels <- as.character(sort(as.numeric(unique(c(mifish_df$sites)))))
+sitelevels
+
+# put east/west in geographic/sensible order (not alphabetic)
+mifish_df$Bayside_f= factor(mifish_df$Bayside, levels=c('WEST','EAST'))
+mifish_df_ra$Bayside_f= factor(mifish_df_ra$Bayside, levels=c('WEST','EAST'))
+elas_df$Bayside_f= factor(elas_df$Bayside, levels=c('WEST','EAST'))
+elas_df_ra$Bayside_f= factor(elas_df_ra$Bayside, levels=c('WEST','EAST'))
+
+# put months in time/sensible order (not alphabetic)
+mifish_df$Month_f= factor(mifish_df$Month, levels=sort(unique(mifish_df$Month)))
+mifish_df_ra$Month_f= factor(mifish_df_ra$Month, levels=sort(unique(mifish_df$Month)))
+elas_df$Month_f= factor(elas_df$Month, levels=sort(unique(mifish_df$Month)))
+elas_df_ra$Month_f= factor(elas_df_ra$Month, levels=sort(unique(mifish_df$Month)))
+
+```
+
+### Mifish Bubble Plots
+#### By bayside
+```{r}
+# First average replicates at same sites
+mifish_df_bayside <- mifish_df %>%
+    group_by(sites, Bayside_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+mifish_df_bayside
+
+
+bubbleplot_mifish_Bayside <- ggplot(mifish_df_bayside, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 9), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Bayside_f, scales = "free", space = "free", drop= TRUE)
+bubbleplot_mifish_Bayside
+  
+# save
+ggsave(plot = bubbleplot_mifish_Bayside, filename = "figures-2024eDNA/bubbleplot_mifish_Bayside.jpg", width = 10, height = 7, units = "in")
+```
+
+#### By month
+```{r}
+# First average replicates from same month
+mifish_df_month <- mifish_df %>%
+    group_by(sites, Month_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+mifish_df_month
+
+
+bubbleplot_mifish_Month <- ggplot(mifish_df_month, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_wrap(~Month_f, drop= TRUE, nrow = 1)  
+bubbleplot_mifish_Month
+  
+# save
+ggsave(plot = bubbleplot_mifish_Month, filename = "figures-2024eDNA/bubbleplot_mifish_Month.jpg", width = 22, height = 8, units = "in")
+```
+
+#### By month, trawl sites only
+
+```{r}
+# First average replicates from same month
+mifish_df_month_trawl <- mifish_df %>%
+  filter(sites %in% c(1,2,3,4,5,6,7,8,9,10,11,12,13)) %>%
+    group_by(sites, Month_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+mifish_df_month_trawl
+
+
+bubbleplot_mifish_Month_trawlonly <- ggplot(mifish_df_month_trawl, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_wrap(~Month_f, drop= TRUE, nrow = 1)  
+bubbleplot_mifish_Month_trawlonly
+  
+# save
+ggsave(plot = bubbleplot_mifish_Month_trawlonly, filename = "figures-2024eDNA/bubbleplot_mifish_Month_trawlonly.jpg", width = 12, height = 8, units = "in")
+```
+
+
+
+#### By month, other sites
+
+First checked labels and "SEA GRASS" AND "EEL GRASS" should be the same. Fix
+```{r}
+#check before
+unique(mifish_df$Habitat)
+
+mifish_df <- mifish_df %>%
+  mutate(Habitat = case_when(
+    Habitat == "SEAGRASS" ~ "EELGRASS",
+    TRUE ~ Habitat  # Keep all other values unchanged
+  ))
+
+#and after
+unique(mifish_df$Habitat)
+```
+
+Plot by othet habitat types:
+Eelgrass
+```{r}
+# First average replicates from same month
+mifish_df_month_eelgrass <- mifish_df %>%
+  filter(Habitat == "EELGRASS") %>%
+    group_by(sites, Month_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+mifish_df_month_eelgrass
+
+
+bubbleplot_mifish_Month_eelgrass <- ggplot(mifish_df_month_eelgrass, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Month_f, drop = TRUE, scales = "free")
+bubbleplot_mifish_Month_eelgrass
+
+# save
+ggsave(plot = bubbleplot_mifish_Month_eelgrass, filename = "figures-2024eDNA/bubbleplot_mifish_Month_eelgrass.jpg", width = 9, height = 5, units = "in")
+```
+
+
+Clam Sanctuary
+```{r}
+# First average replicates from same month
+mifish_df_month_clamsanct <- mifish_df %>%
+  filter(Habitat == "CLAM SANCTUARY") %>%
+    group_by(sites, Month_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+mifish_df_month_clamsanct
+
+
+bubbleplot_mifish_Month_clamsanct <- ggplot(mifish_df_month_clamsanct, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Month_f, drop = TRUE, scales = "free")
+bubbleplot_mifish_Month_clamsanct
+
+# save
+ggsave(plot = bubbleplot_mifish_Month_clamsanct, filename = "figures-2024eDNA/bubbleplot_mifish_Month_clamsanct.jpg", width = 9, height = 3.5, units = "in")
+```
+
+
+Oyster reef
+```{r}
+# First average replicates from same month
+mifish_df_month_oysterreef <- mifish_df %>%
+  filter(Habitat == "OYSTER REEF") %>%
+    group_by(sites, Month_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+mifish_df_month_oysterreef
+
+
+bubbleplot_mifish_Month_oysterreef <- ggplot(mifish_df_month_oysterreef, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Month_f, drop = TRUE, scales = "free")
+bubbleplot_mifish_Month_oysterreef
+
+# save
+ggsave(plot = bubbleplot_mifish_Month_oysterreef, filename = "figures-2024eDNA/bubbleplot_mifish_Month_oysterreef.jpg", width = 9, height = 4.5, units = "in")
+```
+
+
+
+
+
+
+### Elas02 Bubble Plots
+#### By bayside
+```{r}
+# First average replicates at same sites
+elas_df_bayside <- elas_df %>%
+    group_by(sites, Bayside_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_bayside
+
+
+bubbleplot_elas_Bayside <- ggplot(elas_df_bayside, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 9), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Bayside_f, scales = "free", space = "free", drop= TRUE)
+bubbleplot_elas_Bayside
+  
+# save
+ggsave(plot = bubbleplot_elas_Bayside, filename = "figures-2024eDNA/bubbleplot_elas_Bayside.jpg", width = 10, height = 3, units = "in")
+```
+
+
+#### By month
+```{r}
+# First average replicates from same month
+elas_df_month <- elas_df %>%
+    group_by(sites, Month_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_month
+
+
+bubbleplot_elas_Month <- ggplot(elas_df_month, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_wrap(~Month_f, drop= TRUE, nrow = 1)  
+bubbleplot_elas_Month
+  
+# save
+ggsave(plot = bubbleplot_elas_Month, filename = "figures-2024eDNA/bubbleplot_elas_Month.jpg", width = 22, height = 3, units = "in")
+```
+
+#### By month, trawl sites only
+
+```{r}
+# First average replicates from same month
+elas_df_month_trawl <- elas_df %>%
+  filter(sites %in% c(1,2,3,4,5,6,7,8,9,10,11,12,13)) %>%
+    group_by(sites, Month_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_month_trawl
+
+
+bubbleplot_elas_Month_trawlonly <- ggplot(elas_df_month_trawl, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_wrap(~Month_f, drop= TRUE, nrow = 1)  
+bubbleplot_elas_Month_trawlonly
+  
+# save
+ggsave(plot = bubbleplot_elas_Month_trawlonly, filename = "figures-2024eDNA/bubbleplot_elas_Month_trawlonly.jpg", width = 11, height = 2.5, units = "in")
+```
+
+
+
+#### By month, other sites
+
+First checked labels and "SEA GRASS" AND "EEL GRASS" should be the same. Fix
+```{r}
+#check before
+unique(elas_df$Habitat)
+
+elas_df <- elas_df %>%
+  mutate(Habitat = case_when(
+    Habitat == "SEAGRASS" ~ "EELGRASS",
+    TRUE ~ Habitat  # Keep all other values unchanged
+  ))
+
+#and after
+unique(elas_df$Habitat)
+```
+
+Plot by othet habitat types:
+Eelgrass
+```{r}
+# First average replicates from same month
+elas_df_month_eelgrass <- elas_df %>%
+  filter(Habitat == "EELGRASS") %>%
+    group_by(sites, Month_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_month_eelgrass
+
+
+bubbleplot_elas_Month_eelgrass <- ggplot(elas_df_month_eelgrass, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Month_f, drop = TRUE, scales = "free")
+bubbleplot_elas_Month_eelgrass
+
+# save
+ggsave(plot = bubbleplot_elas_Month_eelgrass, filename = "figures-2024eDNA/bubbleplot_elas_Month_eelgrass.jpg", width = 9, height = 2.5, units = "in")
+```
+
+
+Clam Sanctuary
+```{r}
+# First average replicates from same month
+elas_df_month_clamsanct <- elas_df %>%
+  filter(Habitat == "CLAM SANCTUARY") %>%
+    group_by(sites, Month_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_month_clamsanct
+
+
+bubbleplot_elas_Month_clamsanct <- ggplot(elas_df_month_clamsanct, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Month_f, drop = TRUE, scales = "free")
+bubbleplot_elas_Month_clamsanct
+
+# save
+ggsave(plot = bubbleplot_elas_Month_clamsanct, filename = "figures-2024eDNA/bubbleplot_elas_Month_clamsanct.jpg", width = 7, height = 2.5, units = "in")
+```
+
+
+Oyster reef
+```{r}
+# First average replicates from same month
+elas_df_month_oysterreef <- elas_df %>%
+  filter(Habitat == "OYSTER REEF") %>%
+    group_by(sites, Month_f, CommonName, `Species.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_month_oysterreef
+
+
+bubbleplot_elas_Month_oysterreef <- ggplot(elas_df_month_oysterreef, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Species.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Species.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Month_f, drop = TRUE, scales = "free")
+bubbleplot_elas_Month_oysterreef
+
+# save
+ggsave(plot = bubbleplot_elas_Month_oysterreef, filename = "figures-2024eDNA/bubbleplot_elas_Month_oysterreef.jpg", width = 9, height = 3, units = "in")
+```
+
+

@@ -1,5 +1,5 @@
 ---
-title: "Plots and Analysis and all eDNA Hand Samples: 2020-2024"
+title: "Data Clean up - all eDNA Hand Samples (MiFish, Elas02, mlCO1): 2020-2024"
 output: html_notebook
 ---
 
@@ -16,7 +16,6 @@ output: html_notebook
 # rm(list = ls())
 library(tidyverse)
 library(phyloseq)
-library(decontam)
 library(vegan)
 library(RColorBrewer)
 library(microbiome)
@@ -453,97 +452,12 @@ unique(tax_table(ps_elas_2024)[, "Class"])
 
 
 
-## Remove incorrect annotations
-check unique species
-```{r}
-data.frame(unique(tax_table(ps_mifish_2020)[, "Species"]))
-data.frame(unique(tax_table(ps_mifish_2021)[, "Species"]))
-data.frame(unique(tax_table(ps_mifish_2022)[, "Species"]))
-data.frame(unique(tax_table(ps_mifish_2023)[, "Species"]))
-data.frame(unique(tax_table(ps_mifish_2024)[, "Species"]))
-
-data.frame(unique(tax_table(ps_elas_2021)[, "Species"]))
-data.frame(unique(tax_table(ps_elas_2023)[, "Species"]))
-data.frame(unique(tax_table(ps_elas_2024)[, "Species"]))
-```
-
-### Change all menhaden to genus-level annotation
-
-There is something going on with menhaden. The regional species should be Atlantic menhaden (B. tyrannus) but we frequently get Finescale and Gulf menhaden. Retain all at genus level for now and look into phylogenetics later (if it can even be resolved with this short amplicon)
-
-```{r}
-tax_table(ps_mifish_2020)[tax_table(ps_mifish_2020)[, "Genus"] == "Brevoortia", "Species"] <- "Unknown Brevoortia (Genus)"
-tax_table(ps_mifish_2021)[tax_table(ps_mifish_2021)[, "Genus"] == "Brevoortia", "Species"] <- "Unknown Brevoortia (Genus)"
-tax_table(ps_mifish_2022)[tax_table(ps_mifish_2022)[, "Genus"] == "Brevoortia", "Species"] <- "Unknown Brevoortia (Genus)"
-tax_table(ps_mifish_2023)[tax_table(ps_mifish_2023)[, "Genus"] == "Brevoortia", "Species"] <- "Unknown Brevoortia (Genus)"
-tax_table(ps_mifish_2024)[tax_table(ps_mifish_2024)[, "Genus"] == "Brevoortia", "Species"] <- "Unknown Brevoortia (Genus)"
-
-```
-
-check
-```{r}
-unique(tax_table(ps_mifish_2020)[tax_table(ps_mifish_2020)[, "Genus"] == "Brevoortia","Species"])
-unique(tax_table(ps_mifish_2021)[tax_table(ps_mifish_2021)[, "Genus"] == "Brevoortia","Species"])
-unique(tax_table(ps_mifish_2022)[tax_table(ps_mifish_2022)[, "Genus"] == "Brevoortia","Species"])
-unique(tax_table(ps_mifish_2023)[tax_table(ps_mifish_2023)[, "Genus"] == "Brevoortia","Species"])
-unique(tax_table(ps_mifish_2024)[tax_table(ps_mifish_2024)[, "Genus"] == "Brevoortia","Species"])
-
-```
-### Change Mustelus species
-
-check
-```{r}
-unique(tax_table(ps_elas_2021)[tax_table(ps_elas_2021)[, "Genus"] == "Mustelus","Species"])
-unique(tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Genus"] == "Mustelus","Species"])
-unique(tax_table(ps_elas_2024)[tax_table(ps_elas_2024)[, "Genus"] == "Mustelus","Species"])
-
-```
-
-Mustelus mosis, Mustelus henlei, and Mustelus griseus are likely incorrect (these are Asian/Arabian/Pacific species). 
-
-Change to Unknown Mustelus (Genus)
-```{r}
-tax_table(ps_elas_2021)[tax_table(ps_elas_2021)[, "Species"] %in% c("Mustelus mosis", "Mustelus henlei", "Mustelus griseus")] <- "Unknown Mustelus (Genus)"
-
-tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Species"] %in% c("Mustelus mosis", "Mustelus henlei", "Mustelus griseus")] <- "Unknown Mustelus (Genus)"
-
-tax_table(ps_elas_2024)[tax_table(ps_elas_2024)[, "Species"] %in% c("Mustelus mosis", "Mustelus henlei", "Mustelus griseus")] <- "Unknown Mustelus (Genus)"
-
-```
-
-check
-```{r}
-unique(tax_table(ps_elas_2021)[tax_table(ps_elas_2021)[, "Genus"] == "Mustelus","Species"])
-unique(tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Genus"] == "Mustelus","Species"])
-unique(tax_table(ps_elas_2024)[tax_table(ps_elas_2024)[, "Genus"] == "Mustelus","Species"])
-
-```
-
-### Change Pteroplatytrygon sp.
-check
-```{r}
-#unique(tax_table(ps_elas_2021)[tax_table(ps_elas_2021)[, "Genus"] == "Pteroplatytrygon","Species"])
-unique(tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Genus"] == "Pteroplatytrygon","Species"])
-#unique(tax_table(ps_elas_2024)[tax_table(ps_elas_2024)[, "Genus"] == "Pteroplatytrygon","Species"])
-
-```
-
-
-There is only one possible species, put in regional species name, violacea
 
 
 
-```{r}
 
-tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Genus"] == "Pteroplatytrygon", "Species"] <- "Pteroplatytrygon violacea"
 
-```
 
-check
-```{r}
-unique(tax_table(ps_elas_2023)[tax_table(ps_elas_2023)[, "Genus"] == "Pteroplatytrygon","Species"])
-
-```
 
 
 
@@ -721,7 +635,7 @@ plot_bar(ps_elas_2024)
 
 ```
 
-Cut out any sample with <15,000 reads from all libraries
+Cut out any sample with <25,000 reads from all libraries
 
 
 ```{r}
@@ -756,15 +670,15 @@ plot_bar(ps_elas_2024)
 
 ## Agglomerate 
 ```{r}
-ps_mifish_2020_glommed <- tax_glom(ps_mifish_2020, "Species-CommonName")
-ps_mifish_2021_glommed <- tax_glom(ps_mifish_2021, "Species-CommonName")
-ps_mifish_2022_glommed <- tax_glom(ps_mifish_2022, "Species-CommonName")
-ps_mifish_2023_glommed <- tax_glom(ps_mifish_2023, "Species-CommonName")
-ps_mifish_2024_glommed <- tax_glom(ps_mifish_2024, "Species-CommonName")
+ps_mifish_2020_glommed <- tax_glom(ps_mifish_2020, "Species.CommonName")
+ps_mifish_2021_glommed <- tax_glom(ps_mifish_2021, "Species.CommonName")
+ps_mifish_2022_glommed <- tax_glom(ps_mifish_2022, "Species.CommonName")
+ps_mifish_2023_glommed <- tax_glom(ps_mifish_2023, "Species.CommonName")
+ps_mifish_2024_glommed <- tax_glom(ps_mifish_2024, "Species.CommonName")
 
-ps_elas_2021_glommed <- tax_glom(ps_elas_2021, "Species-CommonName")
-ps_elas_2023_glommed <- tax_glom(ps_elas_2023, "Species-CommonName")
-ps_elas_2024_glommed <- tax_glom(ps_elas_2024, "Species-CommonName")
+ps_elas_2021_glommed <- tax_glom(ps_elas_2021, "Species.CommonName")
+ps_elas_2023_glommed <- tax_glom(ps_elas_2023, "Species.CommonName")
+ps_elas_2024_glommed <- tax_glom(ps_elas_2024, "Species.CommonName")
 
 
 ```
@@ -791,7 +705,7 @@ NOTE- this function doesn't allow you to name Krona files. I went in manually in
 ```{r}
 source('https://raw.githubusercontent.com/markschl/embed_krona/master/embed_krona.R')
 
-mifish_2020_krona <- plot_krona(ps_mifish_2020_glommed) # gets written as krona_files/krona_3.html
+mifish_2020_krona <- plot_krona(ps_mifish_2020_glommed) # gets written as krona_files/krona_1.html, etc
 mifish_2021_krona <- plot_krona(ps_mifish_2021_glommed) 
 mifish_2022_krona <- plot_krona(ps_mifish_2022_glommed) 
 mifish_2023_krona <- plot_krona(ps_mifish_2023_glommed) 
@@ -804,69 +718,147 @@ elas_2024_krona <- plot_krona(ps_elas_2024_glommed)
 ```
 
 ## Export tables
+Every year has 5 tables:
+1) ASV table
+2) Taxonomy table (corresponds to ASVs)
+3) Sample data
+4) Glommed ASV table (aggregated by Species.CommonName)
+5) Glommed taxonomy table (corresponds to glommed taxa from #4)
+
+### Mifish
 ```{r}
+#2020
+mifish_2020_asv_table <- data.frame(otu_table(ps_mifish_2020))
+write.csv(mifish_2020_asv_table,"filtered_data/mifish_2020_asv_table.csv", row.names = TRUE)
+
+mifish_2020_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2020)), var = "ASV")
+write.csv(mifish_2020_tax_table,"filtered_data/mifish_2020_tax_table.csv", row.names = FALSE)
+
+mifish_2020_sample_data <- data.frame(sample_data(ps_mifish_2020))
+write.csv(mifish_2020_sample_data,"filtered_data/mifish_2020_sample_data.csv", row.names = TRUE)
+
 mifish_2020_glommed_asv_table <- data.frame(otu_table(ps_mifish_2020_glommed))
-mifish_2020_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2020_glommed)), var = "1stRepresentative_ASV")
-mifish_2020_glommed_sample_data <- data.frame(sample_data(ps_mifish_2020_glommed))
 write.csv(mifish_2020_glommed_asv_table,"filtered_data/mifish_2020_glommed_asv_table.csv", row.names = TRUE)
+
+mifish_2020_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2020_glommed)), var = "1stRepresentative_ASV")
 write.csv(mifish_2020_glommed_tax_table,"filtered_data/mifish_2020_glommed_tax_table.csv", row.names = FALSE)
-write.csv(mifish_2020_glommed_sample_data,"filtered_data/mifish_2020_glommed_sample_data.csv", row.names = TRUE)
+
+#2021
+mifish_2021_asv_table <- data.frame(otu_table(ps_mifish_2021))
+write.csv(mifish_2021_asv_table,"filtered_data/mifish_2021_asv_table.csv", row.names = TRUE)
+
+mifish_2021_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2021)), var = "ASV")
+write.csv(mifish_2021_tax_table,"filtered_data/mifish_2021_tax_table.csv", row.names = FALSE)
+
+mifish_2021_sample_data <- data.frame(sample_data(ps_mifish_2021))
+write.csv(mifish_2021_sample_data,"filtered_data/mifish_2021_sample_data.csv", row.names = TRUE)
 
 mifish_2021_glommed_asv_table <- data.frame(otu_table(ps_mifish_2021_glommed))
-mifish_2021_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2021_glommed)), var = "1stRepresentative_ASV")
-mifish_2021_glommed_sample_data <- data.frame(sample_data(ps_mifish_2021_glommed))
 write.csv(mifish_2021_glommed_asv_table,"filtered_data/mifish_2021_glommed_asv_table.csv", row.names = TRUE)
+
+mifish_2021_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2021_glommed)), var = "1stRepresentative_ASV")
 write.csv(mifish_2021_glommed_tax_table,"filtered_data/mifish_2021_glommed_tax_table.csv", row.names = FALSE)
-write.csv(mifish_2021_glommed_sample_data,"filtered_data/mifish_2021_glommed_sample_data.csv", row.names = TRUE)
 
+#2022
+mifish_2022_asv_table <- data.frame(otu_table(ps_mifish_2022))
+write.csv(mifish_2022_asv_table,"filtered_data/mifish_2022_asv_table.csv", row.names = TRUE)
 
+mifish_2022_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2022)), var = "ASV")
+write.csv(mifish_2022_tax_table,"filtered_data/mifish_2022_tax_table.csv", row.names = FALSE)
+
+mifish_2022_sample_data <- data.frame(sample_data(ps_mifish_2022))
+write.csv(mifish_2022_sample_data,"filtered_data/mifish_2022_sample_data.csv", row.names = TRUE)
 
 mifish_2022_glommed_asv_table <- data.frame(otu_table(ps_mifish_2022_glommed))
-mifish_2022_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2022_glommed)), var = "1stRepresentative_ASV")
-mifish_2022_glommed_sample_data <- data.frame(sample_data(ps_mifish_2022_glommed))
 write.csv(mifish_2022_glommed_asv_table,"filtered_data/mifish_2022_glommed_asv_table.csv", row.names = TRUE)
-write.csv(mifish_2022_glommed_tax_table,"filtered_data/mifish_2022_glommed_tax_table.csv", row.names = FALSE)
-write.csv(mifish_2022_glommed_sample_data,"filtered_data/mifish_2022_glommed_sample_data.csv", row.names = TRUE)
 
+mifish_2022_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2022_glommed)), var = "1stRepresentative_ASV")
+write.csv(mifish_2022_glommed_tax_table,"filtered_data/mifish_2022_glommed_tax_table.csv", row.names = FALSE)
+
+#2023
+mifish_2023_asv_table <- data.frame(otu_table(ps_mifish_2023))
+write.csv(mifish_2023_asv_table,"filtered_data/mifish_2023_asv_table.csv", row.names = TRUE)
+
+mifish_2023_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2023)), var = "ASV")
+write.csv(mifish_2023_tax_table,"filtered_data/mifish_2023_tax_table.csv", row.names = FALSE)
+
+mifish_2023_sample_data <- data.frame(sample_data(ps_mifish_2023))
+write.csv(mifish_2023_sample_data,"filtered_data/mifish_2023_sample_data.csv", row.names = TRUE)
 
 mifish_2023_glommed_asv_table <- data.frame(otu_table(ps_mifish_2023_glommed))
-mifish_2023_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2023_glommed)), var = "1stRepresentative_ASV")
-mifish_2023_glommed_sample_data <- data.frame(sample_data(ps_mifish_2023_glommed))
 write.csv(mifish_2023_glommed_asv_table,"filtered_data/mifish_2023_glommed_asv_table.csv", row.names = TRUE)
+
+mifish_2023_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2023_glommed)), var = "1stRepresentative_ASV")
 write.csv(mifish_2023_glommed_tax_table,"filtered_data/mifish_2023_glommed_tax_table.csv", row.names = FALSE)
-write.csv(mifish_2023_glommed_sample_data,"filtered_data/mifish_2023_glommed_sample_data.csv", row.names = TRUE)
 
+#2024
+mifish_2024_asv_table <- data.frame(otu_table(ps_mifish_2024))
+write.csv(mifish_2024_asv_table,"filtered_data/mifish_2024_asv_table.csv", row.names = TRUE)
 
+mifish_2024_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2024)), var = "ASV")
+write.csv(mifish_2024_tax_table,"filtered_data/mifish_2024_tax_table.csv", row.names = FALSE)
 
+mifish_2024_sample_data <- data.frame(sample_data(ps_mifish_2024))
+write.csv(mifish_2024_sample_data,"filtered_data/mifish_2024_sample_data.csv", row.names = TRUE)
 
 mifish_2024_glommed_asv_table <- data.frame(otu_table(ps_mifish_2024_glommed))
-mifish_2024_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2024_glommed)), var = "1stRepresentative_ASV")
-mifish_2024_glommed_sample_data <- data.frame(sample_data(ps_mifish_2024_glommed))
 write.csv(mifish_2024_glommed_asv_table,"filtered_data/mifish_2024_glommed_asv_table.csv", row.names = TRUE)
+
+mifish_2024_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_mifish_2024_glommed)), var = "1stRepresentative_ASV")
 write.csv(mifish_2024_glommed_tax_table,"filtered_data/mifish_2024_glommed_tax_table.csv", row.names = FALSE)
-write.csv(mifish_2024_glommed_sample_data,"filtered_data/mifish_2024_glommed_sample_data.csv", row.names = TRUE)
 
-
-
-elas_2021_glommed_asv_table <- data.frame(otu_table(ps_elas_2021_glommed))
-elas_2021_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2021_glommed)), var = "1stRepresentative_ASV")
-elas_2021_glommed_sample_data <- data.frame(sample_data(ps_elas_2021_glommed))
-write.csv(elas_2021_glommed_asv_table,"filtered_data/elas_2021_glommed_asv_table.csv", row.names = TRUE)
-write.csv(elas_2021_glommed_tax_table,"filtered_data/elas_2021_glommed_tax_table.csv", row.names = FALSE)
-write.csv(elas_2021_glommed_sample_data,"filtered_data/elas_2021_glommed_sample_data.csv", row.names = TRUE)
-
-elas_2023_glommed_asv_table <- data.frame(otu_table(ps_elas_2023_glommed))
-elas_2023_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2023_glommed)), var = "1stRepresentative_ASV")
-elas_2023_glommed_sample_data <- data.frame(sample_data(ps_elas_2023_glommed))
-write.csv(elas_2023_glommed_asv_table,"filtered_data/elas_2023_glommed_asv_table.csv", row.names = TRUE)
-write.csv(elas_2023_glommed_tax_table,"filtered_data/elas_2023_glommed_tax_table.csv", row.names = FALSE)
-write.csv(elas_2023_glommed_sample_data,"filtered_data/elas_2023_glommed_sample_data.csv", row.names = TRUE)
-
-elas_2024_glommed_asv_table <- data.frame(otu_table(ps_elas_2024_glommed))
-elas_2024_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2024_glommed)), var = "1stRepresentative_ASV")
-elas_2024_glommed_sample_data <- data.frame(sample_data(ps_elas_2024_glommed))
-write.csv(elas_2024_glommed_asv_table,"filtered_data/elas_2024_glommed_asv_table.csv", row.names = TRUE)
-write.csv(elas_2024_glommed_tax_table,"filtered_data/elas_2024_glommed_tax_table.csv", row.names = FALSE)
-write.csv(elas_2024_glommed_sample_data,"filtered_data/elas_2024_glommed_sample_data.csv", row.names = TRUE)
 ```
 
+
+
+### Elas02
+```{r}
+#2021
+elas_2021_asv_table <- data.frame(otu_table(ps_elas_2021))
+write.csv(elas_2021_asv_table,"filtered_data/elas_2021_asv_table.csv", row.names = TRUE)
+
+elas_2021_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2021)), var = "ASV")
+write.csv(elas_2021_tax_table,"filtered_data/elas_2021_tax_table.csv", row.names = FALSE)
+
+elas_2021_sample_data <- data.frame(sample_data(ps_elas_2021))
+write.csv(elas_2021_sample_data,"filtered_data/elas_2021_sample_data.csv", row.names = TRUE)
+
+elas_2021_glommed_asv_table <- data.frame(otu_table(ps_elas_2021_glommed))
+write.csv(elas_2021_glommed_asv_table,"filtered_data/elas_2021_glommed_asv_table.csv", row.names = TRUE)
+
+elas_2021_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2021_glommed)), var = "1stRepresentative_ASV")
+write.csv(elas_2021_glommed_tax_table,"filtered_data/elas_2021_glommed_tax_table.csv", row.names = FALSE)
+
+#2023
+elas_2023_asv_table <- data.frame(otu_table(ps_elas_2023))
+write.csv(elas_2023_asv_table,"filtered_data/elas_2023_asv_table.csv", row.names = TRUE)
+
+elas_2023_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2023)), var = "ASV")
+write.csv(elas_2023_tax_table,"filtered_data/elas_2023_tax_table.csv", row.names = FALSE)
+
+elas_2023_sample_data <- data.frame(sample_data(ps_elas_2023))
+write.csv(elas_2023_sample_data,"filtered_data/elas_2023_sample_data.csv", row.names = TRUE)
+
+elas_2023_glommed_asv_table <- data.frame(otu_table(ps_elas_2023_glommed))
+write.csv(elas_2023_glommed_asv_table,"filtered_data/elas_2023_glommed_asv_table.csv", row.names = TRUE)
+
+elas_2023_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2023_glommed)), var = "1stRepresentative_ASV")
+write.csv(elas_2023_glommed_tax_table,"filtered_data/elas_2023_glommed_tax_table.csv", row.names = FALSE)
+
+#2024
+elas_2024_asv_table <- data.frame(otu_table(ps_elas_2024))
+write.csv(elas_2024_asv_table,"filtered_data/elas_2024_asv_table.csv", row.names = TRUE)
+
+elas_2024_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2024)), var = "ASV")
+write.csv(elas_2024_tax_table,"filtered_data/elas_2024_tax_table.csv", row.names = FALSE)
+
+elas_2024_sample_data <- data.frame(sample_data(ps_elas_2024))
+write.csv(elas_2024_sample_data,"filtered_data/elas_2024_sample_data.csv", row.names = TRUE)
+
+elas_2024_glommed_asv_table <- data.frame(otu_table(ps_elas_2024_glommed))
+write.csv(elas_2024_glommed_asv_table,"filtered_data/elas_2024_glommed_asv_table.csv", row.names = TRUE)
+
+elas_2024_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_elas_2024_glommed)), var = "1stRepresentative_ASV")
+write.csv(elas_2024_glommed_tax_table,"filtered_data/elas_2024_glommed_tax_table.csv", row.names = FALSE)
+
+```

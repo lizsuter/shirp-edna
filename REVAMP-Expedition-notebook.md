@@ -2554,3 +2554,644 @@ You have chosen to exit
 
 Trim and filter seemed OK but merge failed... take a look at quality after trimming and the merge parameters/ overlap length and run a test (2-3 samples only)
 
+### Jan 28 2025- COI with MIDORI2
+
+Try re-running subset of samples from Expedition-COIa dataset to figure out problem with merge
+
+First re-assess length for trimming
+
+```
+conda activate REVAMPenv
+
+revamp.sh -p 01_config_file_CO1_2024-expeditiona-test.txt -f 02_figure_config_file_CO1_2024-expeditiona-test.txt -s 03_sample_metadata_CO1-2024-expeditiona-test.txt  -r raw_data/2024-CO1-expeditiona-test -o results-revamp-2024-CO1-expeditiona-test
+
+```
+
+Current config file:
+
+```
+##This is the REVAMP config file for Leray et al mlco1 primers- last modified 1/28/25 ES
+
+####################################################
+##Frequently modified parameters
+####################################################
+primerF=GGWACWGGWTGAACWGTWTAYCCYCC
+primerR=TAIACYTCIGGRTGICCRAARAAYCA
+blastLengthCutoff=280 #bp length under which BLAST hits are not considered; The recommendation for the blastLengthCutoff is 90% of the total marker target length
+systemmemoryMB=10000 #MB of total system memory; uses only 70% of max
+locationNTdatabase=/Volumes/easystore/eDNA/eDNA-databases/MIDORI2_UNIQ_NUC_SP_GB263_CO1_BLAST #try path to ref database here rather than NCBI nt
+taxonomyCutoffs=97,95,90,80,70,60 #Percent ID cutoffs for ID to S,G,F,O,C,P
+# failedMerge_useDirection=FORWARD #Use only FORWARD (R1) or REVERSE (R2) reads (OPTIONAL)
+# removeASVsFILE=
+
+###DADA2 Filtering options:
+dada_minlength=100
+dada_phix=TRUE
+dada_trunQ=2
+dada_maxEE1=2
+dada_maxEE2=2
+dada_trimRight=75 #Recommended to look at fastq quality and trim ends of sequence data as needed.
+dada_trimLeft=0
+###
+
+####################################################
+##Infrequently changed default parameters
+####################################################
+blastMode=allIN #options: allIN, allEnvOUT, mostEnvOUT
+```
+
+
+I think 75bp was too much to trim from the right. See raw quality plots:
+
+![image1](results-revamp-2024-CO1-expeditiona-test/dada2/rawFQualityPlot.pdf)
+![image2](results-revamp-2024-CO1-expeditiona-test/dada2/rawRQualityPlot.pdf)
+
+I can still be conservative and trim 25-50bp off the end of these. Also consider that the length of this amplicon is 350bp and it was sequenced with 250bp orientation. So if I trim 75 from the right of the forward (position 1-175) and from the reverse (position 350-175), there is no overlap! Be less conservative on trimming length, especially since the ends are not terrible quality. Go for 25bp...
+
+Edit config file and rerun from dada2 step...
+
+Output after trimming:
+
+![image1](results-revamp-2024-CO1-expeditiona-test/dada2/trimFQualityPlot.pdf)
+
+![image2](results-revamp-2024-CO1-expeditiona-test/dada2/trimRQualityPlot.pdf)
+
+
+```
+Cutadapt from prior run
+
+Running DADA2: Tue Jan 28 14:04:09 EST 2025
+Trim and filter in DADA2...
+
+DADA2 Filtering results:
+Sample	% Reads Passing
+MP_1_Aug_S1_L002_R1_trimmed.fq.gz 92.8988
+MP_1_Feb_S1_L002_R1_trimmed.fq.gz 95.4552
+MP_1_Jul_S1_L002_R1_trimmed.fq.gz 93.9536
+
+Parameters to modify:
+minLen,rm.phix,truncQ,maxEE-primer1,maxEE-primer2,trimRight,trimLeft
+Current settings:
+100,TRUE,2,2,2,25,0
+Please check DADA2 filtering success. Proceed? [y/n/m]
+y
+Continuing!
+
+Learning error, Dereplication, Merge, and ASVs in DADA2...
+Please be patient, may take a while. Messages printed to Rscript log.
+
+Parameters to modify:
+minLen,rm.phix,truncQ,maxEE-primer1,maxEE-primer2,trimRight,trimLeft
+Current settings:
+100,TRUE,2,2,2,25,0
+Please check DADA2 filtering success. Proceed? [y/n/m]
+Continuing!
+
+Learning error, Dereplication, Merge, and ASVs in DADA2...
+Please be patient, may take a while. Messages printed to Rscript log.
+
+
+FINAL DADA2 STATS
+Note: Please check for a failed merge of forward/reverse sequences
+Sample	%Reads Retained
+MP_1_Aug_S1_L002 83.4
+MP_1_Feb_S1_L002 81.5
+MP_1_Jul_S1_L002 82.8
+
+Do you wish to Proceed? [y/n]
+Continuing!
+
+Running BLASTn: Tue Jan 28 16:45:25 EST 2025
+Warning: [blastn] Number of threads was reduced to 4 to match the number of available CPUs
+BLAST Database error: No alias or index file found for nucleotide database [/Volumes/easystore/eDNA/eDNA-databases/MIDORI2_UNIQ_NUC_SP_GB263_CO1_BLAST/nt] in search path [/Volumes/easystore/eDNA/shirp-edna::]
+
+
+Reformatting BLAST output: Tue Jan 28 16:45:26 EST 2025
+
+
+Running ASV-2-Taxonomy Script: Tue Jan 28 16:45:26 EST 2025
+cat: results-revamp-2024-CO1-expeditiona-test/blast_results/ASV_blastn_nt_formatted.txt: No such file or directory
+16:45:33.446 [31m[ERRO][0m xopen: no content
+16:45:45.790 [31m[ERRO][0m xopen: no content
+
+Reformatted taxon strings created. Options:
+Continue without changes [c]
+Manually edit file and replace in same location with identical file structure [m]
+    (Make choice when file is modified and you are ready to proceed)
+Automatically fill gaps in reformatted taxonkit hierarchy [a]
+Reformatting...
+Original reformatted taxonkit out stored at results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/reformatted_taxonkit_out_ORIGINAL.txt
+Continuing!
+
+
+There is no ../blast_results/ASV_blastn_nt_formatted.txt file!!
+
+cat: results-revamp-2024-CO1-expeditiona-test_asvTaxonomyTable.txt: No such file or directory
+cat: results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/results-revamp-2024-CO1-expeditiona-test_unknown_asvids.txt: No such file or directory
+
+
+There is no results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/results-revamp-2024-CO1-expeditiona-test_asvTaxonomyTable.txt file!!
+
+mv: rename results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/results-revamp-2024-CO1-expeditiona-test_allin_KRONA.txt to results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/results-revamp-2024-CO1-expeditiona-test_allin_TaxonomyASVSampleCount_byline.txt: No such file or directory
+mv: rename results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/MP_*_KRONA.txt to results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/KRONA_plots/KRONA_inputs/MP_*_KRONA.txt: No such file or directory
+mv: rename results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/results-revamp-2024-CO1-expeditiona-test_wholeKRONA.txt to results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/KRONA_plots/KRONA_inputs/results-revamp-2024-CO1-expeditiona-test_samplesSummedKRONA.txt: No such file or directory
+mv: rename results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/results-revamp-2024-CO1-expeditiona-test_master_krona.html to results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/KRONA_plots/results-revamp-2024-CO1-expeditiona-test_master_krona.html: No such file or directory
+mv: rename results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/results-revamp-2024-CO1-expeditiona-test_wholeKRONA.html to results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/KRONA_plots/results-revamp-2024-CO1-expeditiona-test_samplesSummedKRONA.html: No such file or directory
+Use of uninitialized value $sampleheaders_coll in scalar chomp at /Users/admin/software/REVAMP/assets/stats.pl line 52.
+Use of uninitialized value $sampleheaders_coll in split at /Users/admin/software/REVAMP/assets/stats.pl line 53.
+Use of uninitialized value in string ne at /Users/admin/software/REVAMP/assets/stats.pl line 67.
+
+
+Sample header order does not match between ASV and collapsed ASV file
+
+
+
+NADA results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/results-revamp-2024-CO1-expeditiona-test_barchart_forR.txt file!!
+
+
+
+There is no results-revamp-2024-CO1-expeditiona-test/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_percentabund.tsv file!!
+
+cat: /Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1-expeditiona-test/processed_tables/sample_metadata*: No such file or directory
+Use of uninitialized value $sampleheaders in scalar chomp at /Users/admin/software/REVAMP/assets/replicate_presence_absence.pl line 38.
+Use of uninitialized value $sampleheaders in split at /Users/admin/software/REVAMP/assets/replicate_presence_absence.pl line 39.
+Use of uninitialized value $sampleheaders in scalar chomp at /Users/admin/software/REVAMP/assets/replicate_compRelabund_detection.pl line 38.
+Use of uninitialized value $sampleheaders in split at /Users/admin/software/REVAMP/assets/replicate_compRelabund_detection.pl line 39.
+YOU MADE IT!
+
+```
+
+
+- Merge worked well!
+- Database error:
+
+ ```
+ Error: mdb_env_open: No such file or directory
+ ```
+- See [this discussion](https://stackoverflow.com/questions/59476703/error-mdb-env-open-no-such-file-or-directory-blast-local-database-problem). This could be an error with the file from the web or with the download. Try downloading again but didn't work (try from home later)
+- If that doesn't work, try downloading the fasta file and formatting my own database....
+	- Working but not with mapping_file. The format of that file is still a problem (and is required for REVAMP to work)
+	- The issue is there were taxaIDs that were NAs. Might mean that the database is newer than my version of taxonomizr (both from Oct 2024). Checking up on it...
+
+
+It's working! HOWEVER 70-85% are unknowns and what was identified were mostly fungi....
+I am trying to see if this is a problem with the way I formatted these database, however, I found [this thread](https://github.com/benjjneb/dada2/issues/1520) where I am not the only one with the problem
+
+- I also realized that most of the Unknown ASVs were identified by BLAST and assigned an accession number (see [ASV blastn nt formatte file](results-revamp-2024-CO1-expeditiona-test/blast_result/ASV_blastn_nt_formatted.txt)) but were not assigned a taxaID and therefore come up as Unknowns in the [asv Taxonomy Table file](results-revamp-2024-CO1-expeditiona-test/ASV2Taxonomy/results-revamp-2024-CO1-expeditiona-test_asvTaxonomyTable.txt)
+- So I think there is a problem with the database but not what the person on the site says.. there is probably something wrong with the accession numbers and it can't match them to taxIDs. MIDORI has taxonomy in the sequence names/ fasta files but still, this is getting complicated...
+- On the other hand, I checked the mapping file and there are some missing species, like loggerhead, humpback, etc. Things we were looking for
+
+## Jan 31- COI with NCBI nt
+While I am waiting for re-doing the taxaIDs in R, run against nt database
+- Modify config files to direct to `/Volumes/MyPassportforMac/eDNA-backup/eDNA-databases/NCBI_blast_nt` for ref database
+- This worked but it took a long time for just 3 samples. Most hits are algae, fungi, arthropods. Very few animals and no mammals other than human/ dog (but again, this is only 3 samples)
+
+
+## Feb 2-3 COI with RCRux-derived nt database
+
+See notes in eDNA-database R notebook but same results... There are ~70-80% unknowns and while the blast step identifies consensus accssion numbers, the annotation step assigns a bunch of zeroes for taxaID
+- Investigting the taxonomizr db a little more closely
+- Meanwhile set up pipelines to run cutadapt, dada2 for COI overnight (with blast nt database for now) since it takes so long...
+
+Modify config files according to the above test:
+
+- trim 75 bp from right
+- change degenerate bases so "I" in "N" (see how they are formatted by [rCRUX Generated Leray CO1-ncbi-mitochondrial Reference Database](https://zenodo.org/records/8407603). Leray list "I" in the primers but I don't think these are recognized by cutadapt. From a google search and [this site](https://www.genelink.com/oligo_modifications_reference/OMR_mod_category_design.asp?mod_sp_cat_id=5): 
+	- *Since inosine is capable of base-pairing with any natural nucleotide, it can be used to substitute for any "N" (A,C,G,T) degenerate position (see Designing Degenerate Primers and Degenerate primers). When using inosine in this manner, be aware that because this base does not base-pair with natural nucleotides with equal affinity (I-C>I-A>I-T~I-G), there will be some difference in priming efficiency between the members of the degenerate primer set. However, in most cases, the overall increase in priming efficiency afforded by the 4-fold reduction in degeneracy per inosine substitution outweighs this, as such substitution both increases the effective concentration of these primers in the pool and also reduces the amount required optimization of the reaction conditions.*
+
+```
+conda activate REVAMPenv
+
+revamp.sh -p 01_config_file_CO1_2024-expeditiona.txt -f 02_figure_config_file_CO1_2024-expeditiona.txt -s 03_sample_metadata_CO1-2024-expeditiona.txt  -r raw_data/2024-CO1-expeditiona -o results-revamp-2024-CO1-expeditiona
+```
+
+--> crashed while merging the last sample, `MP_9_Jul`! Ugh. I will need to divide the expedition into THIRDS to run it....
+
+#### Running first 3rd of Expedition/ COI - A
+
+~Output~
+```
+
+Running Cutadapt: Wed Feb  5 09:10:50 EST 2025
+Finished Cutadapt: Wed Feb  5 09:18:55 EST 2025
+Sample	Passing Reads	Passing bp
+MP_1_Aug_S1_L002	99.5%	89.0%
+MP_1_Feb_S1_L002	99.5%	89.1%
+MP_1_Jul_S1_L002	99.4%	88.8%
+MP_1_May_S1_L002	99.6%	89.1%
+MP_2_Apr_S1_L002	99.4%	89.0%
+MP_2_Aug_S1_L002	99.5%	89.1%
+MP_2_Feb_S1_L002	99.5%	89.1%
+MP_2_Jan_S1_L001	99.4%	89.1%
+MP_2_Jul_S1_L002	99.5%	89.0%
+MP_2_Jun_S1_L002	99.5%	89.1%
+MP_2_May_S1_L002	99.5%	89.1%
+MP_3_Apr_S1_L002	99.4%	89.0%
+MP_3_Aug_S1_L002	99.5%	89.1%
+MP_3_Feb_S1_L002	99.5%	89.1%
+MP_3_Jul_S1_L002	99.6%	89.2%
+MP_3_Jun_S1_L002	99.5%	89.1%
+MP_3_May_S1_L002	99.4%	89.0%
+MP_4_Apr_S1_L002	99.4%	89.0%
+MP_4_Aug_S1_L002	99.3%	89.0%
+MP_4_Feb_S1_L002	99.5%	89.2%
+MP_4_Jan_S1_L001	99.6%	89.2%
+MP_4_Jul_S1_L002	99.4%	89.0%
+MP_4_Jun_S1_L002	99.5%	89.0%
+MP_4_May_S1_L002	99.5%	89.1%
+MP_5_Apr_S1_L002	99.5%	89.1%
+MP_5_Feb_S1_L002	99.5%	89.1%
+MP_5_Jan_S1_L001	99.5%	89.2%
+MP_5_Jul_S1_L002	99.5%	89.1%
+MP_5_Jun_S1_L002	99.5%	89.1%
+MP_5_May_S1_L002	99.4%	89.0%
+MP_6_Apr_S1_L002	99.5%	89.0%
+MP_6_Feb_S1_L002	99.5%	89.1%
+
+Please check Cutadapt success. Proceed? [y/n]
+Continuing!
+
+Running DADA2: Wed Feb  5 09:20:26 EST 2025
+Trim and filter in DADA2...
+
+DADA2 Filtering results:
+Sample	% Reads Passing
+MP_1_Aug_S1_L002_R1_trimmed.fq.gz 92.8988
+MP_1_Feb_S1_L002_R1_trimmed.fq.gz 95.4552
+MP_1_Jul_S1_L002_R1_trimmed.fq.gz 93.9536
+MP_1_May_S1_L002_R1_trimmed.fq.gz 93.4837
+MP_2_Apr_S1_L002_R1_trimmed.fq.gz 93.7077
+MP_2_Aug_S1_L002_R1_trimmed.fq.gz 91.895
+MP_2_Feb_S1_L002_R1_trimmed.fq.gz 94.1511
+MP_2_Jan_S1_L001_R1_trimmed.fq.gz 94.8857
+MP_2_Jul_S1_L002_R1_trimmed.fq.gz 94.2614
+MP_2_Jun_S1_L002_R1_trimmed.fq.gz 91.4451
+MP_2_May_S1_L002_R1_trimmed.fq.gz 94.3725
+MP_3_Apr_S1_L002_R1_trimmed.fq.gz 93.6689
+MP_3_Aug_S1_L002_R1_trimmed.fq.gz 94.6149
+MP_3_Feb_S1_L002_R1_trimmed.fq.gz 94.363
+MP_3_Jul_S1_L002_R1_trimmed.fq.gz 92.9174
+MP_3_Jun_S1_L002_R1_trimmed.fq.gz 94.6504
+MP_3_May_S1_L002_R1_trimmed.fq.gz 94.729
+MP_4_Apr_S1_L002_R1_trimmed.fq.gz 94.4015
+MP_4_Aug_S1_L002_R1_trimmed.fq.gz 94.2916
+MP_4_Feb_S1_L002_R1_trimmed.fq.gz 95.0942
+MP_4_Jan_S1_L001_R1_trimmed.fq.gz 92.5934
+MP_4_Jul_S1_L002_R1_trimmed.fq.gz 93.9929
+MP_4_Jun_S1_L002_R1_trimmed.fq.gz 93.8209
+MP_4_May_S1_L002_R1_trimmed.fq.gz 94.8933
+MP_5_Apr_S1_L002_R1_trimmed.fq.gz 94.0285
+MP_5_Feb_S1_L002_R1_trimmed.fq.gz 95.0307
+MP_5_Jan_S1_L001_R1_trimmed.fq.gz 94.4075
+MP_5_Jul_S1_L002_R1_trimmed.fq.gz 94.9243
+MP_5_Jun_S1_L002_R1_trimmed.fq.gz 94.7233
+MP_5_May_S1_L002_R1_trimmed.fq.gz 94.0318
+MP_6_Apr_S1_L002_R1_trimmed.fq.gz 93.6187
+MP_6_Feb_S1_L002_R1_trimmed.fq.gz 95.2275
+
+Parameters to modify:
+minLen,rm.phix,truncQ,maxEE-primer1,maxEE-primer2,trimRight,trimLeft
+Current settings:
+100,TRUE,2,2,2,25,0
+Please check DADA2 filtering success. Proceed? [y/n/m]
+Continuing!
+
+Learning error, Dereplication, Merge, and ASVs in DADA2...
+Please be patient, may take a while. Messages printed to Rscript log.
+
+
+FINAL DADA2 STATS
+Note: Please check for a failed merge of forward/reverse sequences
+Sample	%Reads Retained
+MP_1_Aug_S1_L002 84.3
+MP_1_Feb_S1_L002 82.2
+MP_1_Jul_S1_L002 82.9
+MP_1_May_S1_L002 81.6
+MP_2_Apr_S1_L002 84.8
+MP_2_Aug_S1_L002 82.8
+MP_2_Feb_S1_L002 82.2
+MP_2_Jan_S1_L001 74.3
+MP_2_Jul_S1_L002 84.7
+MP_2_Jun_S1_L002 83.4
+MP_2_May_S1_L002 84.7
+MP_3_Apr_S1_L002 86.5
+MP_3_Aug_S1_L002 83.6
+MP_3_Feb_S1_L002 82.1
+MP_3_Jul_S1_L002 83.5
+MP_3_Jun_S1_L002 90.6
+MP_3_May_S1_L002 85.5
+MP_4_Apr_S1_L002 80.6
+MP_4_Aug_S1_L002 83.5
+MP_4_Feb_S1_L002 79
+MP_4_Jan_S1_L001 75.4
+MP_4_Jul_S1_L002 85.8
+MP_4_Jun_S1_L002 87.5
+MP_4_May_S1_L002 88.6
+MP_5_Apr_S1_L002 82.2
+MP_5_Feb_S1_L002 75.9
+MP_5_Jan_S1_L001 75.6
+MP_5_Jul_S1_L002 84.6
+MP_5_Jun_S1_L002 82.6
+MP_5_May_S1_L002 85
+MP_6_Apr_S1_L002 86.5
+MP_6_Feb_S1_L002 72.8
+
+Do you wish to Proceed? [y/n]
+Continuing!
+
+Running BLASTn: Thu Feb  6 08:39:10 EST 2025
+Warning: [blastn] Number of threads was reduced to 4 to match the number of available CPUs
+
+```
+
+Worked well. Checked through annotations, some very interesting. believeable. Mammals/chordates not very well identified. Also the log states it removed some taxIDs. I think because these are not in the taxdump (maybe I can update that)
+```
+09:18:03.928 [WARN] taxid 1813808 was deleted
+09:18:03.952 [WARN] taxid 2989709 was deleted
+09:18:03.953 [WARN] taxid 3000344 was deleted
+09:18:03.953 [WARN] taxid 3000446 was deleted
+09:18:03.953 [WARN] taxid 3030987 was deleted
+09:18:03.953 [WARN] taxid 3030988 was deleted
+09:18:03.954 [WARN] taxid 3048517 was deleted
+09:18:03.954 [WARN] taxid 3055839 was deleted
+09:18:03.954 [WARN] taxid 3056766 was deleted
+09:18:03.954 [WARN] taxid 3060260 was deleted
+09:18:03.954 [WARN] taxid 3068590 was deleted
+09:18:03.954 [WARN] taxid 3068591 was deleted
+09:18:03.955 [WARN] taxid 3073994 was deleted
+09:18:03.955 [WARN] taxid 3074953 was deleted
+09:18:03.955 [WARN] taxid 3114093 was deleted
+09:18:03.955 [WARN] taxid 3126206 was deleted
+09:18:03.956 [WARN] taxid 3137404 was deleted
+09:18:03.956 [WARN] taxid 3150917 was deleted
+09:18:03.956 [WARN] taxid 3158914 was deleted
+09:18:03.956 [WARN] taxid 3230268 not found
+09:18:03.956 [WARN] taxid 3230729 not found
+09:18:03.956 [WARN] taxid 3241333 not found
+09:18:03.956 [WARN] taxid 3243676 not found
+09:18:03.957 [WARN] taxid 3301459 not found
+09:18:03.957 [WARN] taxid 3341757 not found
+09:18:03.957 [WARN] taxid 3341916 not found
+09:18:03.957 [WARN] taxid 3341961 not found
+09:18:03.957 [WARN] taxid 3348176 not found
+09:18:03.963 [WARN] taxid 601278 was deleted
+```
+
+
+#### Running second 3rd of Expedition/ COI - B
+
+```
+conda activate REVAMPenv
+
+revamp.sh -p 01_config_file_CO1_2024-expeditionb.txt -f 02_figure_config_file_CO1_2024-expeditionb.txt -s 03_sample_metadata_CO1-2024-expeditionb.txt  -r raw_data/2024-CO1-expeditionb -o results-revamp-2024-CO1-expeditionb
+
+```
+
+Output
+
+```
+
+Running Cutadapt: Thu Feb  6 11:27:46 EST 2025
+Finished Cutadapt: Thu Feb  6 11:37:27 EST 2025
+Sample	Passing Reads	Passing bp
+MP_6_Jun_S1_L002	99.5%	89.1%
+MP_6_May_S1_L002	99.5%	89.1%
+MP_7_Apr_S1_L002	99.5%	89.1%
+MP_7_Aug_S1_L002	99.5%	89.0%
+MP_7_Feb_S1_L002	99.5%	89.1%
+MP_7_Jan_S1_L001	99.4%	89.1%
+MP_7_Jun_S1_L002	99.5%	89.1%
+MP_7_Mar_S1_L002	99.4%	89.0%
+MP_8_Apr_S1_L002	99.5%	89.1%
+MP_8_Feb_S1_L002	99.5%	89.1%
+MP_8_Jul_S1_L002	99.4%	89.1%
+MP_8_May_S1_L002	99.6%	89.2%
+MP_9_Apr_S1_L002	99.5%	89.1%
+MP_9_Aug_S1_L002	99.5%	89.1%
+MP_9_Feb_S1_L002	99.5%	89.1%
+MP_9_Jan_S1_L001	99.4%	89.1%
+MP_9_Jul_S1_L002	99.6%	89.1%
+MP_10_Aug_S1_L002	99.5%	89.1%
+MP_10_Feb_S1_L002	99.5%	89.1%
+MP_10_Jan_S1_L001	99.4%	89.0%
+MP_10_Jul_S1_L002	99.5%	89.1%
+MP_10_May_S1_L002	99.5%	89.1%
+MP_11_Aug_S1_L002	99.3%	89.0%
+MP_11_Feb_S1_L002	99.6%	89.2%
+MP_11_Jan_S1_L002	99.5%	89.1%
+MP_11_Jul_S1_L002	99.4%	89.1%
+MP_12_Apr_S1_L002	99.4%	89.0%
+MP_12_Feb_S1_L002	99.5%	89.2%
+MP_12_Jan_S1_L002	99.5%	89.1%
+MP_12_Jul_S1_L002	99.5%	89.1%
+MP_13_Apr_S1_L002	99.4%	89.0%
+
+Please check Cutadapt success. Proceed? [y/n]
+Continuing!
+
+Running DADA2: Thu Feb  6 11:44:34 EST 2025
+Trim and filter in DADA2...
+
+DADA2 Filtering results:
+Sample	% Reads Passing
+MP_6_Jun_S1_L002_R1_trimmed.fq.gz 94.6204
+MP_6_May_S1_L002_R1_trimmed.fq.gz 92.9148
+MP_7_Apr_S1_L002_R1_trimmed.fq.gz 88.6933
+MP_7_Aug_S1_L002_R1_trimmed.fq.gz 93.68
+MP_7_Feb_S1_L002_R1_trimmed.fq.gz 95.5052
+MP_7_Jan_S1_L001_R1_trimmed.fq.gz 95.2568
+MP_7_Jun_S1_L002_R1_trimmed.fq.gz 94.7627
+MP_7_Mar_S1_L002_R1_trimmed.fq.gz 95.2868
+MP_8_Apr_S1_L002_R1_trimmed.fq.gz 93.6538
+MP_8_Feb_S1_L002_R1_trimmed.fq.gz 95.361
+MP_8_Jul_S1_L002_R1_trimmed.fq.gz 95.1159
+MP_8_May_S1_L002_R1_trimmed.fq.gz 91.678
+MP_9_Apr_S1_L002_R1_trimmed.fq.gz 94.0937
+MP_9_Aug_S1_L002_R1_trimmed.fq.gz 94.9806
+MP_9_Feb_S1_L002_R1_trimmed.fq.gz 95.8268
+MP_9_Jan_S1_L001_R1_trimmed.fq.gz 95.0898
+MP_9_Jul_S1_L002_R1_trimmed.fq.gz 94.0678
+MP_10_Aug_S1_L002_R1_trimmed.fq.gz 94.5105
+MP_10_Feb_S1_L002_R1_trimmed.fq.gz 94.6412
+MP_10_Jan_S1_L001_R1_trimmed.fq.gz 94.7138
+MP_10_Jul_S1_L002_R1_trimmed.fq.gz 92.638
+MP_10_May_S1_L002_R1_trimmed.fq.gz 95.493
+MP_11_Aug_S1_L002_R1_trimmed.fq.gz 95.1875
+MP_11_Feb_S1_L002_R1_trimmed.fq.gz 93.2489
+MP_11_Jan_S1_L002_R1_trimmed.fq.gz 94.8035
+MP_11_Jul_S1_L002_R1_trimmed.fq.gz 94.811
+MP_12_Apr_S1_L002_R1_trimmed.fq.gz 94.4637
+MP_12_Feb_S1_L002_R1_trimmed.fq.gz 94.4607
+MP_12_Jan_S1_L002_R1_trimmed.fq.gz 95.2215
+MP_12_Jul_S1_L002_R1_trimmed.fq.gz 95.0805
+MP_13_Apr_S1_L002_R1_trimmed.fq.gz 93.0095
+
+Parameters to modify:
+minLen,rm.phix,truncQ,maxEE-primer1,maxEE-primer2,trimRight,trimLeft
+Current settings:
+100,TRUE,2,2,2,25,0
+Please check DADA2 filtering success. Proceed? [y/n/m]
+Continuing!
+
+Learning error, Dereplication, Merge, and ASVs in DADA2...
+Please be patient, may take a while. Messages printed to Rscript log.
+
+
+FINAL DADA2 STATS
+Note: Please check for a failed merge of forward/reverse sequences
+Sample	%Reads Retained
+MP_6_Jun_S1_L002 83.2
+MP_6_May_S1_L002 85.3
+MP_7_Apr_S1_L002 83.1
+MP_7_Aug_S1_L002 87.9
+MP_7_Feb_S1_L002 80
+MP_7_Jan_S1_L001 76.8
+MP_7_Jun_S1_L002 81.2
+MP_7_Mar_S1_L002 75.4
+MP_8_Apr_S1_L002 85.5
+MP_8_Feb_S1_L002 75.3
+MP_8_Jul_S1_L002 84
+MP_8_May_S1_L002 87.4
+MP_9_Apr_S1_L002 83
+MP_9_Aug_S1_L002 86
+MP_9_Feb_S1_L002 65.6
+MP_9_Jan_S1_L001 86.6
+MP_9_Jul_S1_L002 82.2
+MP_10_Aug_S1_L002 87.7
+MP_10_Feb_S1_L002 69.5
+MP_10_Jan_S1_L001 81.3
+MP_10_Jul_S1_L002 77.1
+MP_10_May_S1_L002 87.2
+MP_11_Aug_S1_L002 90.7
+MP_11_Feb_S1_L002 75.2
+MP_11_Jan_S1_L002 86.6
+MP_11_Jul_S1_L002 83.2
+MP_12_Apr_S1_L002 86.9
+MP_12_Feb_S1_L002 79.7
+MP_12_Jan_S1_L002 87
+MP_12_Jul_S1_L002 83.9
+MP_13_Apr_S1_L002 84.5
+
+Do you wish to Proceed? [y/n]
+Continuing!
+
+Running BLASTn: Fri Feb  7 08:52:19 EST 2025
+Warning: [blastn] Number of threads was reduced to 4 to match the number of available CPUs
+
+
+Reformatting BLAST output: Fri Feb  7 09:24:19 EST 2025
+
+
+Running ASV-2-Taxonomy Script: Fri Feb  7 09:25:04 EST 2025
+09:25:10.670 [33m[WARN][0m taxid 3047057 was deleted
+09:25:10.670 [33m[WARN][0m taxid 3056766 was deleted
+09:25:10.670 [33m[WARN][0m taxid 3056986 was deleted
+09:25:10.670 [33m[WARN][0m taxid 3060260 was deleted
+09:25:10.670 [33m[WARN][0m taxid 3067694 was deleted
+09:25:10.670 [33m[WARN][0m taxid 3068579 was deleted
+09:25:10.671 [33m[WARN][0m taxid 3068582 was deleted
+09:25:10.671 [33m[WARN][0m taxid 3068593 was deleted
+09:25:10.671 [33m[WARN][0m taxid 3073994 was deleted
+09:25:10.671 [33m[WARN][0m taxid 3074942 was deleted
+09:25:10.671 [33m[WARN][0m taxid 3137404 was deleted
+09:25:10.672 [33m[WARN][0m taxid 3144429 was deleted
+09:25:10.672 [33m[WARN][0m taxid 3149731 was deleted
+09:25:10.672 [33m[WARN][0m taxid 3158157 was deleted
+09:25:10.672 [33m[WARN][0m taxid 3162510 was deleted
+09:25:10.672 [33m[WARN][0m taxid 3301459 not found
+09:25:10.673 [33m[WARN][0m taxid 3341916 not found
+09:25:10.672 [33m[WARN][0m taxid 3230268 not found
+09:25:10.673 [33m[WARN][0m taxid 3230729 not found
+09:25:10.673 [33m[WARN][0m taxid 3231981 not found
+09:25:10.673 [33m[WARN][0m taxid 3238736 not found
+09:25:10.673 [33m[WARN][0m taxid 3241333 not found
+09:25:10.680 [33m[WARN][0m taxid 601278 was deleted
+
+Reformatted taxon strings created. Options:
+Continue without changes [c]
+Manually edit file and replace in same location with identical file structure [m]
+    (Make choice when file is modified and you are ready to proceed)
+Automatically fill gaps in reformatted taxonkit hierarchy [a]
+Reformatting...
+Original reformatted taxonkit out stored at results-revamp-2024-CO1-expeditionb/ASV2Taxonomy/reformatted_taxonkit_out_ORIGINAL.txt
+Continuing!
+Writing results-revamp-2024-CO1-expeditionb_master_krona.html...
+Writing results-revamp-2024-CO1-expeditionb_wholeKRONA.html...
+
+```
+
+
+Completed... continue with c overnight...
+
+#### Running third 3rd of Expedition/ COI - C
+
+
+
+```
+conda activate REVAMPenv
+
+revamp.sh -p 01_config_file_CO1_2024-expeditionc.txt -f 02_figure_config_file_CO1_2024-expeditionc.txt -s 03_sample_metadata_CO1-2024-expeditionc.txt  -r raw_data/2024-CO1-expeditionc -o results-revamp-2024-CO1-expeditionc
+
+```
+
+```
+Running Cutadapt: Fri Feb  7 21:20:46 EST 2025
+Finished Cutadapt: Fri Feb  7 21:28:49 EST 2025
+Sample	Passing Reads	Passing bp
+MP_13_Feb_S1_L002	99.4%	88.8%
+MP_13_Jan_S1_L002	99.5%	89.0%
+MP_13_Jul_S1_L002	99.5%	89.1%
+MP_13_May_S1_L002	99.5%	89.1%
+MP_14_Apr_S1_L002	99.4%	89.1%
+MP_14_Feb_S1_L002	99.5%	89.1%
+MP_14_Jan_S1_L002	99.4%	89.0%
+MP_15_Apr_S1_L002	99.5%	89.1%
+MP_15_Aug_S1_L002	99.4%	88.9%
+MP_15_Feb_S1_L002	99.5%	89.1%
+MP_15_Jan_S1_L002	99.5%	89.1%
+MP_15_Jul_S1_L002	99.5%	89.1%
+MP_16_Aug_S1_L002	99.4%	89.1%
+MP_16_Jan_S1_L002	99.5%	89.1%
+MP_16_May_S1_L002	99.5%	89.0%
+MP_17_Aug_S1_L002	99.6%	89.1%
+MP_17_Jul_S1_L002	99.5%	89.1%
+MP_17_May_S1_L002	99.6%	89.1%
+MP_18_Aug_S1_L002	99.5%	89.1%
+MP_18_Jan_S1_L002	99.5%	89.2%
+MP_19_Jan_S1_L002	99.4%	89.0%
+MP_19_May_S1_L002	99.5%	89.0%
+MP_20_Jan_S1_L002	99.4%	89.0%
+MP_20_May_S1_L002	99.5%	89.1%
+MP_22_Aug_S1_L002	99.5%	89.1%
+MP_23_May_S1_L002	99.4%	89.1%
+MP_24_Jul_S1_L002	99.5%	89.1%
+MP_24_May_S1_L002	99.4%	89.0%
+MP_25_Jul_S1_L002	99.5%	89.1%
+MP_9_Jun_S1_L002	99.4%	89.1%
+MP_9_May_S1_L002	99.5%	89.1%
+MP_C_2_S1_L001	99.3%	89.0%
+MP_C_3_S1_L001	98.4%	87.8%
+MP_C_4_S1_L001	99.4%	89.0%
+MP_C_5_S1_L001	99.4%	88.9%
+
+
+```
+
+
+## 2/8/25
+#### Try BLAST nt
+
+Those are all working above but I am not happy with all the annotations... Some make a lot of sense (the bivalves, some of the algae, some of the fish) I cross-checked some annotations like unclassified animals and amphibians in BLAST and they are not even in those phyla... 
+
+Try rerunnin REVAMP with progress.txt starting at BLAST step and direct it to my local nt database to compate annotations...
+
+VERY careful not to rerun from beginning or I'll lose all the cutadapt and dada2 progress. In fact I backed up all results so far in ShiRP shared drive
+
+
+```
+conda activate REVAMPenv
+
+revamp.sh -p 01_config_file_CO1_2024-expeditiona.txt -f 02_figure_config_file_CO1_2024-expeditiona.txt -s 03_sample_metadata_CO1-2024-expeditiona.txt  -r raw_data/2024-CO1-expeditiona -o results-revamp-2024-CO1-expeditiona
+
+```
+
