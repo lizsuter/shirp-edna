@@ -3195,3 +3195,10 @@ revamp.sh -p 01_config_file_CO1_2024-expeditiona.txt -f 02_figure_config_file_CO
 
 ```
 
+```
+revamp.sh -p 01_config_file_CO1_2024-expeditionb.txt -f 02_figure_config_file_CO1_2024-expeditionb.txt -s 03_sample_metadata_CO1-2024-expeditionb.txt  -r raw_data/2024-CO1-expeditionb -o results-revamp-2024-CO1-expeditionb
+```
+
+```
+revamp.sh -p 01_config_file_CO1_2024-expeditionc.txt -f 02_figure_config_file_CO1_2024-expeditionc.txt -s 03_sample_metadata_CO1-2024-expeditionc.txt  -r raw_data/2024-CO1-expeditionc -o results-revamp-2024-CO1-expeditionc
+```

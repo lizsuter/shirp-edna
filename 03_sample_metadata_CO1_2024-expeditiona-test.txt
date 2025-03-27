@@ -1,0 +1,4 @@
+Sample	Name-Deploy_Cartr	Deployment	Cartridge_ID	sites	replicates	site_altname	Station	controls	Volume_liter	lat	long	Bayside	Habitat	Site-type	Date	Start Time (ET)	End Time (ET)	Night/ Day	Datecode	Year	Month	Day	DO	Temperature	Salinity	Time	Weather
+1.Aug_S1_L002	8.1_	8	1	15	8_15	15	OLD FORT POND	NA	0.318	40.881638	-72.440168	E	OPEN WATER	New	9/18/24	14:43:52	14:54:11	Day	20240918	2024	9	18					
+1.Feb_S1_L002	2.1_	2	1	15	2_15	15	OLD FORT POND	NA	0.7	40.881657	-72.440188	E	OPEN WATER	New	9/11/24	15:30:44	15:41:44	Day	20240911	2024	9	11					
+1.Jul_S1_L002	7.1_	7	1	15	7_15	15	OLD FORT POND	NA	0.368	40.881638	-72.440168	E	OPEN WATER	New	9/17/24	7:45:24	7:56:44	Day	20240917	2024	9	17					
