@@ -3704,12 +3704,35 @@ waicOcc(model_out_elas)
 ```
 
 
+What each metric means:
+1. WAIC (Widely Applicable Information Criterion) = 72.33
+Lower WAIC is better when comparing models.
+It reflects both how well the model fits the data and how complex it is (i.e., it penalizes overfitting).
+Since this is a single model, the WAIC alone isn’t meaningful unless comparing it to WAIC from another model.
+
+2. elpd (Expected Log Predictive Density) = -20.91
+Measures the model’s predictive accuracy: how well it predicts new data.
+More positive values indicate better predictive performance.
+This number is related to WAIC by: WAIC ≈ -2 * elpd.
+
+3. pD (effective number of parameters) = 15.26
+Reflects the model’s complexity.
+A higher value indicates a more flexible (and potentially overfit) model.
+Given that there are only have 6 species and a modest number of covariates, a pD around 15 is reasonable.
+
+##### Summary for manuscript
+
 *Text Summary*
-The non-spatial multi-species occupancy model for the elasmobranch primer set did not identify any statistically significant covariate effects at the community level for occupancy or detection. All 95% credible intervals for predictors such as habitat type, temperature, salinity, and sampling time overlapped zero. However, at the species level, ASV_7 (roughtail stingray) exhibited strong positive detection effects. Filtration volume significantly improved detection probability (mean = 1.83, 95% CI: 0.31–4.54), and day of sampling had an even more pronounced effect (mean = 13.32, 95% CI: 5.66–28.58). Other ASVs showed no statistically significant species-level occurrence or detection responses. While Rhat values and ESS were generally within acceptable ranges, many effects were associated with wide credible intervals, reflecting underlying uncertainty in parameter estimates.
+The non-spatial multi-species occupancy model for the elasmobranch primer set did not identify any statistically significant covariate effects at the community level for occupancy or detection. All 95% credible intervals for predictors such as habitat type, temperature, salinity, and sampling time overlapped zero. However, at the species level, ASV_7 (roughtail stingray) exhibited strong positive detection effects. Filtration volume significantly improved detection probability (mean = 1.83, 95% CI: 0.31–4.54), and day of sampling had an even more pronounced effect (mean = 13.32, 95% CI: 5.66–28.58). Other ASVs showed no statistically significant species-level occurrence or detection responses. 
+
+Model diagnostics indicated overall good convergence: most parameters had Rhat values close to 1.00 and effective sample sizes (ESS) exceeded 200, suggesting adequate mixing. Posterior predictive checks using both chi-squared and Freeman-Tukey statistics showed Bayesian p-values near 0.25–0.28 at the community level and between 0.07–0.67 at the species level, indicating no strong evidence of model misfit. WAIC for the model was 72.33, with an effective number of parameters (pD) of 15.26, suggesting a moderately complex model given the small number of species (n = 6).
 
 *Discussion*
-These results from the non-spatial model indicate that most environmental covariates do not exert a consistent influence on elasmobranch occupancy or detection when spatial structure is ignored. The significant positive effect of filtration volume and sampling day on ASV_7 detection suggests that this species is particularly responsive to sampling effort and timing—factors that may reflect short-term changes in eDNA concentration. However, the absence of other significant patterns and the wide credible intervals point to potential model limitations in resolving ecological signals from noise without accounting for spatial autocorrelation. 
-These limitations underscore the importance of incorporating spatial structure into occupancy models, especially in ecosystems with fine-scale habitat gradients or species exhibiting localized distributions. Transitioning to a spatial model is likely to yield more robust insights into the drivers of elasmobranch presence and detection dynamics...
+These results from the non-spatial model suggest that most environmental covariates do not exert a consistent influence on elasmobranch occupancy or detection across the study area when spatial structure is ignored. The significant positive effect of filtration volume and sampling day on ASV_7 detection highlights how this species may be particularly sensitive to sampling effort and temporal variation—factors that likely affect short-term fluctuations in eDNA concentration.
+
+However, the lack of other significant species-level responses, combined with wide credible intervals for many effects, underscores the model's limitations in resolving ecological signals from noise. While convergence diagnostics were generally strong, the modest Bayesian p-values from posterior predictive checks and the moderate WAIC suggest that the model may still be missing important structure in the data.
+
+In particular, the assumption of independence between sites may obscure meaningful spatial patterns. Given the likely spatial autocorrelation in elasmobranch distributions and the fine-scale environmental gradients present in the estuarine system, transitioning to a spatial occupancy framework is warranted. Incorporating spatial random effects or spatially structured latent factors can improve the model’s ability to detect true ecological effects and provide more robust insight into the drivers of elasmobranch occurrence and detection dynamics.
 
 
 #### Run spatial model (Multi-Species Spatial Occupancy)
@@ -3822,6 +3845,14 @@ sf.elas.out <- sfMsPGOcc(
 
 
 
+##### Save model
+```{r}
+# save(sf.elas.out, file = "figures-expedition/sf.elas.out")
+# load("figures-expedition/sf.elas.out")
+```
+
+##### Examine output
+
 Summarize results
 I've been iteratively adjusting parameters in model above to optimize model convergence (Rhat, ESS), and SDs for means/ variances. Variances are no longer extreme (e.g., ~1–2, not 100+).
 ```{r}
@@ -3883,6 +3914,61 @@ Species-level effects revealed more notable patterns. For ASV_7(roughtail stingr
 *Discussion* The lack of statistically significant community-level effects in this model suggests that, across all elasmobranch taxa detected, occupancy patterns were not consistently driven by any single covariate, including habitat type or physical variables like depth, temperature, or salinity. However, the positive detection effect of filtration volume and strong day-of-sampling effect for the roughtail stingray suggest that detection probability for this species is sensitive to both sampling effort and temporal variation, possibly reflecting movement that increased detectability later in the sampling window.
 
 Of particular interest is the spatial covariance estimate of approximately 400 meters, indicating the range over which spatial autocorrelation in occupancy patterns persists. This means that sites located more than 400 meters apart tend to exhibit distinct occupancy patterns, reflecting ecological or environmental heterogeneity that is not simply due to spatial proximity. Notably, this pattern emerges even for elasmobranchs, highly mobile species relative to many of the other taxa detected in our study. The fact that we still observe spatially distinct patterns in occupancy suggests that their distribution, or the persistence and transport of their eDNA signal, is shaped by localized environmental conditions or behaviors such as site fidelity or habitat preference. These findings validate the spatial resolution of our sampling and reinforce the importance of broad spatial coverage when monitoring even mobile or wide-ranging species with eDNA within a restricted waterbody such as a shallow water lagoon.
+
+
+##### Check Model diagnostics
+###### 1. Convergence diagnostics
+
+```{r}
+plot(sf.elas.out, param = "beta")  
+plot(sf.elas.out, param = "alpha")
+```
+
+--> All traces look like "fuzzy caterpillars," i.e. overlap among 3 chains and nothing stands out too much from other chains. Density plots are unimodal
+
+
+###### 2. Posterior predictive checks
+
+
+```{r}
+ppc.out1 <- ppcOcc(sf.elas.out, fit.stat = 'freeman-tukey', group = 1)
+summary(ppc.out1)
+
+ppc.out2 <- ppcOcc(sf.elas.out, fit.stat = 'freeman-tukey', group = 2)
+summary(ppc.out2)
+
+```
+
+
+###### 3. WAIC for model comparison
+
+```{r}
+waicOcc(sf.elas.out)
+
+```
+
+
+##### Summary for manuscript
+
+*Text Summary*
+In the spatial multi-species occupancy model, no covariates showed statistically significant community-level effects on occupancy, as all 95% credible intervals overlapped zero. At the detection level, none of the covariates reached statistical significance at the community level either, though filtration volume notably had a positive effect (mean = 0.878, 95% CI: –0.50 to 2.32, Rhat = 1.0013, ESS = 5634).
+
+Species-level effects revealed more pronounced patterns. ASV_7 (roughtail stingray) showed significant positive detection effects for both filtration volume (mean = 1.39, 95% CI: 0.05 to 3.03, Rhat = 1.0024, ESS = 5,004) and sampling day (mean = 7.80, 95% CI: 3.63 to 14.67, Rhat = 1.0054, ESS = 2,472), indicating increased detectability later in the sampling period and with greater filtered volume.
+
+Spatial covariance parameters phi-1 and phi-2 were estimated at 402.7 (95% CI: 19.8 to 780.5, Rhat = 1.0002, ESS = 14,297) and 400.1 (95% CI: 20.5 to 781.4, Rhat = 1.0001, ESS = 14,121), respectively, indicating spatial autocorrelation with a range of approximately 400 meters.
+
+Model diagnostics supported overall fit and convergence. Most parameters had Rhat values close to 1.00 and high ESS values, indicating good MCMC performance. Posterior predictive checks using Freeman-Tukey statistics showed Bayesian p-values of 0.32 (site level) and 0.30 (replicate level) at the community level, suggesting no major evidence of model misfit. The WAIC was 81.92, with an effective number of parameters (pD) of 16.12, indicating modest model complexity appropriate for a small set of species.
+
+
+
+*Discussion* 
+The lack of statistically significant community-level effects suggests that occupancy patterns for elasmobranchs were not strongly driven by any single environmental or habitat covariate. However, the species-specific detection responses of ASV_7 (roughtail stingray) indicate that this taxon may be more responsive to sampling effort (filtration volume) and temporal variation (day of sampling). These detection trends could reflect movement behavior, diel activity, or localized aggregations increasing eDNA signal strength.
+
+Of particular interest is the spatial covariance estimate of approximately 400 meters, indicating the range over which spatial autocorrelation in occupancy patterns persists. This means that sites located more than 400 meters apart tend to exhibit distinct occupancy patterns, reflecting ecological or environmental heterogeneity that is not simply due to spatial proximity. Notably, this pattern emerges even for elasmobranchs, highly mobile species relative to many of the other taxa detected in our study. The fact that we still observe spatially distinct patterns in occupancy suggests that their distribution, or the persistence and transport of their eDNA signal, is shaped by localized environmental conditions or behaviors such as site fidelity or habitat preference. These findings validate the spatial resolution of our sampling and reinforce the importance of broad spatial coverage when monitoring even mobile or wide-ranging species with eDNA within a restricted waterbody such as a shallow water lagoon.
+
+Model diagnostics reinforce confidence in these findings. Convergence was strong, posterior predictive checks revealed no major misfit, and WAIC supported the model's ability to balance fit and complexity. Compared to the non-spatial model, the spatial framework provides a better lens to detect subtle ecological signals and interpret species–environment relationships in estuarine systems.
+
+Collectively, these results highlight the value of incorporating spatial structure, even for wide-ranging species, and validate the spatial resolution of your sampling approach. For eDNA-based monitoring in shallow lagoons, accounting for spatial autocorrelation is crucial to avoid overlooking localized patterns that may be critical for species management and conservation.
 
 
 
@@ -4221,7 +4307,15 @@ sf.mifish.out <- sfMsPGOcc(
 
 ```
 
-##### Check output
+
+
+##### Save model
+```{r}
+# save(sf.mifish.out, file = "figures-expedition/sf.mifish.out")
+# load("figures-expedition/sf.mifish.out")
+```
+
+##### Examine output
 
 Summarize results
 ```{r}
@@ -4232,7 +4326,6 @@ Summarize results
 ```
 
 
-##### Interesting results 
 *Community Level*
 Community-Level Effects
 At the community level, several environmental covariates exhibited directional effects on species occupancy, though most estimates were associated with wide credible intervals. The only statistically supported relationship was a positive effect of temperature on occupancy across species, indicating a higher probability of occupancy in warmer waters.
@@ -4529,12 +4622,48 @@ ASV_30 is Naked goby
 
 
 
+##### Check Model diagnostics
+###### 1. Convergence diagnostics
+
+```{r}
+plot(sf.mifish.out, param = "beta")  
+plot(sf.mifish.out, param = "alpha")
+```
+
+--> All traces look like "fuzzy caterpillars," i.e. overlap among 3 chains and nothing stands out too much from other chains. Density plots are unimodal
+
+
+###### 2. Posterior predictive checks
+
+
+```{r}
+ppc.out1 <- ppcOcc(sf.mifish.out, fit.stat = 'freeman-tukey', group = 1)
+summary(ppc.out1)
+
+ppc.out2 <- ppcOcc(sf.mifish.out, fit.stat = 'freeman-tukey', group = 2)
+summary(ppc.out2)
+
+```
+
+
+###### 3. WAIC for model comparison
+
+```{r}
+waicOcc(sf.mifish.out)
+
+```
+
+
+##### Summary for manuscript
+
 
 *Results text* incorporating community level , species level, spatial variance from mifish--
 
 At the community level, temperature was the only covariate with a statistically supported effect on occupancy (mean = 1.06, 95% CI: 0.22 to 2.14, R̂ = 1.0046, ESS = 501), indicating higher occupancy in warmer waters. Other covariates, such as the habitat categories, eel grass (mean = 0.96), and oyster reef (mean = –1.90), showed suggestive but non-significant trends.
 
 Detection probability was positively associated with later sampling times (mean = 0.34, 95% CI: 0.05 to 0.64, R̂ = 1.0012, ESS = 5534), suggesting that detection improved over the course of the day. Filtration volume had a modest but non-significant positive effect (mean = 0.17, CI: –0.12 to 0.48).
+
+Model diagnostics indicate good overall fit. Posterior predictive checks using the Freeman-Tukey statistic yielded Bayesian p-values of 0.38 and 0.43 (group=replicates), suggesting no major discrepancies between observed and predicted data. The WAIC was 1523.8 with effective number of parameters (pD) = 173.7, supporting model adequacy given the model complexity and number of taxa.
 
 Spatial covariance analysis revealed strong spatial autocorrelation in species occupancy, with decay distances estimated around 400 meters (ϕ₁ = 399.7 m, CI: 17.9 to 782.1; ϕ₂ = 400.1 m, CI: 19.1 to 783.1; both R̂ < 1.0002, ESS > 12,000). This indicates that species occupancy patterns were structured over relatively short distances, with spatial correlation diminishing beyond ~400 meters.
 
@@ -4559,6 +4688,8 @@ Detection probability was also influenced by start time, with ASV_4 (Seaboard go
 
 The strong spatial structuring (ϕ ~400 m) is a key result, indicating that eDNA-based occupancy patterns change meaningfully across short distances, even for mobile taxa. Rather than simply reflecting detection noise, these spatial signals likely capture real ecological variation associated with habitat patchiness, microenvironmental gradients, or behavioral site fidelity. Importantly, the ~400-meter range corresponds to a spatial scale that is ecologically tractable and relevant for management planning in coastal restoration and estuarine monitoring.
 
+The posterior predictive checks and WAIC statistics indicate that the spatial model is both well-fitted and informative. Bayesian p-values clustered near 0.4 to 0.5 suggest no major lack of fit, and the WAIC reflects a reasonable trade off between fit and model complexity for a community data set spanning 52 taxa.
+
 Habitat type played a defining role in species distribution patterns, especially in structured habitats like eel grass beds. While few species-level effects reached statistical significance, the consistent and often large positive posterior means across all ASVs at eel grass sites suggested a community-wide increase in occupancy. Species such as anchovies, northern pipefish, scup, and striped bass were among the strongest positive responders, underscoring the ecological value of submerged aquatic vegetation for supporting biodiversity. Interestingly, spot showed the strongest positive association with the clam sanctuary habitat. As a known predator of mollusks (REF), its presence may reflect prey availability rather than structural habitat quality. Most other taxa were less likely to occur in clam sanctuary sites, which lack physical structure and may therefore support fewer niches for pelagic species.
 
 In contrast, oyster reef habitats showed surprisingly consistent negative occupancy effects across nearly all taxa, including Atlantic silverside, anchovies, and winter flounder. While these effects were not statistically strong for individual species, the directional consistency is notable. One possibility is that biogeochemical or structural filtering at these sites, such as low oxygen microzones or compact reef structure, may reduce detectability or exclude certain species. However, these results should not be interpreted as evidence against oyster restoration. Oyster reefs provide substantial ecosystem services, including shoreline stabilization, water filtration, and long-term habitat enhancement. The reduced occupancy observed here may reflect early successional reef stages, hyper-localized conditions, or methodological artifacts related to eDNA persistence or hydrodynamics. Continued monitoring as reefs mature is essential for capturing longer-term trends in habitat value.
@@ -4575,14 +4706,11 @@ Overall, this analysis illustrates how integrating environmental covariates, hab
 
 ## PAUSED HERE 7/7- continue going through summary file. load file below to catch up
 re-run CO1 model with one factor to improve convergence for phi parameters
-re-run all and save model output as their own objects bc slowing down save/load
-go back and do posterior checks and report WAIC, etc
-
 
 #### Save
 ```{r}
-# the data lists are huge and slow up saving/loading. remove before running- will just have to rerun making the lists every time
-rm(elas.exp.list,mifish.exp.list,co1.exp.list,sf.elas.out,sf.mifish.out,sf.co1.out)
+# the data lists and model outputs are huge and slow up saving/loading. remove before running- will just have to rerun making the lists every time. models saved above as their own separate files
+rm(elas.exp.list,mifish.exp.list,co1.exp.list,model_out_elas,sf.elas.out,sf.mifish.out,sf.co1.out)
 
 # save.image(file = "figures-expedition/exp_ecol_analysis_environment_upto_spOccupancyModels.RData")
 ```
