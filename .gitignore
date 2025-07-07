@@ -1,6 +1,6 @@
 .Rproj.user
 .Rhistory
-.RData
+.RData*
 .Ruserdata
 figures-salzman-etal-elasmos/
 figures-expedition/
