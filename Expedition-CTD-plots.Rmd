@@ -13,6 +13,9 @@ library(tidyverse)
 library(sf)
 library(gridExtra)
 library(ggrepel)
+library(gganimate)
+library(gifski)
+library(lubridate)
 ```
 
 ## Import Sample Key with times
@@ -380,6 +383,62 @@ ggsave("figures-expedition/station_ID_map.eps", plot = station_ID_map, width = 7
 ggsave("figures-expedition/station_ID_map.jpg", plot = station_ID_map, width = 7, height = 4, units = "in")
 ```
 
+## Map showing increasing sampling effort
+Overlay map of 1) trawl stations, 2) trawl stations + 2023 eDNA stations, 3)Expedition stations to showcase the increase in sampling effort
+
+Upload stations data
+```{r}
+trawlstations <- read_csv("../eDNA-databases/stationsmetadata.csv") %>% filter(`Site-type` == "Trawl")
+stations_2023 <- read_delim("03_sample_metadata_MiFIsh-2023.txt") %>%
+  select(sites, lat, long) %>% drop_na()
+stations_2024_expedition <- read_delim("03_sample_metadata_MiFIsh-2024-expedition.txt") %>%
+  select(sites, lat, long) %>% drop_na()
+
+trawlstations
+stations_2023
+stations_2024_expedition
+
+```
+
+
+```{r}
+trawlstations_map <- shinnbay_map +
+  geom_point(data = trawlstations, aes(y = lat, x = long), size = 4,  color = "lightblue3") +
+  xlab(NULL) +
+  ylab(NULL) 
+  
+trawlstations_map
+
+ggsave("figures-expedition/trawlstations_map.eps", plot = trawlstations_map, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/trawlstations_map.jpg", plot = trawlstations_map, width = 7, height = 4, units = "in")
+```
+
+
+```{r}
+stations_map_2023 <- trawlstations_map +
+  geom_point(data = stations_2023 %>% filter(!sites %in% trawlstations$sites), aes(y = lat, x = long), size = 4,  color = "lightblue4") +
+  xlab(NULL) +
+  ylab(NULL) 
+  
+stations_map_2023
+
+ggsave("figures-expedition/stations_map_2023.eps", plot = stations_map_2023, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/stations_map_2023.jpg", plot = stations_map_2023, width = 7, height = 4, units = "in")
+```
+
+
+```{r}
+stations_map_2024_exp <- stations_map_2023 +
+  geom_point(data = stations_2024_expedition %>% filter(!sites %in% trawlstations$sites) %>% filter(!sites %in%stations_2023$sites), aes(y = lat, x = long), size = 4,  color = "green4") +
+  xlab(NULL) +
+  ylab(NULL) 
+  
+stations_map_2024_exp
+
+ggsave("figures-expedition/stations_map_2024_exp.eps", plot = stations_map_2024_exp, width = 7, height = 4, units = "in")
+ggsave("figures-expedition/stations_map_2024_exp.jpg", plot = stations_map_2024_exp, width = 7, height = 4, units = "in")
+```
+
 # Map environmental data
 Temperature
 ```{r}
@@ -541,6 +600,44 @@ dev.off()
 ```
 
 
+## Example for report
+For one example, Sample 1_10, I pulled out the pdf page to show during the Donor Meeting. also make a zoom in of the station showing how the USV drifts:
+
+```{r}
+key_1_10 <- key %>%
+  filter(`Name-Deploy_Cartr` == "1_10")
+key_1_10
+
+CTD_1_10 <- CTD %>%
+    filter(Time > key_1_10$StartTime, Time < key_1_10$EndTime)
+CTD_1_10
+
+# geo.box <- c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9)
+
+# Remake geo box for smaller map
+geo.box2 <- c(xmin=-72.495, xmax=-72.475, ymin=40.85, ymax=40.86)
+sf_use_s2(FALSE)
+gshhg.l2 <- sf::read_sf("raw_data/gshhg-shp-2.3.7/GSHHS_shp/f/GSHHS_f_L1.shp") %>% st_crop(geo.box2)
+plot(gshhg.l2["id"])
+
+
+# make ggplot object
+map_small_sample_1_10 <- ggplot(data = gshhg.l2) +
+  geom_sf(aes(geometry = geometry)) +
+  coord_sf(xlim = c(-72.490, -72.487), ylim = c(40.85, 40.852), expand = FALSE) +
+  geom_point(data = CTD_1_10, aes(x = `Longitude (°)`, y = `Latitude (°)`), color = "red")
+
+map_small_sample_1_10
+
+
+ggsave("figures-expedition/map_small_sample_1_10.jpg", plot = map_small_sample_1_10, width = 5,
+  height = 5,
+  units = c("in"))
+
+```
+
+
+
 Make a table of the averaged value for a CTD parameter during the sample interval for each of 94 samples
 ```{r}
 # Create an empty data frame to store results
@@ -590,3 +687,70 @@ write.csv(summary_table, "figures-expedition/CTD_avg_eDNA_sample_intervals.csv",
 
 
 Import above into eDNA workbook and start comparing to eDNA data.
+
+# Gif of parameters
+Bin time intervals, start with 3 hours for now
+```{r}
+CTD_binned <- CTD %>%
+  mutate(
+    Time_ET = as.POSIXct(Time_ET, tz = "America/New_York"),
+    time_bin = cut(Time_ET, breaks = "2 hours")
+  )
+
+
+
+# CTD_binned <- CTD_binned %>%
+#   mutate(time_bin_label = format(as.POSIXct(time_bin), "%b %d %H:%M"))
+
+```
+
+
+Generate gif
+```{r}
+chlorophyll_gif <- shinnbay_map +
+  geom_point(data = CTD_binned,
+             aes(x = `Longitude (°)`, y = `Latitude (°)`, color = `Chloro Blue (ug/L)`),
+             size = 6, alpha = 0.8) +
+  scale_color_gradient2(low="black", high="green", limits=c(0, 50), oob=scales::squish) +
+  labs(title = "Chlorophyll", subtitle = "Time: {closest_state}") +
+  theme_minimal() +
+  transition_states(time_bin, transition_length = 10, state_length = 20, wrap = FALSE) +
+  ease_aes('linear')
+
+
+```
+
+
+Set gif parameters and render
+```{r}
+chlorophyll_animation <- animate(
+  chlorophyll_gif,
+  fps = 10,             # Frames per second
+  duration = 30,        # Total duration in seconds
+  width = 800,          # Width in pixels
+  height = 600,         # Height in pixels
+  renderer = gifski_renderer(loop = FALSE)  # Avoid endless loop
+)
+
+```
+
+
+
+Save
+```{r}
+anim_save("figures-expedition/ctd_chlorophyll_map.gif", 
+          chlorophyll_animation)
+
+```
+
+#### Save
+
+```{r}
+save.image(file = "figures-expedition/exp_CTDplot_environment_upto_gifs.RData")
+```
+
+or load back in
+```{r}
+load(file = "figures-expedition/exp_CTDplot_environment_upto_gifs.RData")
+```
+

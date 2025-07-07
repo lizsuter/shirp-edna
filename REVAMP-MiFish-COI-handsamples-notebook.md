@@ -3624,7 +3624,6 @@ cd /Volumes/easystore/eDNA/shirp-edna
 ./automate_reblast.sh results-revamp-2024-CO1c CO1_2024c
 ```
 
-# RUN C AND RE-RUN EXPEDITION-A. GOT DELETED WHILE I WAS MODIFYING AND TESTING AUTOMATE SCRIPT
 
 
 Meanwhile, the taxonomy files were generated with incorrect tabs and this is messing up taxonomy when importing to R. To quickly correct them so i can continue in R:
@@ -3667,4 +3666,37 @@ awk '{
 
 ```
 
-also updated script so this will be fixed in future runs
+also updated script so this will be fixed in future runs-- DIDN"T WORK... continue to do it manually...
+
+```
+awk '{
+  if (NF > 8) {
+    $8 = $8 FS $9;
+    for (i = 9; i < NF; i++) $i = "";
+  }
+  NF = 8;
+  print $0
+}' OFS='\t' results-revamp-2024-CO1a_Updated_asvTaxonomyTable.txt > results-revamp-2024-CO1a_Updated_asvTaxonomyTable_fixed.txt 
+```
+
+```
+awk '{
+  if (NF > 8) {
+    $8 = $8 FS $9;
+    for (i = 9; i < NF; i++) $i = "";
+  }
+  NF = 8;
+  print $0
+}' OFS='\t' results-revamp-2024-CO1b_Updated_asvTaxonomyTable.txt > results-revamp-2024-CO1b_Updated_asvTaxonomyTable_fixed.txt 
+```
+
+```
+awk '{
+  if (NF > 8) {
+    $8 = $8 FS $9;
+    for (i = 9; i < NF; i++) $i = "";
+  }
+  NF = 8;
+  print $0
+}' OFS='\t' results-revamp-2024-CO1c_Updated_asvTaxonomyTable.txt > results-revamp-2024-CO1c_Updated_asvTaxonomyTable_fixed.txt 
+```

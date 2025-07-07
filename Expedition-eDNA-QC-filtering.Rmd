@@ -433,37 +433,36 @@ Elas02: 58.8% of ASVs were removed as unknowns (29.2% of total reads). 1500 ASVs
 
 ## Rarefaction curves
 
+It takes forever to render the rarefaction curves in notebook. Alternatively, generate once, save, and preview in markdown:
 ```{r}
-# output from phyloseq needs to be converted to matrix and transposed
-table1 <- otu_table(phylo_2024_exp_mifish)
-class(table1) <- "matrix" 
-table1 <- t(table1) 
-
-table2 <- otu_table(phylo_2024_exp_elas)
-class(table2) <- "matrix" 
-table2 <- t(table2) 
-
-table3 <- otu_table(phylo_2024_trawl_mifish)
-class(table3) <- "matrix" 
-table3 <- t(table3) 
-
-table4 <- otu_table(phylo_2024_trawl_elas)
-class(table4) <- "matrix" 
-table4 <- t(table4) 
-
-table5 <- otu_table(phylo_2024_exp_co1)
-class(table5) <- "matrix" 
-table5 <- t(table5) 
-
-
-rarecurve(table1, step=50, cex=0.5)
-rarecurve(table2, step=50, cex=0.5)
-rarecurve(table3, step=50, cex=0.5)
-rarecurve(table4, step=50, cex=0.5)
-rarecurve(table5, step=50, cex=0.5)
-
-
+# # Create a helper function to streamline the process
+# save_rarefaction_plot <- function(otu_mat, filename) {
+#   png(filename, width = 800, height = 600)
+#   rarecurve(otu_mat, step = 50, cex = 0.5)
+#   dev.off()
+# }
+# 
+# # Convert and transpose OTU tables
+# prep_otu <- function(physeq) {
+#   mat <- otu_table(physeq)
+#   class(mat) <- "matrix"
+#   t(mat)
+# }
+# 
+# save_rarefaction_plot(prep_otu(phylo_2024_exp_mifish), "figures-expedition/rarecurve_mifish_exp.png")
+# save_rarefaction_plot(prep_otu(phylo_2024_exp_elas), "figures-expedition/rarecurve_elas_exp.png")
+# save_rarefaction_plot(prep_otu(phylo_2024_trawl_mifish), "figures-expedition/rarecurve_mifish_trawl.png")
+# save_rarefaction_plot(prep_otu(phylo_2024_trawl_elas), "figures-expedition/rarecurve_elas_trawl.png")
+# save_rarefaction_plot(prep_otu(phylo_2024_exp_co1), "figures-expedition/rarecurve_co1_exp.png")
 ```
+
+
+![MiFish Expedition](figures-expedition/rarecurve_mifish_exp.png)
+![Elasmo Expedition](figures-expedition/rarecurve_elas_exp.png)
+![MiFish Trawl](figures-expedition/rarecurve_mifish_trawl.png)
+![Elasmo Trawl](figures-expedition/rarecurve_elas_trawl.png)
+[CO1 Expedition](figures-expedition/rarecurve_co1_exp.png)
+(add ! to above line when complete)
 
 View sample sums, sort from min to max, to flag low-sequencing-effort samples:
 ```{r}
@@ -872,7 +871,7 @@ Other things to keep an eye on:
 After QC and curation, these are the number of ASVs left:
 Expedition/MiFish: 1148
 Expedition/Elas02: 1230
-Expedition/CO1: 
+Expedition/CO1: 39,617
 SeptemberTrawl/MiFish: 1414
 SeptemberTrawl/Elas02: 1423
 SeptemberTrawl/CO1:
@@ -880,12 +879,14 @@ SeptemberTrawl/CO1:
 After QC and curation, these are the number of unique Orders left:
 Expedition/MiFish: 26
 Expedition/Elas02: 18
+Expedition/CO1: 509
 SeptemberTrawl/MiFish: 31
 SeptemberTrawl/Elas02: 15
 
 After QC and curation, these are the number of unique Species left:
 Expedition/MiFish: 62
 Expedition/Elas02: 29
+Expedition/CO1: 993 (many of these are undefined at the Sp level and represent Genera, Families, etc.)
 SeptemberTrawl/MiFish: 80
 SeptemberTrawl/Elas02: 28
 
@@ -998,7 +999,7 @@ CO1/ Expedition-
 data.frame(otu_table(ps2024_exp_co1)[,which(sample_data(ps2024_exp_co1)$controls == "negative")])
 max(otu_table(ps2024_exp_co1)[,which(sample_data(ps2024_exp_co1)$controls == "negative")])
 ```
-None of the more abundant ASVs are in the negative controls, that's great. The max read abundance for an ASV in a negative control is 37931, which is high but not too relatively high for this library. What are these ASVs (don't appear in table preview above)--
+None of the more abundant ASVs are in the negative controls, that's great. The max read abundance for an ASV in a negative control is 37931, which is high but not too relatively high for this library. 
 
 ```{r}
 neg_controls_df <- data.frame(otu_table(ps2024_exp_co1)[, which(sample_data(ps2024_exp_co1)$controls == "negative")])
@@ -1014,7 +1015,7 @@ df.neg.ASVs <- as.data.frame(tax_table(phylo_2024_exp_co1)[rownames(data.frame(o
 
 df.neg.ASVs[rownames(neg_controls_sorted),]
 ```
-These are mostly protists/ algae/ fungi. Great.
+These are mostly protists/ algae/ fungi. Great. It was not a sterile control, just DI water collected into a washed bucket from the marine station).
 
 
 MiFish/ Trawl-
@@ -1127,7 +1128,7 @@ I decided not to remove any from CO1. Because of the much higher diversity, many
 ```{r}
 data.frame(otu_table(ps2024_exp_co1)) # compare before
 ```
-1918 taxa remain.
+39,617 taxa remain
 
 ```{r}
 sum(apply(otu_table(ps2024_exp_co1), 2, as.numeric))
@@ -1212,7 +1213,7 @@ data.frame(tax_table(ps2024_exp_elas_glommed))
 
 
 Exp/CO1-
-NOTE for CO1, agglomerate by Species, not common name, because there is way too much diversity here to assign a common name, and there are many species which do not have one.
+NOTE for CO1, agglomerate by Species, not common name, because there is way too much diversity here to assign a common name to all, and there are many species which do not have one.
 ```{r}
 ps2024_exp_co1_glommed <- tax_glom(ps2024_exp_co1, "Species")
 
