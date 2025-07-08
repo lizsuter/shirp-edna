@@ -1,7 +1,7 @@
 ---
 title: "Expedition-eDNA-Ecol-analysis"
 author: "Liz Suter"
-date: "2025-03-27"
+date: "started 2025-03-27"
 output: html_document
 ---
 
@@ -4704,22 +4704,6 @@ Overall, this analysis illustrates how integrating environmental covariates, hab
 
 
 
-## PAUSED HERE 7/7- continue going through summary file. load file below to catch up
-re-run CO1 model with one factor to improve convergence for phi parameters
-
-#### Save
-```{r}
-# the data lists and model outputs are huge and slow up saving/loading. remove before running- will just have to rerun making the lists every time. models saved above as their own separate files
-rm(elas.exp.list,mifish.exp.list,co1.exp.list,model_out_elas,sf.elas.out,sf.mifish.out,sf.co1.out)
-
-# save.image(file = "figures-expedition/exp_ecol_analysis_environment_upto_spOccupancyModels.RData")
-```
-
-
-```{r}
-# load(file = "figures-expedition/exp_ecol_analysis_environment_upto_spOccupancyModels.RData")
-```
-
 
 ### CO1
 
@@ -5049,8 +5033,8 @@ priors.list <- list(
   beta.comm.normal = list(mean = 0, var = 2.72),
   alpha.comm.normal = list(mean = 0, var = 2.72),
   tau.sq.beta.ig = list(a = 2, b = 2),
-  tau.sq.alpha.ig = list(a = 2, b = 2),
-  phi.unif = list(a = a, b = b)
+  tau.sq.alpha.ig = list(a = 2, b = 2)
+#  ,phi.unif = list(a = a, b = b) Actually when NGGP = TRUE, the models sets its own phi bounds and sfMsPGOcc is currently only implemented for NNGPs, not full Gaussian Processes. NNGP has to be TRUE
 )
 
 tuning.list <- list(phi = rep(1, n.factors))
@@ -5086,7 +5070,7 @@ sf.co1.out <- sfMsPGOcc(
     grid.index = co1.exp.list$grid.index
   ),
   inits = inits.list,
-  priors = priors.list,
+  prior = priors.list,
   tuning = tuning.list,
   cov.model = "exponential",
   NNGP = TRUE,
@@ -5107,7 +5091,16 @@ sf.co1.out <- sfMsPGOcc(
 
 
 
-##### Check output
+
+
+
+##### Save model
+```{r}
+# save(sf.co1.out, file = "figures-expedition/sf.co1.out")
+# load("figures-expedition/sf.co1.out")
+```
+
+##### Examine output
 
 Summarize results
 ```{r}
@@ -5118,12 +5111,95 @@ sink()
 ```
 
 
-## PAUSED HERE 6/22- continue going through summary file. load file below to catch up
-re-run model to improve convergence for phi parameters
+*Community Level*
+In the spatial multi-species occupancy analysis of the CO1 eDNA dataset, several environmental covariates influenced community-level occupancy patterns. Temperature had a clear positive community-level effect (mean = 0.46, 95% CI: 0.33–0.59, R̂ = 1.046, ESS = 1041), suggesting generally higher occupancy across taxa in warmer conditions. Salinity similarly had a significant positive effect (mean = 0.73, 95% CI: 0.57–0.89, R̂ = 1.004, ESS = 822), consistent with expectations for marine-influenced taxa in estuarine environments. Conversely, nighttime sampling (mean = -1.53, 95% CI: -1.74 to -1.32, R̂ = 1.009, ESS = 1010) and turbidity (mean = -0.23, 95% CI: -0.34 to -0.13, R̂ = 1.002, ESS = 1311) negatively influenced occupancy at the community level, highlighting reduced occupancy during night and in more turbid conditions.
 
-#### Save
+Other covariates exhibited suggestive but uncertain effects at the community level. For instance, eelgrass habitat was associated with moderately higher occupancy (mean = 0.90, 95% CI: 0.47–1.33, R̂ = 1.002, ESS = 486), while oyster reefs and clam sanctuary habitats generally showed negative occupancy trends (oyster reefs: mean = -0.51, 95% CI: -1.04 to 0.04, R̂ = 1.015, ESS = 491; clam sanctuary: mean = -0.59, 95% CI: -1.04 to -0.14, R̂ = 1.015, ESS = 441). However, uncertainty in these estimates suggests some species-specific variation that should be explored further at the individual species level.
+
+Detection probability at the community level was positively associated with filtration volume (mean = 0.20, 95% CI: 0.15–0.24, R̂ = 1.002, ESS = 5082) and later sampling times during the day (mean = 0.16, 95% CI: 0.11–0.21, R̂ = 1.002, ESS = 2873). The influence of sampling day was small and uncertain (mean = 0.03, 95% CI: -0.02 to 0.08, R̂ = 1.010, ESS = 3050).
+
+The spatial covariance parameter (ϕ) indicated strong spatial autocorrelation, with a decay distance of approximately 446 meters (mean = 446.2 m, 95% CI: 118.7–784.7 m, R̂ = 1.0004, ESS = 14,406). This result indicates distinct occupancy patterns over spatial scales less than 500 meters, supporting the ecological validity of observed spatial structure despite the dynamic, shallow nature of Shinnecock Bay.
+
+Model diagnostics indicated robust convergence for most community-level parameters, with R̂ values mostly near 1.00 and ESS typically >500, although temperature and some categorical habitat effects had slightly elevated R̂ (around 1.01–1.05), suggesting some mild convergence challenges but generally reliable inference.
+
+*Discussion* 
+This analysis clearly shows that despite concerns regarding rapid mixing and tidal exchange in shallow coastal lagoons like Shinnecock Bay, spatially structured occupancy signals for marine taxa remain detectable using eDNA. The positive occupancy responses to temperature and salinity align with known ecological preferences of estuarine and coastal marine taxa, reinforcing the ecological plausibility of these results. Negative relationships with turbidity and nighttime sampling further demonstrate the ecological sensitivity of eDNA to both habitat quality and diel behavioral patterns.
+
+The spatial autocorrelation decay distance (~446 meters) reinforces the ecological relevance of the spatial structure detected. Given that eDNA degradation rates typically occur on timescales of days or less, this spatial scale suggests localized ecological processes, such as habitat selection, resource availability, or behavioral site fidelity, strongly shape the observed patterns, rather than physical mixing homogenizing signals across larger scales.
+
+Community-level uncertainty around habitat effects like eelgrass, oyster reefs, and clam sanctuaries implies that species-specific occupancy responses to these habitats vary considerably. Future targeted analyses at species or taxonomic group levels could help resolve these patterns further, allowing for more refined ecological interpretations and targeted management actions.
+
+Overall, these findings support the applicability of eDNA methods for ecological assessment and biodiversity monitoring in dynamic coastal lagoons and highlight the value of incorporating spatially explicit analyses to reveal nuanced habitat associations and environmental drivers of marine biodiversity.
+
+
+
+
+
+
+
+
+##### Check Model diagnostics
+###### 1. Convergence diagnostics
+
 ```{r}
-# the listed objects are huge and slow up saving/loading. remove before running- will just have to rerun making the lists everytime
+plot(sf.co1.out, param = "beta")  
+plot(sf.co1.out, param = "alpha")
+```
+
+--> 
+
+###### 2. Posterior predictive checks
+
+
+```{r}
+ppc.out1 <- ppcOcc(sf.co1.out, fit.stat = 'freeman-tukey', group = 1)
+summary(ppc.out1)
+
+ppc.out2 <- ppcOcc(sf.co1.out, fit.stat = 'freeman-tukey', group = 2)
+summary(ppc.out2)
+
+```
+
+
+
+###### 3. WAIC for model comparison
+
+```{r}
+waicOcc(sf.co1.out)
+
+```
+
+
+1. Posterior Predictive Checks (Bayesian p-values)
+- Community-level Bayesian p-values:
+  - Group 1 (sites): 0.3845
+  - Group 2 (replicates): 0.4296
+- These Bayesian p-values are near the ideal midpoint (~0.5), suggesting a good model fit at the community level. Values between about 0.2–0.8 generally indicate a healthy balance between model fit and complexity. Thus, your community-level checks are quite good.
+- Species-level Bayesian p-values:
+  - Almost all species have Bayesian p-values comfortably in the acceptable range (mostly between 0.1–0.8). A few species have values closer to extremes (e.g., ASV_89 = 0.086), but these are relatively rare. This slight deviation is expected with a large number of species.
+- The errors related to memory limits (vector memory limit of 96.0 Gb reached) are computational in nature and do not reflect a conceptual flaw in the model or analysis. They simply indicate you might need to break down certain diagnostics into smaller chunks if repeated.
+
+2. WAIC Diagnostic
+WAIC: 44447.282
+Effective number of parameters (pD): 3849.936
+- A large WAIC is normal given your large dataset and the complexity of a spatial multispecies occupancy model with 993 species. The high effective number of parameters (pD) reflects the complexity of the model and the many latent variables involved (e.g., species-level random effects, spatial factors).
+
+3. MCMC Diagnostics (from your earlier output)
+- R̂ (Rhat): mostly close to 1.0 (≤1.05) across community-level parameters.
+- Effective Sample Size (ESS): Most values are comfortably above ~500, with many in the thousands. This suggests good chain convergence and stable parameter estimates.
+- The spatial covariance (ϕ) parameter ESS > 10,000 is reassuring, indicating stable estimation of spatial structure.
+
+
+
+
+
+
+
+#### Save environment
+```{r}
+# the data objects and model outputs are huge and slow up saving/loading. remove before running- will just have to rerun making the lists every time. models saved above as their own separate files
+
+# rm(elas.exp.list,mifish.exp.list,co1.exp.list,model_out_elas,sf.elas.out,sf.mifish.out,sf.co1.out)
 
 # save.image(file = "figures-expedition/exp_ecol_analysis_environment_upto_spOccupancyModels.RData")
 ```
@@ -5132,15 +5208,9 @@ re-run model to improve convergence for phi parameters
 ```{r}
 # load(file = "figures-expedition/exp_ecol_analysis_environment_upto_spOccupancyModels.RData")
 ```
-
-##### Interesting results 
-*Community Level*
-from summary (focus on parameters with ~ high posterior means [+ or -], 95% credible intervals that do not overlap zero (or barely do), and acceptable convergence diagnostics (Rhat < ~1.1 and ESS > ~200))
-
-
-
-
-
+## PAUSED HERE 7/8- continue going through summary file. load file below to catch up
+Contonue to example output of CO1 model at the species level.
+Calculate avg distance between stations- compare to phi values. Phi might be a ~maximum based on station distances. Finer spatial resolution could make this distance smaller
 
 
 
