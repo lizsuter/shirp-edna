@@ -5100,6 +5100,7 @@ sf.co1.out <- sfMsPGOcc(
 # load("figures-expedition/sf.co1.out")
 ```
 
+
 ##### Examine output
 
 Summarize results
@@ -5132,6 +5133,51 @@ Community-level uncertainty around habitat effects like eelgrass, oyster reefs, 
 Overall, these findings support the applicability of eDNA methods for ecological assessment and biodiversity monitoring in dynamic coastal lagoons and highlight the value of incorporating spatially explicit analyses to reveal nuanced habitat associations and environmental drivers of marine biodiversity.
 
 
+*Species Level*
+There are A LOT of ASVs so first just filter out the ones for which CI does not overlap zero:
+
+```{r}
+# Get the summary output
+sum_output <- capture.output(summary(sf.co1.out))
+
+# Locate Species Level section
+species_header_line <- grep("^\tSpecies Level$", sum_output)
+dashes_lines <- grep("^[-]{5,}$", sum_output)
+start_line <- dashes_lines[dashes_lines > species_header_line][1]
+end_line <- dashes_lines[dashes_lines > start_line][1]
+
+# Extract the table body
+species_occ_lines <- sum_output[(start_line + 2):(end_line - 2)]
+
+# Use regex to extract Parameter and numeric values
+pattern <- "^\\s*(.*?)\\s+(-?\\d+\\.\\d+|NA)\\s+(-?\\d+\\.\\d+|NA)\\s+(-?\\d+\\.\\d+|NA)\\s+(-?\\d+\\.\\d+|NA)\\s+(-?\\d+\\.\\d+|NA)\\s+(\\d+\\.\\d+|NA)\\s+(\\d+|NA)\\s*$"
+
+# Apply pattern line-by-line
+parsed <- lapply(species_occ_lines, function(line) {
+  if (grepl(pattern, line)) {
+    matches <- regmatches(line, regexec(pattern, line))[[1]]
+    return(matches[2:9])  # Drop the full match, keep capture groups
+  } else {
+    return(rep(NA, 8))
+  }
+})
+
+# Convert to data frame
+species_occ_df <- as.data.frame(do.call(rbind, parsed), stringsAsFactors = FALSE)
+colnames(species_occ_df) <- c("Parameter", "Mean", "SD", "2.5%", "50%", "95%", "Rhat", "ESS")
+
+# Convert appropriate columns to numeric
+species_occ_df[, 2:8] <- lapply(species_occ_df[, 2:8], as.numeric)
+
+# Filter for significant results (credible intervals do not include 0)
+species_occ_sig <- species_occ_df %>%
+  filter(`2.5%` > 0 | `95%` < 0)
+
+species_occ_sig
+```
+## PAUSED HERE 7/8- continue going through summary file. load file below to catch up
+Contonue to example output of CO1 model at the species level.
+Calculate avg distance between stations- compare to phi values. Phi might be a ~maximum based on station distances. Finer spatial resolution could make this distance smaller
 
 
 
@@ -5208,9 +5254,6 @@ Effective number of parameters (pD): 3849.936
 ```{r}
 # load(file = "figures-expedition/exp_ecol_analysis_environment_upto_spOccupancyModels.RData")
 ```
-## PAUSED HERE 7/8- continue going through summary file. load file below to catch up
-Contonue to example output of CO1 model at the species level.
-Calculate avg distance between stations- compare to phi values. Phi might be a ~maximum based on station distances. Finer spatial resolution could make this distance smaller
 
 
 
