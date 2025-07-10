@@ -2623,6 +2623,8 @@ ggsave("figures-expedition/Bcentroura_map_mifish.jpg", plot = shinn_bay_Bcentrou
 - Syngnathus fuscus(Northern pipefish): Not endangered/threatened/special concern but identified as "Priority Species of Greatest Conservation Need". [DEC source](https://dec.ny.gov/nature/animals-fish-plants/biodiversity-species-conservation/endangered-species/list)
 - Similarly, eastern oyster, hard clam, tautog, American Shad, Winter Flounder, Roughtail Stingray are all on this NY Conservation list as well
 - Didn't plot Xiphias gladius (Swordfish), Lopholatilus chamaeleonticeps (Tilefish), Thunnus obesus (Bigeye tuna) bc while threatened/ endangered, based on where these were [sts 1 and 19], we suspect they are runoff from restaurants/marinas
+- Cross check list of species with the [NYS DEC site on invasives](https://dec.ny.gov/nature/invasive-species/aquatic/marine)
+- Pull out those that were identified to the species level and see if any are bioindicators (i.e. [Polygordius jouinae is a polychaete that might indicate well-sorted sandy bottoms](https://link.springer.com/article/10.1007/s00227-008-0936-9))
 
 
 
@@ -5112,32 +5114,13 @@ sink()
 ```
 
 
-*Community Level*
-In the spatial multi-species occupancy analysis of the CO1 eDNA dataset, several environmental covariates influenced community-level occupancy patterns. Temperature had a clear positive community-level effect (mean = 0.46, 95% CI: 0.33–0.59, R̂ = 1.046, ESS = 1041), suggesting generally higher occupancy across taxa in warmer conditions. Salinity similarly had a significant positive effect (mean = 0.73, 95% CI: 0.57–0.89, R̂ = 1.004, ESS = 822), consistent with expectations for marine-influenced taxa in estuarine environments. Conversely, nighttime sampling (mean = -1.53, 95% CI: -1.74 to -1.32, R̂ = 1.009, ESS = 1010) and turbidity (mean = -0.23, 95% CI: -0.34 to -0.13, R̂ = 1.002, ESS = 1311) negatively influenced occupancy at the community level, highlighting reduced occupancy during night and in more turbid conditions.
-
-Other covariates exhibited suggestive but uncertain effects at the community level. For instance, eelgrass habitat was associated with moderately higher occupancy (mean = 0.90, 95% CI: 0.47–1.33, R̂ = 1.002, ESS = 486), while oyster reefs and clam sanctuary habitats generally showed negative occupancy trends (oyster reefs: mean = -0.51, 95% CI: -1.04 to 0.04, R̂ = 1.015, ESS = 491; clam sanctuary: mean = -0.59, 95% CI: -1.04 to -0.14, R̂ = 1.015, ESS = 441). However, uncertainty in these estimates suggests some species-specific variation that should be explored further at the individual species level.
-
-Detection probability at the community level was positively associated with filtration volume (mean = 0.20, 95% CI: 0.15–0.24, R̂ = 1.002, ESS = 5082) and later sampling times during the day (mean = 0.16, 95% CI: 0.11–0.21, R̂ = 1.002, ESS = 2873). The influence of sampling day was small and uncertain (mean = 0.03, 95% CI: -0.02 to 0.08, R̂ = 1.010, ESS = 3050).
-
-The spatial covariance parameter (ϕ) indicated strong spatial autocorrelation, with a decay distance of approximately 446 meters (mean = 446.2 m, 95% CI: 118.7–784.7 m, R̂ = 1.0004, ESS = 14,406). This result indicates distinct occupancy patterns over spatial scales less than 500 meters, supporting the ecological validity of observed spatial structure despite the dynamic, shallow nature of Shinnecock Bay.
-
-Model diagnostics indicated robust convergence for most community-level parameters, with R̂ values mostly near 1.00 and ESS typically >500, although temperature and some categorical habitat effects had slightly elevated R̂ (around 1.01–1.05), suggesting some mild convergence challenges but generally reliable inference.
-
-*Discussion* 
-This analysis clearly shows that despite concerns regarding rapid mixing and tidal exchange in shallow coastal lagoons like Shinnecock Bay, spatially structured occupancy signals for marine taxa remain detectable using eDNA. The positive occupancy responses to temperature and salinity align with known ecological preferences of estuarine and coastal marine taxa, reinforcing the ecological plausibility of these results. Negative relationships with turbidity and nighttime sampling further demonstrate the ecological sensitivity of eDNA to both habitat quality and diel behavioral patterns.
-
-The spatial autocorrelation decay distance (~446 meters) reinforces the ecological relevance of the spatial structure detected. Given that eDNA degradation rates typically occur on timescales of days or less, this spatial scale suggests localized ecological processes, such as habitat selection, resource availability, or behavioral site fidelity, strongly shape the observed patterns, rather than physical mixing homogenizing signals across larger scales.
-
-Community-level uncertainty around habitat effects like eelgrass, oyster reefs, and clam sanctuaries implies that species-specific occupancy responses to these habitats vary considerably. Future targeted analyses at species or taxonomic group levels could help resolve these patterns further, allowing for more refined ecological interpretations and targeted management actions.
-
-Overall, these findings support the applicability of eDNA methods for ecological assessment and biodiversity monitoring in dynamic coastal lagoons and highlight the value of incorporating spatially explicit analyses to reveal nuanced habitat associations and environmental drivers of marine biodiversity.
 
 
-*Species Level*
 There are A LOT of ASVs so first just filter out the ones for which CI does not overlap zero:
 
 ```{r}
 # Get the summary output
+options(max.print = 100000)
 sum_output <- capture.output(summary(sf.co1.out))
 
 # Locate Species Level section
@@ -5174,12 +5157,148 @@ species_occ_sig <- species_occ_df %>%
   filter(`2.5%` > 0 | `95%` < 0)
 
 species_occ_sig
+
+# save as file
+write.table(species_occ_sig, 
+            file = "figures-expedition/model_out_co1_spatial_summary_95sig_sp_level_only.txt",
+            sep = "\t", 
+            row.names = FALSE, 
+            quote = FALSE)
 ```
-## PAUSED HERE 7/8- continue going through summary file. load file below to catch up
-Contonue to example output of CO1 model at the species level.
-Calculate avg distance between stations- compare to phi values. Phi might be a ~maximum based on station distances. Finer spatial resolution could make this distance smaller
+
+Pull out sig results and match to taxonomy tables to see what these ASVs are:
+```{r}
+# Remove "Intercept" rows- these are baseline species level results and don't say anything about the impacts of env parameters on the ASVs)
+species_occ_sig <- species_occ_sig %>%
+  filter(!str_detect(Parameter, "Intercept")) %>%
+  mutate(
+    ASV = str_extract(Parameter, "ASV_\\d+"),
+    suffix = str_extract(Parameter, "_[abc]$") %>% str_remove("_"),
+    covariate = str_remove(Parameter, "-ASV_\\d+_[abc]$")
+  )
+
+# Read in CO1 taxonomy files
+tax_a <- read_tsv("results-revamp-2024-CO1-expeditiona_Chordata_reBLAST/results-revamp-2024-CO1-expeditiona_Updated_asvTaxonomyTable.txt") %>%
+  mutate(suffix = "a")
+
+tax_b <- read_tsv("results-revamp-2024-CO1-expeditionb_Chordata_reBLAST/results-revamp-2024-CO1-expeditionb_Updated_asvTaxonomyTable.txt") %>%
+  mutate(suffix = "b")
+
+tax_c <- read_tsv("results-revamp-2024-CO1-expeditionc_Chordata_reBLAST/results-revamp-2024-CO1-expeditionc_Updated_asvTaxonomyTable.txt") %>%
+  mutate(suffix = "c")
+
+# Combine all tax tables
+all_tax <- bind_rows(tax_a, tax_b, tax_c)
+
+# Merge significant results with taxonomy
+sig_results_tax <- species_occ_sig %>%
+  left_join(all_tax, by = c("ASV", "suffix"))
+
+# Reorder to inspect
+sig_results_tax <-
+  sig_results_tax %>%
+  mutate(sign = ifelse(Mean >= 0, "positive", "negative"),
+    abs_mean = abs(Mean)) %>%
+  arrange(covariate, sign, desc(abs_mean)) %>%
+  select(Parameter, covariate, sign, Mean, abs_mean, ASV, suffix, Kingdom:Species, everything(), -abs_mean)%>%
+  View()  
+
+```
 
 
+
+"Western bay" variable:
+
+86 ASVs have strong negative ocurrence patterns in the west (i.e. preference for the east). Many are phytoplankton or macroalgae (diatoms, dinoflagellates, haptophytes, chlorophytes, rhodophytes, raphidophytes, streptophytes) as well as other protists (e.g. rotifers, amoebas, ). Here are some of the more interesting ones:
+
+- ASV_1860_a, Order Actiniaria (Sea anemones!)- overall strongest association with eastern bay
+- ASV_15697_a (order Octopoda)
+- ASV_480_b Mercenaria mercenaria (hard clam)- interesting because west is where the clam sanctuaries are!
+- ASV_1967_c Mytilus trossulus - Pacific blue mussel that is also found in Maine and Canada. Can hybridize with Mytilus edulis
+- ASV_509_c, Macoploma tenta, (Elongated macoma clam)
+- ASV_1247_c, Petricolaria pholadiformis (False angelwing clam)
+- ASV_1684_a, Sclerodactyla briareus (Hairy sea cucumber)
+- ASV_3903_a, Styela canopus (Rough Sea Squirt)
+- ASV_613_c, Anisolpidiales (Order of fungus-like parasites of algae)
+- Potential HABs: 
+  - ASV_13_a Aureococcus anophagefferens, ASV_10303_b (genus Aureococcus), ASV_9042_a (Aureococcus family)
+  - ASV_610_c, Pseudochattonella farcimen (icthyotoxic)
+  - ASV_185_c, Fibrocapsa japonica
+  - ASV_801_c, Eucampia zodiacus (harmful to seaweeds?)
+  - ASV_544_c, Takayama genus (in the same family as Karenia brevis)
+  - ASV_2008_a, Odontella regia, harmful diatom
+  - ASV_2229_c, Gymnodiniaceae family contains several HAB species (but not further identified)
+  - ASV_2908_a, Phaeocystaceae family contains several HAB species (but not further identified)
+
+
+Only 4 ASVs have a strong positive occurrence (preference for the west)
+
+- ASV_1036_a Gemma gemma (Amethyst gem clam; competitor with other small bivalves/ clams- [wins out in competition in the presence of green crab](https://invasions.si.edu/nemesis/species_summary/81511))
+- ASV_134_a Haminella solitaria (Solitary glassy bubble snail)
+- ASV_1092_a Cylindrotheca genus (diatom)
+- ASV_923_a Grateloupia genus - [likely invasive red algae](https://invasions.si.edu/nemesis/species_summary/12572), species turuturu?
+
+
+Only 3 species had strong positive occurrence with Eelgrass habitat
+
+- ASV_694_a Cheilostomatida, order of bryozoans ([there is at least 1 species in this order that is an epibiont of eelgrass](https://bioone.org/journals/zoological-science/volume-32/issue-5/zs150079/Cribrilina-mutabilis-n-sp-an-Eelgrass-Associated-Bryozoan-Gymnolaemata/10.2108/zs150079.full))
+- ASV_4483_a, Anaulales, order of diatoms
+- ASV_3893_a, Entomophthoromycetes, rare fungal infection of humans (ew)- tropical disease
+
+
+292 ASVs had a strong negative occurrence with Night (e.g. preference for the day)- makes logical sense for photosynthesizers. The majority of these are phytoplankton. Some species of note:
+
+- HABs:
+  - ASV_1197_c, Levanderina fissa
+  - ASV_276_a, Takayama acrotrocha
+  - ASV_896_a, Phaeocystis pouchetii
+  - ASV_45_a, Biecheleria cincta
+  - ASV_185_c, Fibrocapsa japonica
+  - ASV_94_a, Nusuttodinium genus- contains some harmful species
+  - ASV_610_c, Pseudochattonella farcimen (icthyotoxic)
+
+
+No significant positive occurences at night
+
+
+1 ASV had a significant positive occurence with Chlorophyll-
+
+- ASV_2356_a, Toxariales, an order of diatoms
+
+
+No significant negative occurences with Chlorophyll
+
+
+3 ASVs had a significant negative occurrence with salinity-
+- ASV_4654_c (Clathria prolifera) - [a sponge that has a wide salinity tolerance, including down to 15 psu](https://invasions.si.edu/nemesis/species_summary/47997)
+- ASV_708_b (Halichondriidae family of sponges)- also seem to have wide salinity tolerance
+- ASV_1572_b Chloropicales - order of chlorophytes/ green algae. Some species can thrive at lower salinities (10-15 psu)
+
+
+128 ASVs had a significant positive occurrence with salinity. These were all over the phylogenetic tree.- Phytoplankton, sponges, arthropods, fungi, bivalves and other mollusks, protists, cnidaria, ctenophores, annelids, etc etc
+
+
+No significant negative occurences with temperature
+
+
+74 ASVs had a significant positive occurrence with temperature. Similar to salinity, these were all over the phylogenetic tree. Some can be considered tropical or to favor warmer waters, for example:
+
+- ASV_35_c Mnemiopsis leidyi, comb jelly - wide temperature tolerance but range [is spreading due to climate change](https://www.sciencedirect.com/science/article/pii/S0272771419305955)
+- ASV_276_a, Takayama acrotrocha- also a HAB dinoflagellate. [Blooms are driven by high SST/ low SS](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5282212)
+- ASV_1823_a	Gracilaria tikvahiae (red alga)	[Native to the western Atlantic tropics/sub-tropics; commercial cultivation in Florida & the Caribbean at 25 – 30 °C.	[large termperature tolerance and indicative of eutrophication](https://www.hawaii.edu/reefalgae/invasive_algae/pdf%20files/gracilaria_tikvahiae.pdf)
+- ASV_2622_a	Hypnea musciformis (red alga)	[Cosmopolitan but considered a tropical macroalga; optimum growth temperatures 25-30C](https://www.cabidigitallibrary.org/doi/full/10.5555/20033183355)- can't get full text of this book chapter but cited [here](https://www.tandfonline.com/doi/full/10.1080/26388081.2021.2011412#d1e166)
+- ASV_736 _c	Lithodesmium intricatum (diatom)	[Cosmopolitan; found in warm to temperate water](https://www.inaturalist.org/guide_taxa/1636894#:~:text=Classification%204,CC%20BY%2DNC%2DSA))
+- ASV_614_c	Chaetoceros tenuissimus (diatom) [Considered a tropical species and is highly adaptable to futher warming](https://www.nature.com/articles/s41598-018-36091-y)
+- ASV_913_c	Thoracosphaera heimii (calcifying dinophyte)	[Found in Sargasso Sea, Gulf of Mexico, equatorial Atlantic. Used as a warm-water/paleo-tropical marker in marine sediments](https://www.sciencedirect.com/science/article/abs/pii/0377839882900020)
+- ASV_112_a	Skeletonema menzelii (diatom)	[Recorded mainly from warm coastal waters of the Atlantic, Mediterranean, and S America.](https://www.sciencedirect.com/science/article/pii/S1434461007000739#fig4);  [Among the Skeletonema, has ability to grow at very high temperatures (35C)](https://www.tandfonline.com/doi/full/10.1080/09670262.2011.565128#d1e565)
+
+
+
+8 ASVs (all are phytoplankton) had negative occurrence with day-of-sampling and 10 (mostloy animals) had positive occurrence.
+- Phytoplankton (Cryptophyceae, Rhodophyta, Phaeophyceae, Haptophyta) taxa decline across the sampling period-- might reflect a bloom decay or changing water masses.
+- ASV_41_b, Nanomia bijuga (Siphonophore): a pelagic cnidarian. increased detection over time might reflect oceanic influx (mirroring phytoplankton pattern)
+
+26 ASVs had positive occurrence with volume of water filtered, indicating that detection probability increases with graeter volume filtered
 
 
 
@@ -5235,6 +5354,44 @@ Effective number of parameters (pD): 3849.936
 - Effective Sample Size (ESS): Most values are comfortably above ~500, with many in the thousands. This suggests good chain convergence and stable parameter estimates.
 - The spatial covariance (ϕ) parameter ESS > 10,000 is reassuring, indicating stable estimation of spatial structure.
 
+
+
+##### Summary for manuscript
+
+
+*Community Level Patterns*
+In the spatial multi-species occupancy analysis of the CO1 eDNA dataset, several environmental covariates exhibited statistically supported effects on occupancy. Temperature showed a strong positive community-level effect (mean = 0.46, 95% CI: 0.33–0.59, R̂ = 1.046, ESS = 1041), suggesting higher species occupancy in warmer waters. Salinity also positively influenced occupancy (mean = 0.73, 95% CI: 0.57–0.89, R̂ = 1.004, ESS = 822), reflecting the marine affinities of many taxa in Shinnecock Bay. Conversely, nighttime sampling (mean = –1.53, 95% CI: –1.74 to –1.32, R̂ = 1.009, ESS = 1010) and turbidity (mean = –0.23, 95% CI: –0.34 to –0.13, R̂ = 1.002, ESS = 1311) had negative effects on occupancy.
+
+Habitat associations were mixed. Eelgrass beds were associated with increased occupancy (mean = 0.90, 95% CI: 0.47–1.33), while clam sanctuaries (mean = –0.59, CI: –1.04 to –0.14) and oyster reefs (mean = –0.51, CI: –1.04 to 0.04) showed negative community-level occupancy These trends indicate some functional differentiation between habitats but with considerable species-specific variability.
+
+Detection probability was positively associated with both filtration volume (mean = 0.20, 95% CI: 0.15–0.24) and later sampling times during the day (mean = 0.16, 95% CI: 0.11–0.21). No effect was detected for sampling day.
+
+Spatial covariance analysis indicated a decay distance of approximately 446 meters (ϕ = 446.2, 95% CI: 118.7–784.7, R̂ = 1.0004, ESS = 14,406), indicating that species occupancy was spatially structured at sub-kilometer scales.
+
+Posterior predictive checks using the Freeman–Tukey statistic produced Bayesian p-values of 0.38 (group = 1) and 0.43 (group = 2), indicating adequate model fit. Model diagnostics indicated robust convergence for most community-level parameters, with R̂ values mostly near 1.00 and ESS >500.
+
+*Species-Level Trends*
+
+Species-specific analyses revealed fine-scale ecological patterns. Temperature and salinity were positively associated with occupancy across many ASVs. For instance, ASV_35_c (Mnemiopsis leidyi) and ASV_1823_a (Gracilaria tikvahiae) had strong positive temperature effects, reflecting their known thermal tolerance and likely tropical or warm-temperate affinity.
+
+Nighttime sampling was negatively associated with occupancy for 292 ASVs, nearly all phytoplankton, likely reflecting light-dependent detection dynamics. No CO1 taxa had significantly higher occupancy at night. 
+
+A subset of 8 ASVs showed negative associations with day-of-sampling whereas 10 ASVs showed positive associations with sampling day. Interestingly, all ASVs with a negative associated were phytoplankton while the 10 ASVs that had a positive association were mostly animals, (e.g., Nanomia bijuga, ASV_41_b), suggesting time-sensitive detection, possibly related to tide or oceanic influx. Volume of water filtered significantly increased detection probability for 26 ASVs, underscoring the importance of sufficient sampling effort for eDNA recovery.
+
+At the habitat level, three ASVs had strong positive associations with eelgrass: ASV_694_a (Cheilostomatida), ASV_4483_a (Anaulales), and ASV_3893_a (Entomophthoromycetes). Western bay effects were especially strong: 86 ASVs had significantly lower occupancy in the western bay, including Mercenaria mercenaria, Mytilus trossulus, and multiple potential HAB-forming taxa (e.g., Aureococcus anophagefferens, Pseudochattonella farcimen). Only four ASVs showed preference for the western bay, notably Gemma gemma and Grateloupia spp.
+
+*Discussion*
+This analysis confirms that spatially structured, environmentally mediated patterns in biodiversity are detectable using eDNA in a shallow, dynamic estuary like Shinnecock Bay. Despite skepticism that such systems are too well-mixed to retain ecological signal, the estimated spatial autocorrelation range of ~446 meters reveals that occupancy varies meaningfully at sub-kilometer scales. This provides compelling evidence against the assumption that small estuaries are too homogenized for spatial eDNA inference.
+
+Temperature and salinity were consistently strong predictors of occupancy, consistent with known physiological preferences across marine phyla. The presence of warm-water-affiliated species, including tropical macroalgae (Gracilaria, Hypnea), calcifying dinoflagellates (Thoracosphaera), and bloom-forming taxa (Takayama, Skeletonema), supports recent evidence of poleward species shifts and seasonal stratification in temperate estuaries.
+
+The species-level trends further show that potential behavioral and environmental variability, including diel shifts, bloom dynamics, and water mass changes, can be resolved through well-replicated eDNA sampling. The prevalence of strong daytime associations for phytoplankton and diatoms, coupled with weak to absent nighttime occupancy, likely reflects diel growth patterns of phytoplankton as well as degradation kinetics tied to light and temperature. The day-of-sampling effects for some taxa (e.g., siphonophores, cryptophytes) may reflect increased oceanic flushing during the later sampling period. Notably, a shift to cooler temperatures in the latter portion of the sampling period was also observed using the continuous CTD measurements.
+
+Habitat trends add a new dimension to these results. The positive eelgrass signal, though driven by only three CO1 ASVs, included taxa like bryozoans and diatoms known to associate closely with submerged vegetation. Meanwhile, the negative oyster reef effects across many ASVs echo trends observed in the MiFish dataset and warrant further exploration. These patterns may reflect early reef successional stages or localized eDNA retention limitations, not necessarily true absence. T
+
+Most strikingly, the western bay signal, characterized by lower occuapncy of many taxonomic groups relative to the eastern bay, aligns with ecological degradation patterns observed in previous field studies. The eastern bay, which benefits from stronger tidal flushing through the inlet, has shown more rapid recovery in key ecological indicators (REF). This study supports that trend, revealing consistently higher biodiversity in the eastern bay, including a greater diversity of phytoplankton. Notably, this includes several taxa associated with harmful algal blooms (HABs). Rather than indicating ecological stress, their presence may signal a resilient and dynamic ecosystem capable of supporting a broad range of functional groups without tipping into bloom conditions. The absence of recent bloom events despite the presence of these taxa (REF) suggests that the eastern bay is in a sufficiently healthy state to accommodate potentially opportunistic species while maintaining overall ecological balance.
+
+Taken together, these results show that spatially explicit eDNA modeling, when coupled with environmental covariates, reveals nuanced ecological signals in small, dynamic coastal lagoons. The strong spatial decay and structured environmental associations underscore the method’s ecological fidelity and its utility for fine-scale biodiversity monitoring, habitat assessment, and restoration planning.
 
 
 
