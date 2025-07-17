@@ -28,6 +28,9 @@ library(cowplot)
 library(patchwork)
 library(spOccupancy)
 library(corrplot)
+library(geosphere)
+
+sessionInfo()
 ```
 
 # Load data from QC and Filtering Workbook
@@ -2775,7 +2778,28 @@ dist_methods <- unlist(distanceMethodList)
 print(dist_methods)
 ```
 
-On the other hand, from the vegan documentation, Aitchison distance is just the Euclidean distance on clr-transformed data, so I can do a transformation first and then the Euclidean distance calculation:
+On the other hand, from the vegan documentation, Aitchison distance is just the Euclidean distance on clr-transformed data, so I can do a transformation first and then the Euclidean distance calculation.
+
+
+
+I also spent a long time figuring out why clr transformation using 2 different packages was giving different distance matrices. Finally figured it out using practice dataset, dietswap, below. Next apply to real data:
+```{r}
+###
+
+data(dietswap)
+
+otu_df <- as.data.frame(otu_table(dietswap))
+
+otu_df[otu_df == 0] <- 1e-8 # Small value replacement for zeros
+
+otu_df
+
+
+## FINALLY FIGURED THAT THESE 2 THINGS ARE EQUIVLENT:
+data.frame(microbiome::transform(t(otu_df), transform = "clr") ) 
+data.frame(compositions::clr(otu_df))
+
+```
 
 ### Mifish
 Dissimilarity between replicates
@@ -3950,28 +3974,6 @@ waicOcc(sf.elas.out)
 ```
 
 
-##### Summary for manuscript
-
-*Text Summary*
-In the spatial multi-species occupancy model, no covariates showed statistically significant community-level effects on occupancy, as all 95% credible intervals overlapped zero. At the detection level, none of the covariates reached statistical significance at the community level either, though filtration volume notably had a positive effect (mean = 0.878, 95% CI: –0.50 to 2.32, Rhat = 1.0013, ESS = 5634).
-
-Species-level effects revealed more pronounced patterns. ASV_7 (roughtail stingray) showed significant positive detection effects for both filtration volume (mean = 1.39, 95% CI: 0.05 to 3.03, Rhat = 1.0024, ESS = 5,004) and sampling day (mean = 7.80, 95% CI: 3.63 to 14.67, Rhat = 1.0054, ESS = 2,472), indicating increased detectability later in the sampling period and with greater filtered volume.
-
-Spatial covariance parameters phi-1 and phi-2 were estimated at 402.7 (95% CI: 19.8 to 780.5, Rhat = 1.0002, ESS = 14,297) and 400.1 (95% CI: 20.5 to 781.4, Rhat = 1.0001, ESS = 14,121), respectively, indicating spatial autocorrelation with a range of approximately 400 meters.
-
-Model diagnostics supported overall fit and convergence. Most parameters had Rhat values close to 1.00 and high ESS values, indicating good MCMC performance. Posterior predictive checks using Freeman-Tukey statistics showed Bayesian p-values of 0.32 (site level) and 0.30 (replicate level) at the community level, suggesting no major evidence of model misfit. The WAIC was 81.92, with an effective number of parameters (pD) of 16.12, indicating modest model complexity appropriate for a small set of species.
-
-
-
-*Discussion* 
-The lack of statistically significant community-level effects suggests that occupancy patterns for elasmobranchs were not strongly driven by any single environmental or habitat covariate. However, the species-specific detection responses of ASV_7 (roughtail stingray) indicate that this taxon may be more responsive to sampling effort (filtration volume) and temporal variation (day of sampling). These detection trends could reflect movement behavior, diel activity, or localized aggregations increasing eDNA signal strength.
-
-Of particular interest is the spatial covariance estimate of approximately 400 meters, indicating the range over which spatial autocorrelation in occupancy patterns persists. This means that sites located more than 400 meters apart tend to exhibit distinct occupancy patterns, reflecting ecological or environmental heterogeneity that is not simply due to spatial proximity. Notably, this pattern emerges even for elasmobranchs, highly mobile species relative to many of the other taxa detected in our study. The fact that we still observe spatially distinct patterns in occupancy suggests that their distribution, or the persistence and transport of their eDNA signal, is shaped by localized environmental conditions or behaviors such as site fidelity or habitat preference. These findings validate the spatial resolution of our sampling and reinforce the importance of broad spatial coverage when monitoring even mobile or wide-ranging species with eDNA within a restricted waterbody such as a shallow water lagoon.
-
-Model diagnostics reinforce confidence in these findings. Convergence was strong, posterior predictive checks revealed no major misfit, and WAIC supported the model's ability to balance fit and complexity. Compared to the non-spatial model, the spatial framework provides a better lens to detect subtle ecological signals and interpret species–environment relationships in estuarine systems.
-
-Collectively, these results highlight the value of incorporating spatial structure, even for wide-ranging species, and validate the spatial resolution of your sampling approach. For eDNA-based monitoring in shallow lagoons, accounting for spatial autocorrelation is crucial to avoid overlooking localized patterns that may be critical for species management and conservation.
-
 
 
 ### MiFish
@@ -4656,54 +4658,6 @@ waicOcc(sf.mifish.out)
 ```
 
 
-##### Summary for manuscript
-
-
-*Results text* incorporating community level , species level, spatial variance from mifish--
-
-At the community level, temperature was the only covariate with a statistically supported effect on occupancy (mean = 1.06, 95% CI: 0.22 to 2.14, R̂ = 1.0046, ESS = 501), indicating higher occupancy in warmer waters. Other covariates, such as the habitat categories, eel grass (mean = 0.96), and oyster reef (mean = –1.90), showed suggestive but non-significant trends.
-
-Detection probability was positively associated with later sampling times (mean = 0.34, 95% CI: 0.05 to 0.64, R̂ = 1.0012, ESS = 5534), suggesting that detection improved over the course of the day. Filtration volume had a modest but non-significant positive effect (mean = 0.17, CI: –0.12 to 0.48).
-
-Model diagnostics indicate good overall fit. Posterior predictive checks using the Freeman-Tukey statistic yielded Bayesian p-values of 0.38 and 0.43 (group=replicates), suggesting no major discrepancies between observed and predicted data. The WAIC was 1523.8 with effective number of parameters (pD) = 173.7, supporting model adequacy given the model complexity and number of taxa.
-
-Spatial covariance analysis revealed strong spatial autocorrelation in species occupancy, with decay distances estimated around 400 meters (ϕ₁ = 399.7 m, CI: 17.9 to 782.1; ϕ₂ = 400.1 m, CI: 19.1 to 783.1; both R̂ < 1.0002, ESS > 12,000). This indicates that species occupancy patterns were structured over relatively short distances, with spatial correlation diminishing beyond ~400 meters.
-
-At the species level, occupancy varied by habitat and environmental conditions. Habitat associations revealed clear trends: all ASVs had positive mean coefficients for eel grass, with many showing high effect sizes (e.g., ASV_20 = 1.50, ASV_17 = 1.41), suggesting eelgrass promotes occupancy, even though credible intervals included zero. In contrast, oyster reef habitats were uniformly associated with lower occupancy, with all ASVs showing large negative coefficients. The clam sanctuary showed mostly negative trends, though a few species such as ASV_12 (Spot) had positive but highly uncertain effects.
-
-Temperature effects were consistently positive across ASVs. Species such as ASV_14 (Northern sennet) and ASV_58 (Shads) had strong positive means (>1.5), suggesting temperature sensitivity. These species may be near their lower thermal tolerance limits in this region (REFs), making it sensible that they are sensitive to temperature gradients towards the end of summer.
-
-Depth was generally negatively associated with occupancy. ASV_5 (Atlantic silverside) showed the most negative depth relationship (mean = –1.79, CI: –4.46 to 0.20), suggesting preference for shallower habitats.
-
-Turbidity and chlorophyll both showed broad negative trends. ASVs 4 (Seaboard goby), 6 (Anchovies), and 12 (Spot) showed particularly negative turbidity responses. The chlorophyll signal was more diffuse but consistently negative across all ASVs, potentially reflecting avoidance of eutrophic or bloom-prone areas.
-
-Salinity effects varied, as expected in an estuarine system. Some species (e.g., ASV_7 – Black sea bass) showed strong positive responses to higher salinity (mean = 2.38, CI: 0.28 to 5.40).
-
-Night vs. day sampling effects were mixed. Some species like ASV_2 (Scombriformes) and ASV_58 (Shads) had positive associations with nighttime sampling, while ASV_7 (Black sea bass) and ASV_17 (Northern pipefish) were more common during the day. No consistent community-wide pattern emerged.
-
-Detection probability was also influenced by start time, with ASV_4 (Seaboard goby) and ASV_5 (Atlantic silverside) showing improved detectability later in the day. Filtration volume generally increased detection, with ASV_9 (Tautog) showing a significant positive effect (mean = 0.81, CI: 0.00 to 1.93).
-
-
-
-
-*Paired discussion* This spatial occupancy analysis revealed clear environmental gradients and habitat preferences shaping the teleost community in Shinnecock Bay. The strong positive effect of temperature on species occupancy suggests that thermal optima can structure community composition and species distributions. The reduced occupancy in the western bay likely reflects anthropogenic pressures and lower habitat quality relative to the eastern bay, as established in previous studies (REF). Despite wide credible intervals in some cases, the consistency of directional trends across taxa, particularly for temperature, eel grass habitat, turbidity, and chlorophyll, suggests that ecological filtering is occurring across these gradients.
-
-The strong spatial structuring (ϕ ~400 m) is a key result, indicating that eDNA-based occupancy patterns change meaningfully across short distances, even for mobile taxa. Rather than simply reflecting detection noise, these spatial signals likely capture real ecological variation associated with habitat patchiness, microenvironmental gradients, or behavioral site fidelity. Importantly, the ~400-meter range corresponds to a spatial scale that is ecologically tractable and relevant for management planning in coastal restoration and estuarine monitoring.
-
-The posterior predictive checks and WAIC statistics indicate that the spatial model is both well-fitted and informative. Bayesian p-values clustered near 0.4 to 0.5 suggest no major lack of fit, and the WAIC reflects a reasonable trade off between fit and model complexity for a community data set spanning 52 taxa.
-
-Habitat type played a defining role in species distribution patterns, especially in structured habitats like eel grass beds. While few species-level effects reached statistical significance, the consistent and often large positive posterior means across all ASVs at eel grass sites suggested a community-wide increase in occupancy. Species such as anchovies, northern pipefish, scup, and striped bass were among the strongest positive responders, underscoring the ecological value of submerged aquatic vegetation for supporting biodiversity. Interestingly, spot showed the strongest positive association with the clam sanctuary habitat. As a known predator of mollusks (REF), its presence may reflect prey availability rather than structural habitat quality. Most other taxa were less likely to occur in clam sanctuary sites, which lack physical structure and may therefore support fewer niches for pelagic species.
-
-In contrast, oyster reef habitats showed surprisingly consistent negative occupancy effects across nearly all taxa, including Atlantic silverside, anchovies, and winter flounder. While these effects were not statistically strong for individual species, the directional consistency is notable. One possibility is that biogeochemical or structural filtering at these sites, such as low oxygen microzones or compact reef structure, may reduce detectability or exclude certain species. However, these results should not be interpreted as evidence against oyster restoration. Oyster reefs provide substantial ecosystem services, including shoreline stabilization, water filtration, and long-term habitat enhancement. The reduced occupancy observed here may reflect early successional reef stages, hyper-localized conditions, or methodological artifacts related to eDNA persistence or hydrodynamics. Continued monitoring as reefs mature is essential for capturing longer-term trends in habitat value.
-
-One novel dimension of this study was the inclusion of nighttime sampling, which, though producing weak species-level shifts overall, revealed slightly higher occupancy probabilities for a few taxa. These included Atlantic menhaden and shads, species known or suspected to exhibit diel behavioral patterns such as vertical migration or nocturnal foraging (REF). While not statistically conclusive, these trends point to the potential value of expanding temporal coverage in eDNA surveys, especially for taxa with crepuscular or nocturnal activity patterns that are poorly captured during daytime-only sampling protocols.
-
-Anthropogenic impacts were also detectable in the species-level results, most notably through the strong and consistent negative associations with turbidity and chlorophyll-a. Taxa such as seaboard goby, anchovies, and spot showed steep declines in occupancy with increasing turbidity, suggesting reduced habitat quality, direct physiological stress, or decreased eDNA detectability in more eutrophic conditions. In the case of spot, this may also be driven by preference for clam sanctuaries, which would be lower turbidity due to filtration. These findings align with community-level results and highlight the ecological footprint of nutrient enrichment and sediment disturbance in coastal systems. Additionally, the presence of offshore pelagic species such as Atlantic bluefin tuna and Bigeye tuna at inner-bay sites raises the possibility of anthropogenic eDNA sources—such as runoff or discharge from restaurants or marinas that handle fish from distant waters. MENTION SPECIFIC LOCATIONS While speculative, this hypothesis underscores the importance of source validation in interpreting eDNA results in urbanized estuaries.
-
-Other environmental covariates produced more modest but ecologically meaningful trends. Salinity gradients, while narrow across the system (27–31 psu), appeared to structure species occurrence, with taxa like Black sea bass showing clear preferences for more saline sites. This finding reinforces the importance of estuarine gradients as drivers of faunal composition, even at relatively fine scales. Geographic differences between the eastern and western bays were also evident, with several species (e.g., summer flounder, tautog, darter goby) more likely to occupy eastern sites. These trends likely reflect cumulative differences in habitat quality, development intensity, and proximity to the inlet, and they mirror patterns reported in prior field surveys of Shinnecock Bay (REF).
-
-Overall, this analysis illustrates how integrating environmental covariates, habitat features, and spatial structure into eDNA models can uncover nuanced ecological patterns and provide decision-relevant insights for habitat restoration and biodiversity monitoring.
-
 
 
 
@@ -5356,44 +5310,6 @@ Effective number of parameters (pD): 3849.936
 
 
 
-##### Summary for manuscript
-
-
-*Community Level Patterns*
-In the spatial multi-species occupancy analysis of the CO1 eDNA dataset, several environmental covariates exhibited statistically supported effects on occupancy. Temperature showed a strong positive community-level effect (mean = 0.46, 95% CI: 0.33–0.59, R̂ = 1.046, ESS = 1041), suggesting higher species occupancy in warmer waters. Salinity also positively influenced occupancy (mean = 0.73, 95% CI: 0.57–0.89, R̂ = 1.004, ESS = 822), reflecting the marine affinities of many taxa in Shinnecock Bay. Conversely, nighttime sampling (mean = –1.53, 95% CI: –1.74 to –1.32, R̂ = 1.009, ESS = 1010) and turbidity (mean = –0.23, 95% CI: –0.34 to –0.13, R̂ = 1.002, ESS = 1311) had negative effects on occupancy.
-
-Habitat associations were mixed. Eelgrass beds were associated with increased occupancy (mean = 0.90, 95% CI: 0.47–1.33), while clam sanctuaries (mean = –0.59, CI: –1.04 to –0.14) and oyster reefs (mean = –0.51, CI: –1.04 to 0.04) showed negative community-level occupancy These trends indicate some functional differentiation between habitats but with considerable species-specific variability.
-
-Detection probability was positively associated with both filtration volume (mean = 0.20, 95% CI: 0.15–0.24) and later sampling times during the day (mean = 0.16, 95% CI: 0.11–0.21). No effect was detected for sampling day.
-
-Spatial covariance analysis indicated a decay distance of approximately 446 meters (ϕ = 446.2, 95% CI: 118.7–784.7, R̂ = 1.0004, ESS = 14,406), indicating that species occupancy was spatially structured at sub-kilometer scales.
-
-Posterior predictive checks using the Freeman–Tukey statistic produced Bayesian p-values of 0.38 (group = 1) and 0.43 (group = 2), indicating adequate model fit. Model diagnostics indicated robust convergence for most community-level parameters, with R̂ values mostly near 1.00 and ESS >500.
-
-*Species-Level Trends*
-
-Species-specific analyses revealed fine-scale ecological patterns. Temperature and salinity were positively associated with occupancy across many ASVs. For instance, ASV_35_c (Mnemiopsis leidyi) and ASV_1823_a (Gracilaria tikvahiae) had strong positive temperature effects, reflecting their known thermal tolerance and likely tropical or warm-temperate affinity.
-
-Nighttime sampling was negatively associated with occupancy for 292 ASVs, nearly all phytoplankton, likely reflecting light-dependent detection dynamics. No CO1 taxa had significantly higher occupancy at night. 
-
-A subset of 8 ASVs showed negative associations with day-of-sampling whereas 10 ASVs showed positive associations with sampling day. Interestingly, all ASVs with a negative associated were phytoplankton while the 10 ASVs that had a positive association were mostly animals, (e.g., Nanomia bijuga, ASV_41_b), suggesting time-sensitive detection, possibly related to tide or oceanic influx. Volume of water filtered significantly increased detection probability for 26 ASVs, underscoring the importance of sufficient sampling effort for eDNA recovery.
-
-At the habitat level, three ASVs had strong positive associations with eelgrass: ASV_694_a (Cheilostomatida), ASV_4483_a (Anaulales), and ASV_3893_a (Entomophthoromycetes). Western bay effects were especially strong: 86 ASVs had significantly lower occupancy in the western bay, including Mercenaria mercenaria, Mytilus trossulus, and multiple potential HAB-forming taxa (e.g., Aureococcus anophagefferens, Pseudochattonella farcimen). Only four ASVs showed preference for the western bay, notably Gemma gemma and Grateloupia spp.
-
-*Discussion*
-This analysis confirms that spatially structured, environmentally mediated patterns in biodiversity are detectable using eDNA in a shallow, dynamic estuary like Shinnecock Bay. Despite skepticism that such systems are too well-mixed to retain ecological signal, the estimated spatial autocorrelation range of ~446 meters reveals that occupancy varies meaningfully at sub-kilometer scales. This provides compelling evidence against the assumption that small estuaries are too homogenized for spatial eDNA inference.
-
-Temperature and salinity were consistently strong predictors of occupancy, consistent with known physiological preferences across marine phyla. The presence of warm-water-affiliated species, including tropical macroalgae (Gracilaria, Hypnea), calcifying dinoflagellates (Thoracosphaera), and bloom-forming taxa (Takayama, Skeletonema), supports recent evidence of poleward species shifts and seasonal stratification in temperate estuaries.
-
-The species-level trends further show that potential behavioral and environmental variability, including diel shifts, bloom dynamics, and water mass changes, can be resolved through well-replicated eDNA sampling. The prevalence of strong daytime associations for phytoplankton and diatoms, coupled with weak to absent nighttime occupancy, likely reflects diel growth patterns of phytoplankton as well as degradation kinetics tied to light and temperature. The day-of-sampling effects for some taxa (e.g., siphonophores, cryptophytes) may reflect increased oceanic flushing during the later sampling period. Notably, a shift to cooler temperatures in the latter portion of the sampling period was also observed using the continuous CTD measurements.
-
-Habitat trends add a new dimension to these results. The positive eelgrass signal, though driven by only three CO1 ASVs, included taxa like bryozoans and diatoms known to associate closely with submerged vegetation. Meanwhile, the negative oyster reef effects across many ASVs echo trends observed in the MiFish dataset and warrant further exploration. These patterns may reflect early reef successional stages or localized eDNA retention limitations, not necessarily true absence. T
-
-Most strikingly, the western bay signal, characterized by lower occuapncy of many taxonomic groups relative to the eastern bay, aligns with ecological degradation patterns observed in previous field studies. The eastern bay, which benefits from stronger tidal flushing through the inlet, has shown more rapid recovery in key ecological indicators (REF). This study supports that trend, revealing consistently higher biodiversity in the eastern bay, including a greater diversity of phytoplankton. Notably, this includes several taxa associated with harmful algal blooms (HABs). Rather than indicating ecological stress, their presence may signal a resilient and dynamic ecosystem capable of supporting a broad range of functional groups without tipping into bloom conditions. The absence of recent bloom events despite the presence of these taxa (REF) suggests that the eastern bay is in a sufficiently healthy state to accommodate potentially opportunistic species while maintaining overall ecological balance.
-
-Taken together, these results show that spatially explicit eDNA modeling, when coupled with environmental covariates, reveals nuanced ecological signals in small, dynamic coastal lagoons. The strong spatial decay and structured environmental associations underscore the method’s ecological fidelity and its utility for fine-scale biodiversity monitoring, habitat assessment, and restoration planning.
-
-
 
 
 
@@ -5634,10 +5550,20 @@ First do a CLR, centered log ratio transformation of the absolute abundance data
 Multivariate analyses cannot handle zeroes but clr should remove them... check for zeroes after transformation.
 ```{r}
 
+# replace zeroes with very very small numbers
+ps2024_exp_mifish_glommed_zerosubbed <- as.data.frame(otu_table(ps2024_exp_mifish_glommed))
+ps2024_exp_mifish_glommed_zerosubbed[ps2024_exp_mifish_glommed_zerosubbed == 0] <- 1e-10 
 
-exp_mifish_glommed_clr <- data.frame(compositions::clr(otu_df_exp_mifish))
-exp_elas_glommed_clr <- data.frame(compositions::clr(otu_df_exp_elas))
-exp_co1_glommed_clr <- data.frame(compositions::clr(otu_df_exp_co1))
+ps2024_exp_elas_glommed_zerosubbed <- as.data.frame(otu_table(ps2024_exp_elas_glommed))
+ps2024_exp_elas_glommed_zerosubbed[ps2024_exp_elas_glommed_zerosubbed == 0] <- 1e-10 
+
+ps2024_exp_co1_glommed_zerosubbed <- as.data.frame(otu_table(ps2024_exp_co1_glommed))
+ps2024_exp_co1_glommed_zerosubbed[ps2024_exp_co1_glommed_zerosubbed == 0] <- 1e-10 
+
+
+exp_mifish_glommed_clr <- data.frame(compositions::clr(ps2024_exp_mifish_glommed_zerosubbed))
+exp_elas_glommed_clr <- data.frame(compositions::clr(ps2024_exp_elas_glommed_zerosubbed))
+exp_co1_glommed_clr <- data.frame(compositions::clr(ps2024_exp_co1_glommed_zerosubbed))
 
 any(exp_mifish_glommed_clr==0)
 any(exp_elas_glommed_clr==0)
@@ -5708,7 +5634,7 @@ ggplot(lograt_variances_co1_exp, aes(x = as.numeric(PCaxis), y = PercVar)) +
 
 
 ```
-First two axes are moderate for Elas02 and CO1 but very weak for Mifish.
+First two axes are moderate for MiFish and CO1 and better for Elas
 
 
 Extract variances from the clr pca
@@ -5906,7 +5832,9 @@ pca_co1_exp_nightday_plot <- ggplot(pca_lograt_co1_exp_df, aes(x = PC1, y = PC2,
 pca_co1_exp_nightday_plot
 
 ```
-The CO1 PCA plots are generating lines, which indicates that there are strong linear relationships in the data. [This could happen if there is the same value across many samples for one or more variables.](http://rstudio-pubs-static.s3.amazonaws.com/476142_414f269078a44955ad85365a10b8b2ed.html). Elas02 distribution is also looking ~linear. I suspect this is due many zeroes in the data. Be cautious and look for better method to handle zeroes
+
+
+
 
 
 ### Env Fit
@@ -5937,7 +5865,7 @@ capture.output(pca_envfit_mifish_exp, file = "figures-expedition/pca_envfit_mifi
 
 ```
 *SUMMARY- MiFish EnvFir Results that were sig*
-Latitude, Bayside (note these are related!)
+Salinity, Time, Site_type
 
 
 
@@ -5968,39 +5896,31 @@ capture.output(pca_envfit_elas_exp, file = "figures-expedition/pca_envfit_elas_e
 ```
 
 *Summary of Envfit to Elas02 library*
-Latitude, Longitude, Salinity, Bayside
+Date, salinity, site_type, night-day
 
 
 
 #### CO1
-the `sample_data(ps2024_exp_co1)` does not have the calculated avg temp, etc. Grab it from the `metadata_mifish_exp` bc it is exactly the same metadata for each sample
+the `sample_data(ps2024_exp_co1)` does not have the calculated avg temp, etc. Grab it from the metadata file 
 ```{r}
-# Make into dfs and clean up so names are in same format
-metadata_co1_exp <- data.frame(sample_data(ps2024_exp_co1))%>% data.frame() %>% 
-  rownames_to_column(var = "SampleID") 
-
-metadata_temp <- data.frame(sample_data(ps2024_exp_mifish))%>% data.frame() %>% 
-  rownames_to_column(var = "SampleID") 
-
-# Match up by name, which is in different format for each...
-# Step 1: Clean the variables
-metadata_co1_exp_clean <- metadata_co1_exp %>%
-  mutate(Name_Deploy_Cartr_clean = gsub("\\.", "_", gsub("_$", "", as.character(Name_Deploy_Cartr))))
-
-metadata_temp_clean <- metadata_temp %>%
-  rename(Name_Deploy_Cartr_clean = Name.Deploy_Cartr)
-
-# Step 2: Join by the cleaned key
-joined_df <- left_join(metadata_co1_exp_clean, metadata_temp_clean, by = "Name_Deploy_Cartr_clean")
+# Import complete table with temp, etc
+metadata_co1_exp_complete <- read.csv(file = "figures-expedition/CTD_avg_eDNA_sample_intervals.csv")
 
 
+# sort metadata in same order as the pca matrix, remove empty columns
+metadata_co1_exp <- sample_data(ps2024_exp_co1) %>% 
+  data.frame() %>% 
+  rownames_to_column(var = "SampleID") %>% 
+  arrange(factor(SampleID, levels = rownames(lograt_pca_co1_exp$x))) %>%
+  select(-DO, -Temperature, -Salinity, -Time, -Weather) %>%
+  mutate(Name.Deploy_Cartr = gsub("\\.", "_", gsub("_$", "", as.character(Name_Deploy_Cartr))))
 
-# sort metadata in same order as the pca matrix
-#metadata_co1_exp <- sample_data(ps2024_exp_co1) %>% data.frame() %>% 
-  rownames_to_column(var = "SampleID") %>% arrange(factor(SampleID, levels = rownames(lograt_pca_co1_exp$x)))
+
+# join
+metadata_co1_exp <- full_join(metadata_co1_exp, metadata_co1_exp_complete, by = join_by(Name.Deploy_Cartr))
+
 
 # Fix time and date so it can be used as input
-
 metadata_co1_exp$DateTime <- as.POSIXct(force_tz((mdy_hms(paste(metadata_co1_exp$Date, metadata_co1_exp$Start_Time__ET_))), tzone = "America/New_York"))
 
 # Convert Start Time (from RocSI filtration time) to continuous variable rather than factor. This will be a "time-of-day" variable
@@ -6009,8 +5929,8 @@ metadata_co1_exp$Time_numeric <- as.numeric(as_hms(as.character(metadata_co1_exp
 # Convert Datecode to numeric
 metadata_co1_exp$Datecode <- as.numeric(metadata_co1_exp$Datecode)
 
-# Remove some columns of metadate- only retain the env data that I am testing. Leave out the repetitive ID columns, etc.
-metadata_co1_exp <- select(metadata_co1_exp, -"Name_Deploy_Cartr", -Deployment, -Cartridge_ID, -sites, -replicates, -site_altname, -controls, -Date, -Year, -Month, -Day, -Start_Time__ET_, -End_Time__ET_)
+# Remove some columns of metadata- only retain the env data that I am testing. Leave out the repetitive ID columns, etc.
+metadata_co1_exp <- select(metadata_co1_exp, -"Name_Deploy_Cartr", -Station, -Deployment, -Cartridge_ID, -sites, -replicates, -site_altname, -controls, -Date, -Year, -Month, -Day, -Start_Time__ET_, -End_Time__ET_, -"Name.Deploy_Cartr", -"Deploy_Cartr_Library")
 
 # fit environmental factors and save stats output
 pca_envfit_co1_exp <- envfit(lograt_pca_co1_exp, metadata_co1_exp, permutations = 10000, na.rm = TRUE)
@@ -6020,16 +5940,23 @@ capture.output(pca_envfit_co1_exp, file = "figures-expedition/pca_envfit_co1_exp
 
 ```
 
+Volume, lat, long, date, temp, salinity, bayside, habitat, night/day are all significant
 
 
 
-#### Plot EnvFit - Categorical Vars
+
+
+##### Plot EnvFit, Categorical 
 ```{r}
 pca_mifish_exp_bayside_plot <- pca_mifish_exp_bayside_plot +
   stat_ellipse(aes(color = factor(Bayside)), level = 0.99)
 
 pca_elas_exp_bayside_plot <- pca_elas_exp_bayside_plot +
   stat_ellipse(aes(color = factor(Bayside)), level = 0.99)
+
+pca_co1_exp_bayside_plot <- pca_co1_exp_bayside_plot +
+  stat_ellipse(aes(color = factor(Bayside)), level = 0.99)
+
 
 pca_mifish_exp_habitat_plot <- pca_mifish_exp_habitat_plot +
   stat_ellipse(aes(color = factor(Habitat)), level = 0.99) +
@@ -6040,6 +5967,10 @@ pca_elas_exp_habitat_plot <- pca_elas_exp_habitat_plot +
   stat_ellipse(aes(color = factor(Habitat)), level = 0.99) +
     scale_color_manual(values = c("azure2", "chartreuse4", "cadetblue1")) 
 
+pca_co1_exp_habitat_plot <- pca_co1_exp_habitat_plot +
+  stat_ellipse(aes(color = factor(Habitat)), level = 0.99) +
+    scale_color_manual(values = c("azure2", "chartreuse4", "cadetblue1", "darkgrey")) 
+
 
 pca_mifish_exp_nightday_plot <- pca_mifish_exp_nightday_plot +
   stat_ellipse(aes(color = factor(Night__Day)), level = 0.99) +
@@ -6047,31 +5978,41 @@ pca_mifish_exp_nightday_plot <- pca_mifish_exp_nightday_plot +
   guides(color = "none") 
 
 
-
 pca_elas_exp_nightday_plot <- pca_elas_exp_nightday_plot +
   stat_ellipse(aes(color = factor(Night__Day)), level = 0.99) +
   scale_color_manual(values = c("cornsilk", "antiquewhite4")) +
   guides(color = "none") 
 
+pca_co1_exp_nightday_plot <- pca_co1_exp_nightday_plot +
+  stat_ellipse(aes(color = factor(Night__Day)), level = 0.99) +
+  scale_color_manual(values = c("cornsilk", "antiquewhite4")) +
+  guides(color = "none") 
+
+
 
 pca_mifish_exp_bayside_plot
 pca_elas_exp_bayside_plot
+pca_co1_exp_bayside_plot
+
 pca_mifish_exp_habitat_plot
 pca_elas_exp_habitat_plot
+pca_co1_exp_habitat_plot
+
 pca_mifish_exp_nightday_plot
 pca_elas_exp_nightday_plot
+pca_co1_exp_nightday_plot
 
 ```
 
-##### Mifish
+###### Plot Envfit + Numerical: Mifish
 Add sig vectors from envfit ontop of categ vars
+
 ```{r}
 pca_mifish_sig_vectors <- as.data.frame(pca_envfit_mifish_exp$vectors$arrows) %>%
   rownames_to_column(var = "EnvVar") %>%
-  filter(EnvVar %in% c("lat","Datecode", "Avg_Salinity_psu", "Avg_Turbidity_NTU"))  %>%  
+  filter(EnvVar %in% c("Avg_Salinity_psu", "Time_numeric"))  %>%  
   mutate(EnvVar = ifelse(EnvVar == "Avg_Salinity_psu", "Salinity", EnvVar)) %>%
-  mutate(EnvVar = ifelse(EnvVar == "Avg_Turbidity_NTU", "Turbidity", EnvVar)) %>%
-  mutate(EnvVar = ifelse(EnvVar == "Datecode", "Date", EnvVar))
+  mutate(EnvVar = ifelse(EnvVar == "Time_numeric", "Time of Day", EnvVar))
 
 # Plot vectors ontop of ellipse plot of bayside
 pca_mifish_exp_bayside_date_salinity_plot <- pca_mifish_exp_bayside_plot +
@@ -6095,62 +6036,78 @@ ggsave(plot = pca_mifish_exp_nightday_plot, filename = "figures-expedition/pca_m
 
 ```
 
-##### Elas02
-Add sig vectors from envfit ontop of categorical vars (both bayside and habitat significant in this case)
+###### Plot Envfit + Numerical: Elas02
+Add sig vectors from envfit ontop of categorical vars 
+Date, salinity, night-day
+
 ```{r}
 pca_elas_sig_vectors <- as.data.frame(pca_envfit_elas_exp$vectors$arrows) %>%
   rownames_to_column(var = "EnvVar") %>%
-  filter(EnvVar %in% c("lat", "long"))
+  filter(EnvVar %in% c("Avg_Salinity_psu","Datecode")) %>%
+  mutate(EnvVar = ifelse(EnvVar == "Avg_Salinity_psu", "Salinity", EnvVar)) %>%
+  mutate(EnvVar = ifelse(EnvVar == "Datecode", "Date", EnvVar))
+
     
-# Plot vectors ontop of ellipse plot or Bayside
-pca_elas_exp_bayside_latlong <- pca_elas_exp_bayside_plot +
+# Plot vectors ontop of ellipse plot of Bayside
+pca_elas_exp_nightday_salinity <- pca_elas_exp_nightday_plot +
   geom_segment(data = pca_elas_sig_vectors,
                aes(x = 0, y = 0, xend = PC1, yend = PC2),
                arrow = arrow(type = "closed", length = unit(0.2, "inches")),
-               color = "black") +  
+               color = "black",
+               inherit.aes = FALSE) +  
   geom_text(data = pca_elas_sig_vectors,
             aes(x = PC1, y = PC2, label = EnvVar),
-            size = 4, color = "black", vjust = -0.5)
-pca_elas_exp_bayside_latlong
-
-
+            size = 4, color = "black", vjust = -0.5, inherit.aes = FALSE)
+pca_elas_exp_nightday_salinity
 
 
 ```
 
 save
 ```{r}
-ggsave(plot = pca_elas_exp_bayside_latlong, filename = "figures-expedition/pca_elas_exp_bayside_latlong.jpg", width = 7, height = 5, units = "in")
+ggsave(plot = pca_elas_exp_nightday_salinity, filename = "figures-expedition/pca_elas_exp_nightday_salinity.jpg", width = 7, height = 5, units = "in")
 
 ggsave(plot = pca_elas_exp_habitat_plot, filename = "figures-expedition/pca_elas_exp_habitat_plot.jpg", width = 7, height = 5, units = "in")
 
 ```
 
 
-## NMDS
-Compositional approach, an NMDS on CLR-tranformed data using the Euclidean distances (aka Aitchison distance)
 
-# PAUSED HERE 5/27
-spent a long time figuring out why clr transformation using 2 different packages was giving different distance matrices. Finall figured it out using practice dataset, dietswap, below. Next apply to real data:
+
+###### Plot Envfit + Numerical: CO1
+Add sig vectors from envfit ontop of categ vars
+Volume, lat, long, date, temp, salinity, bayside, habitat, night/day are all significant
 ```{r}
-###
-
-data(dietswap)
-
-otu_df <- as.data.frame(otu_table(dietswap))
-
-otu_df[otu_df == 0] <- 1e-8 # Small value replacement for zeros
-
-otu_df
+pca_co1_sig_vectors <- as.data.frame(pca_envfit_co1_exp$vectors$arrows) %>%
+  rownames_to_column(var = "EnvVar") %>%
+  filter(EnvVar %in% c("Volume_liter","lat","long","Datecode", "Avg_Temperature_C","Avg_Salinity_psu"))  %>%  
+  mutate(EnvVar = ifelse(EnvVar == "Volume_liter", "Volume", EnvVar)) %>%
+  mutate(EnvVar = ifelse(EnvVar == "Avg_Salinity_psu", "Salinity", EnvVar)) %>%
+  mutate(EnvVar = ifelse(EnvVar == "Datecode", "Date", EnvVar)) %>%
+  mutate(EnvVar = ifelse(EnvVar == "Avg_Temperature_C", "Temp", EnvVar)) 
 
 
-## FINALLY FIGURED THAT THESE 2 THINGS ARE EQUIVLENT:
-data.frame(microbiome::transform(t(otu_df), transform = "clr") ) 
-data.frame(compositions::clr(otu_df))
+# Plot vectors ontop of ellipse plot of bayside
+pca_co1_exp_bayside_date_salinity_plot <- pca_co1_exp_bayside_plot +
+  geom_segment(data = pca_co1_sig_vectors,
+               aes(x = 0, y = 0, xend = PC1, yend = PC2),
+               arrow = arrow(type = "closed", length = unit(0.2, "inches")),
+               color = "black") +  
+  geom_text(data = pca_co1_sig_vectors,
+            aes(x = PC1, y = PC2, label = EnvVar),
+            size = 4, color = "black", vjust = -0.5)
+
+pca_co1_exp_bayside_date_salinity_plot
+
 
 ```
+save
+```{r}
+ggsave(plot = pca_co1_exp_bayside_date_salinity_plot, filename = "figures-expedition/pca_co1_exp_bayside_latlong_date_salinity_turbid_plot.jpg", width = 7, height = 5, units = "in")
 
+ggsave(plot = pca_co1_exp_nightday_plot, filename = "figures-expedition/pca_co1_exp_nightday_plot.jpg", width = 7, height = 5, units = "in")
 
+```
 
 
 #### Save
@@ -6159,33 +6116,389 @@ data.frame(compositions::clr(otu_df))
 save.image(file = "figures-expedition/exp_ecol_analysis_environment_upto_pca.RData")
 ```
 
-# SAVED WITH ABOVE, 5/27
-or load back in
+
 ```{r}
 load(file = "figures-expedition/exp_ecol_analysis_environment_upto_pca.RData")
 ```
 
-## TRY NMDS OR OTHER ANALYSIS ON CO1???
 
-# Station time series- CONTINUE HERE
+## Dissimilarity across geographic distance usiung and Mantel tests
+Jaccard similarity (or its complement, Jaccard distance) can be used to examine spatial autocorrelation, especially when paired with [Mantel tests](https://uw.pressbooks.pub/appliedmultivariatestatistics/chapter/mantel-test/)
 
-## Station 20
-follow composition (by bar?) and richness across all samples. annotate important events (day night, rain event, temp)
+Bray Curtis can similarly be compared to geo distance and might be more appropriate for metabarcoding data. 
 
-## Station 15
-same
+The clr/ Euclidean distance matrix is more apprpriate for compositional data
+
+Try all...
 
 
 
-## CONTINUE EDITING above 
-Things to do
-- Follow most commonly sampled station (15? 20?)- diversity/ composition change through all 2 weeks, comparing day/night especially
+[Example 1](https://fireecology.springeropen.com/articles/10.4996/fireecology.0502116): Mantel test compares two distance matrices (one based on the variable of interest and the other based on the geo distance between sampling units). From the paper:
+
+- The normalized statistic behaves similar to the Pearson correlation coefficient, varying between −1 and +1, so that coefficients can be compared to other variables at the same site or to similar variables at other sites. We determined the overall significance of spatial relationships by permutation testing
+- We subjected each of these measures within each experimental unit to a Mantel test using Euclidean distances, with 10 000 permutations used to establish significance (α = 0.05). Although the large number of tests we performed would argue for an adjustment of the critical value, we wanted these tests to be as liberal as possible to search for evidence of significant spatial autocorrelation (e.g., if we used a Bonferroni correction for our 144 tests, we would have a critical value of α = 0.05 ÷ 144 = 0.00035, (a value not surpassed by any of our tests).
+
+[Example 2](https://sciendo.com/article/10.2478/sg-2018-0013)
+
+[Example 3](https://onlinelibrary.wiley.com/doi/full/10.1002/ece3.1962)
+
+[Example 4](https://www.jstor.org/stable/pdf/48703667.pdf)
+
+
+### Elas02
+#### Mantel tests
+```{r}
+# Jaccard uses  presence/absence
+# use already-made presence/absence tables from SpOccupancy analysis
+elas_exp_df_countmatrix
+
+elas_jaccard_dist <- vegdist(t(elas_exp_df_countmatrix), method = "jaccard")
+
+
+# for Bray, use relative abundance calculated from read abundance table
+elas_exp_df_counttable
+elas_exp_df_counttable_relabun <- sweep(elas_exp_df_counttable, 2, colSums(elas_exp_df_counttable), FUN = "/")
+
+elas_bray_dist <- vegdist(t(elas_exp_df_counttable_relabun), method = "bray")
+
+
+# for compositional approach, use clr transformed data and euclidean distance (aka Aitchison distance)
+elas_exp_df_counttable_relabun_clr <- elas_exp_df_counttable
+elas_exp_df_counttable_relabun_clr[elas_exp_df_counttable_relabun_clr == 0] <- 1e-10 # replace zeros using a small pseudocount
+elas_exp_df_counttable_relabun_clr <- data.frame(compositions::clr(elas_exp_df_counttable_relabun_clr))
+
+elas_aitchison_dist <- vegdist(t(elas_exp_df_counttable_relabun), method = "euclidean")
+
+# extract and order coordinate rows to match matrix sample order
+sample_ids <- colnames(elas_exp_df_countmatrix)
+
+# Use coordinates form sampledata df. Note caveat that, bc samples were collected multiple times at same location on different days, there will be places with "zero" geographic distance that might be very different bc of time. Address that later
+geo_dist_matrix <- elas_exp_df_sampledata[sample_ids, c("long", "lat")]
+
+
+# calculate pairwise geographic distances
+geo_dist_matrix <- distm(geo_dist_matrix, fun = distHaversine) # computes distances between points in meters using "Haversine" method, which assumes a spherical earth
+geo_dist <- as.dist(geo_dist_matrix)
+
+# compare Jaccard vs geographic distance
+mantel(elas_jaccard_dist, as.dist(geo_dist), permutations = 10000)
+mantel(elas_bray_dist, as.dist(geo_dist), permutations = 10000)
+mantel(elas_aitchison_dist, as.dist(geo_dist), permutations = 10000)
+
+
+
+```
+
+
+#### Plot
+```{r}
+# Convert to vectors that should match in length
+jaccard_vec <- as.vector(elas_jaccard_dist)
+bray_vec <- as.vector(elas_bray_dist)
+aitchison_vec <- as.vector(elas_aitchison_dist)
+geo_vec <- as.vector(geo_dist)
+
+
+# Combine into data frame. Note I converted to SIMILARITES so the plots are easier to understand
+# Jaccard and Bray are bounded to 1
+# Aitshison is unbounded, so use different calc
+elas_similarities <- data.frame(Geo_Distance_km = geo_vec / 1000,
+  Jaccard_Similarity = 1-jaccard_vec,
+  BrayCurtis_Similarity = 1-bray_vec,
+  Aitchison_Similarity = 1/(1+aitchison_vec))
+
+elas_distvsjaccard <- ggplot(elas_similarities, aes(x = Geo_Distance_km, y = Jaccard_Similarity)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "loess", se = TRUE, color = "blue") +
+  labs(title = "Distance-decay of community similarity, Jaccard, Elas02",
+    x = "Geographic distance (km)",
+    y = "1 - Jaccard dissimilarity") +
+  theme_minimal()
+
+
+elas_distvsbray <- ggplot(elas_similarities, aes(x = Geo_Distance_km, y = BrayCurtis_Similarity)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "loess", se = TRUE, color = "blue") +
+  labs(title = "Distance-decay of community similarity, Bray-Curtis, Elas02",
+    x = "Geographic distance (km)",
+    y = "1 - Bray Curtis dissimilarity") +
+  theme_minimal()
+
+
+elas_distvsaitchison <- ggplot(elas_similarities, aes(x = Geo_Distance_km, y = Aitchison_Similarity)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "loess", se = TRUE, color = "blue") +
+  labs(title = "Distance-decay of community similarity, Aitchison, Elas02",
+    x = "Geographic distance (km)",
+    y = "1/(1+Aitchison distance)") +
+  theme_minimal()
+
+
+elas_distvsjaccard
+elas_distvsbray
+elas_distvsaitchison
+```
+No relationship between Jaccard distance and geographic distance- suggests Elas02 presence/absence is spatially correlated 
+HOWEVER both Bray Curtis and Aitchison suggests there is a relationship between dissimilarity and geo distance in which dissimilarity increases with geo distance (i.e. samples closer together are less dissimilar/ more similar)
+
+CAVEAT- cannot include samples with all zeroes for Jaccard. Therefore this analysis only compares those stations at which at least one elasmobranch was detected. There were 33 stations (of 94) which had zero elasmobranchs. Also there is a very small number of ASVs (only 6) in this dataset compated to the others.
+
+save
+```{r}
+ggsave(plot = elas_distvsjaccard, filename = "figures-expedition/elas_distvsjaccard.jpg", width = 7, height = 5, units = "in")
+
+ggsave(plot = elas_distvsbray, filename = "figures-expedition/elas_distvsbray.jpg", width = 7, height = 5, units = "in")
+
+ggsave(plot = elas_distvsaitchison, filename = "figures-expedition/elas_distvsaitchison.jpg", width = 7, height = 5, units = "in")
+
+```
+
+
+### MiFish
+#### Mantel tests
+```{r}
+# Jaccard uses  presence/absence
+# use already-made presence/absence tables from SpOccupancy analysis
+mifish_exp_df_countmatrix
+
+mifish_jaccard_dist <- vegdist(t(mifish_exp_df_countmatrix), method = "jaccard")
+
+
+# for Bray, use relative abundance calculated from read abundance table
+mifish_exp_df_counttable
+mifish_exp_df_counttable_relabun <- sweep(mifish_exp_df_counttable, 2, colSums(mifish_exp_df_counttable), FUN = "/")
+
+mifish_bray_dist <- vegdist(t(mifish_exp_df_counttable_relabun), method = "bray")
+
+
+# for compositional approach, use clr transformed data and euclidean distance (aka Aitchison distance)
+mifish_exp_df_counttable_relabun_clr <- mifish_exp_df_counttable
+mifish_exp_df_counttable_relabun_clr[mifish_exp_df_counttable_relabun_clr == 0] <- 1e-10 # replace zeros using a small pseudocount
+mifish_exp_df_counttable_relabun_clr <- data.frame(compositions::clr(mifish_exp_df_counttable_relabun_clr))
+
+mifish_aitchison_dist <- vegdist(t(mifish_exp_df_counttable_relabun), method = "euclidean")
+
+# extract and order coordinate rows to match matrix sample order
+sample_ids <- colnames(mifish_exp_df_countmatrix)
+
+# Use coordinates form sampledata df. Note caveat that, bc samples were collected multiple times at same location on different days, there will be places with "zero" geographic distance that might be very different bc of time. Address that later
+geo_dist_matrix <- mifish_exp_df_sampledata[sample_ids, c("long", "lat")]
+
+
+# calculate pairwise geographic distances
+geo_dist_matrix <- distm(geo_dist_matrix, fun = distHaversine) # computes distances between points in meters using "Haversine" method, which assumes a spherical earth
+geo_dist <- as.dist(geo_dist_matrix)
+
+# compare Jaccard vs geographic distance
+mantel(mifish_jaccard_dist, as.dist(geo_dist), permutations = 10000)
+mantel(mifish_bray_dist, as.dist(geo_dist), permutations = 10000)
+mantel(mifish_aitchison_dist, as.dist(geo_dist), permutations = 10000)
+
+
+
+```
+
+#### Plot
+```{r}
+# Convert to vectors that should match in length
+jaccard_vec <- as.vector(mifish_jaccard_dist)
+bray_vec <- as.vector(mifish_bray_dist)
+aitchison_vec <- as.vector(mifish_aitchison_dist)
+geo_vec <- as.vector(geo_dist)
+
+
+# Combine into data frame. Note I converted to SIMILARITES so the plots are easier to understand
+# Jaccard and Bray are bounded to 1
+# Aitshison is unbounded, so use different calc
+mifish_similarities <- data.frame(Geo_Distance_km = geo_vec / 1000,
+  Jaccard_Similarity = 1-jaccard_vec,
+  BrayCurtis_Similarity = 1-bray_vec,
+  Aitchison_Similarity = 1/(1+aitchison_vec))
+
+mifish_distvsjaccard <- ggplot(mifish_similarities, aes(x = Geo_Distance_km, y = Jaccard_Similarity)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "loess", se = TRUE, color = "blue") +
+  labs(title = "Distance-decay of community similarity, Jaccard, MiFish",
+    x = "Geographic distance (km)",
+    y = "1 - Jaccard dissimilarity") +
+  theme_minimal()
+
+
+mifish_distvsbray <- ggplot(mifish_similarities, aes(x = Geo_Distance_km, y = BrayCurtis_Similarity)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "loess", se = TRUE, color = "blue") +
+  labs(title = "Distance-decay of community similarity, Bray-Curtis, MiFish",
+    x = "Geographic distance (km)",
+    y = "1 - Bray Curtis dissimilarity") +
+  theme_minimal()
+
+
+mifish_distvsaitchison <- ggplot(mifish_similarities, aes(x = Geo_Distance_km, y = Aitchison_Similarity)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "loess", se = TRUE, color = "blue") +
+  labs(title = "Distance-decay of community similarity, Aitchison, MiFish",
+    x = "Geographic distance (km)",
+    y = "1/(1+Aitchison distance)") +
+  theme_minimal()
+
+
+mifish_distvsjaccard
+mifish_distvsbray
+mifish_distvsaitchison
+```
+
+None are significant, i.e. there is no relationship between geo distance and compositional similarity for MiFish
+
+
+save
+```{r}
+ggsave(plot = mifish_distvsjaccard, filename = "figures-expedition/mifish_distvsjaccard.jpg", width = 7, height = 5, units = "in")
+
+ggsave(plot = mifish_distvsbray, filename = "figures-expedition/mifish_distvsbray.jpg", width = 7, height = 5, units = "in")
+
+ggsave(plot = mifish_distvsaitchison, filename = "figures-expedition/mifish_distvsaitchison.jpg", width = 7, height = 5, units = "in")
+
+```
+
+
+### CO1
+#### Mantel tests
+```{r}
+# Jaccard uses  presence/absence
+# use already-made presence/absence tables from SpOccupancy analysis
+co1_exp_df_countmatrix
+
+co1_jaccard_dist <- vegdist(t(co1_exp_df_countmatrix), method = "jaccard")
+
+
+# for Bray, use relative abundance calculated from read abundance table
+co1_exp_df_counttable
+co1_exp_df_counttable_relabun <- sweep(co1_exp_df_counttable, 2, colSums(co1_exp_df_counttable), FUN = "/")
+
+co1_bray_dist <- vegdist(t(co1_exp_df_counttable_relabun), method = "bray")
+
+
+# for compositional approach, use clr transformed data and euclidean distance (aka Aitchison distance)
+co1_exp_df_counttable_relabun_clr <- co1_exp_df_counttable
+co1_exp_df_counttable_relabun_clr[co1_exp_df_counttable_relabun_clr == 0] <- 1e-10 # replace zeros using a small pseudocount
+co1_exp_df_counttable_relabun_clr <- data.frame(compositions::clr(co1_exp_df_counttable_relabun_clr))
+
+co1_aitchison_dist <- vegdist(t(co1_exp_df_counttable_relabun), method = "euclidean")
+
+# extract and order coordinate rows to match matrix sample order
+sample_ids <- colnames(co1_exp_df_countmatrix)
+
+# Use coordinates form sampledata df. Note caveat that, bc samples were collected multiple times at same location on different days, there will be places with "zero" geographic distance that might be very different bc of time. Address that later
+geo_dist_matrix <- co1_exp_df_sampledata[sample_ids, c("long", "lat")]
+
+
+# calculate pairwise geographic distances
+geo_dist_matrix <- distm(geo_dist_matrix, fun = distHaversine) # computes distances between points in meters using "Haversine" method, which assumes a spherical earth
+geo_dist <- as.dist(geo_dist_matrix)
+
+# compare Jaccard vs geographic distance
+mantel(co1_jaccard_dist, as.dist(geo_dist), permutations = 10000)
+mantel(co1_bray_dist, as.dist(geo_dist), permutations = 10000)
+mantel(co1_aitchison_dist, as.dist(geo_dist), permutations = 10000)
+
+
+
+```
+
+
+#### Plot
+```{r}
+# Convert to vectors that should match in length
+jaccard_vec <- as.vector(co1_jaccard_dist)
+bray_vec <- as.vector(co1_bray_dist)
+aitchison_vec <- as.vector(co1_aitchison_dist)
+geo_vec <- as.vector(geo_dist)
+
+
+# Combine into data frame. Note I converted to SIMILARITES so the plots are easier to understand
+# Jaccard and Bray are bounded to 1
+# Aitshison is unbounded, so use different calc
+co1_similarities <- data.frame(Geo_Distance_km = geo_vec / 1000,
+  Jaccard_Similarity = 1-jaccard_vec,
+  BrayCurtis_Similarity = 1-bray_vec,
+  Aitchison_Similarity = 1/(1+aitchison_vec))
+
+co1_distvsjaccard <- ggplot(co1_similarities, aes(x = Geo_Distance_km, y = Jaccard_Similarity)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "loess", se = TRUE, color = "blue") +
+  labs(title = "Distance-decay of community similarity, Jaccard, CO1",
+    x = "Geographic distance (km)",
+    y = "1 - Jaccard dissimilarity") +
+  theme_minimal()
+
+
+co1_distvsbray <- ggplot(co1_similarities, aes(x = Geo_Distance_km, y = BrayCurtis_Similarity)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "loess", se = TRUE, color = "blue") +
+  labs(title = "Distance-decay of community similarity, Bray-Curtis, CO1",
+    x = "Geographic distance (km)",
+    y = "1 - Bray Curtis dissimilarity") +
+  theme_minimal()
+
+
+co1_distvsaitchison <- ggplot(co1_similarities, aes(x = Geo_Distance_km, y = Aitchison_Similarity)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "loess", se = TRUE, color = "blue") +
+  labs(title = "Distance-decay of community similarity, Aitchison, CO1",
+    x = "Geographic distance (km)",
+    y = "1/(1+Aitchison distance)") +
+  theme_minimal()
+
+
+co1_distvsjaccard
+co1_distvsbray
+co1_distvsaitchison
+```
+
+By all 3 distance metrics, there is a significant relationship between geo distance and compositional similarity. This makes sense bc this dataset is highly composed of single-celled phytoplankton and other planktonic things (larvae, zooplankton, protists, etc) which are dispersal limited and not mobile. Their position is thus controlled by mixing of currents, etc
+
+
+
+save
+```{r}
+ggsave(plot = co1_distvsjaccard, filename = "figures-expedition/co1_distvsjaccard.jpg", width = 7, height = 5, units = "in")
+
+ggsave(plot = co1_distvsbray, filename = "figures-expedition/co1_distvsbray.jpg", width = 7, height = 5, units = "in")
+
+ggsave(plot = co1_distvsaitchison, filename = "figures-expedition/co1_distvsaitchison.jpg", width = 7, height = 5, units = "in")
+
+```
+
+
+#### Save
+
+```{r}
+save.image(file = "figures-expedition/exp_ecol_analysis_environment_upto_dissimilarity.RData")
+```
+
+
+```{r}
+load(file = "figures-expedition/exp_ecol_analysis_environment_upto_dissimilarity.RData")
+```
+
+## PAUSE HERE 7/17
+
+
+## NMDS
+Compositional approach, an NMDS on CLR-tranformed data using the Euclidean distances (aka Aitchison distance)
+
+
+
+
+
+## Things to do
+- Compare NMDS results to PCA
+- Compare similarity with geographic distance, a la [Wen et al.](https://onlinelibrary.wiley.com/doi/full/10.1002/ece3.1962) - further evidence (or non evidence) of spatial autocorrelation
+- Follow most commonly sampled station (15? 20?)- diversity/ composition change through all 2 weeks, comparing day/night especially. follow composition (by bar?) and richness across all samples. annotate important events (day night, rain event, temp)
 - Day night comparison: present in a way which removes samples that were only sampled in the day
 - Present analysis of impact of RNAlater preservation (in 2024 trawl MiFish samples)
-- Multivariate anlayses: determine if there is influence of time of day, location, etc. 
-- Separate flounder figure?
-- Make pie charts for bayside?
-- Presnet mifish and elasmos together?
+- Think about ways to plot SpOccupancy results (box and whisker plots of sig ASVs - covering mean and CI of logit score. axis shows night/day or east/west as neg/pos, etc)
+- What is average distance across stations? Min? Max?
 
 
 
