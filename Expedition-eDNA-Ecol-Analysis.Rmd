@@ -29,6 +29,7 @@ library(patchwork)
 library(spOccupancy)
 library(corrplot)
 library(geosphere)
+library(plotly)
 
 sessionInfo()
 ```
@@ -6140,7 +6141,7 @@ Try all...
 
 [Example 2](https://sciendo.com/article/10.2478/sg-2018-0013)
 
-[Example 3](https://onlinelibrary.wiley.com/doi/full/10.1002/ece3.1962)
+[Example 3, Wen et al.](https://onlinelibrary.wiley.com/doi/full/10.1002/ece3.1962) - further evidence (or non evidence) of spatial autocorrelation
 
 [Example 4](https://www.jstor.org/stable/pdf/48703667.pdf)
 
@@ -6470,7 +6471,7 @@ ggsave(plot = co1_distvsaitchison, filename = "figures-expedition/co1_distvsaitc
 ```
 
 
-#### Save
+### Save
 
 ```{r}
 save.image(file = "figures-expedition/exp_ecol_analysis_environment_upto_dissimilarity.RData")
@@ -6481,19 +6482,145 @@ save.image(file = "figures-expedition/exp_ecol_analysis_environment_upto_dissimi
 load(file = "figures-expedition/exp_ecol_analysis_environment_upto_dissimilarity.RData")
 ```
 
-## PAUSE HERE 7/17
-
 
 ## NMDS
-Compositional approach, an NMDS on CLR-tranformed data using the Euclidean distances (aka Aitchison distance)
+Use compositional approach, an NMDS on Aitchison distance matrix (aka Euclidean distances on clr-trasnformed abundance. Already computed above)
+To compare to PCA
+
+### Run NMDS
+```{r}
+elas_aitchison_nmds <- metaMDS(elas_aitchison_dist, k=2, autotransform=FALSE) 
+
+mifish_aitchison_nmds <- metaMDS(mifish_aitchison_dist, k=2, autotransform=FALSE) 
+
+co1_aitchison_nmds <- metaMDS(co1_aitchison_dist, k=2, autotransform=FALSE) 
+
+```
 
 
+### Stress
+```{r}
+elas_aitchison_nmds$stress
+
+mifish_aitchison_nmds$stress
+
+co1_aitchison_nmds$stress
+```
+
+Stress less than 0.1 is good. Less than 0.05 is better. Elas02 is OK but the other two are a bit high. 
+
+Can also try NMDS up to 3 dimensions. See if that's a better fit...
+
+### 3D NMDS
+```{r}
+elas_aitchison_nmds_3d <- metaMDS(elas_aitchison_dist, k=3, autotransform=FALSE) 
+
+mifish_aitchison_nmds_3d <- metaMDS(mifish_aitchison_dist, k=3, autotransform=FALSE) 
+co1_aitchison_nmds_3d <- metaMDS(co1_aitchison_dist, k=3, autotransform=FALSE) 
+
+```
+
+
+### Stress
+```{r}
+elas_aitchison_nmds_3d$stress
+
+mifish_aitchison_nmds_3d$stress
+
+co1_aitchison_nmds_3d$stress
+```
+
+This improved, proceed with 3 dimensions
+
+
+### Prepare data frames
+Extract points and merge to metadata
+Elas02
+```{r}
+# Extract points from nmds and merge into data frame with metadata 
+elas_aitchison_nmds_3d_df <- data.frame(elas_aitchison_nmds_3d$points) %>% 
+  rownames_to_column(var = "SampleID")
+
+# Merge metadata 
+elas_sample_data <- sample_data(ps2024_exp_elas_glommed) %>%
+  data.frame() %>%
+  rename("SampleID" = "Name.Deploy_Cartr")
+
+elas_aitchison_nmds_3d_df <- full_join(elas_aitchison_nmds_3d_df, elas_sample_data)
+
+elas_aitchison_nmds_3d_df
+```
+
+
+MiFish
+```{r}
+# Extract points from nmds and merge into data frame with metadata 
+mifish_aitchison_nmds_3d_df <- data.frame(mifish_aitchison_nmds_3d$points) %>% 
+  rownames_to_column(var = "SampleID")
+
+# Merge metadata 
+mifish_sample_data <- sample_data(ps2024_exp_mifish_glommed) %>%
+  data.frame() %>%
+  rename("SampleID" = "Name.Deploy_Cartr")
+
+mifish_aitchison_nmds_3d_df <- full_join(mifish_aitchison_nmds_3d_df, mifish_sample_data)
+
+mifish_aitchison_nmds_3d_df
+```
+
+CO1
+```{r}
+# Extract points from nmds and merge into data frame with metadata 
+co1_aitchison_nmds_3d_df <- data.frame(co1_aitchison_nmds_3d$points) %>% 
+  rownames_to_column(var = "SampleID")
+
+# Merge metadata 
+co1_sample_data <- sample_data(ps2024_exp_co1_glommed) %>%
+  data.frame() %>%
+  mutate(SampleID = gsub("_$", "", gsub("\\.", "_", Name_Deploy_Cartr)))
+
+co1_aitchison_nmds_3d_df <- full_join(co1_aitchison_nmds_3d_df, co1_sample_data)
+
+co1_aitchison_nmds_3d_df
+```
+
+## Plot
+
+```{r}
+elas_aitchison_nmds_3d_plot <- plot_ly(data = elas_aitchison_nmds_3d_df,
+  x    = ~MDS1,
+  y    = ~MDS2,
+  z    = ~MDS3,
+  color  = ~Habitat,
+  symbol = ~Night__Day,
+  symbols = c('circle','square'),   
+  marker = list(size = 5)
+) %>%
+  layout(
+    title = paste0("Elas02 3D NMDS (stress = ", round(elas_aitchison_nmds_3d$stress, 2), ")"),
+    scene = list(
+      xaxis = list(title = "NMDS1"),
+      yaxis = list(title = "NMDS2"),
+      zaxis = list(title = "NMDS3")
+    ),
+    legend = list(title = list(text = "<b>Habitat / Night__Day</b>"))
+  )
+
+# save 
+withr::with_dir('figures-expedition', htmlwidgets::saveWidget(as_widget(elas_aitchison_nmds_3d_plot), file="elas_aitchison_nmds_3d_plot.html", selfcontained = F))
+```
+
+
+<iframe src="elas_aitchison_nmds_3d_plot.html" width="800" height="600"></iframe> 
+
+--> NMDS1 is major axis. What variable does it correlate to? (it's not habitat nor night/day)
+--> Mostly open water sites so differentiation among habitats is difficult but there is clear separation between eelgrass and clam sanctuary
 
 
 
 ## Things to do
 - Compare NMDS results to PCA
-- Compare similarity with geographic distance, a la [Wen et al.](https://onlinelibrary.wiley.com/doi/full/10.1002/ece3.1962) - further evidence (or non evidence) of spatial autocorrelation
+- 
 - Follow most commonly sampled station (15? 20?)- diversity/ composition change through all 2 weeks, comparing day/night especially. follow composition (by bar?) and richness across all samples. annotate important events (day night, rain event, temp)
 - Day night comparison: present in a way which removes samples that were only sampled in the day
 - Present analysis of impact of RNAlater preservation (in 2024 trawl MiFish samples)
