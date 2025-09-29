@@ -118,7 +118,7 @@ asv_count_mat <- as.matrix(asv_count)
 # asv_taxonomya <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1-expeditiona_Chordata_reBLAST/results-revamp-2024-CO1-expeditiona_Updated_asvTaxonomyTable_fixed.txt", header=TRUE, stringsAsFactors=FALSE)
 
 # temporary work around while re-regenerating file
-asv_taxonomya <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1-expeditiona_Updated_asvTaxonomyTable_fixed.txt", header=TRUE, stringsAsFactors=FALSE)
+asv_taxonomya <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1-expeditiona_Chordata_reBLAST/results-revamp-2024-CO1-expeditiona_Updated_asvTaxonomyTable_fixed.txt", header=TRUE, stringsAsFactors=FALSE)
 
 
 asv_taxonomyb <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1-expeditionb_Chordata_reBLAST/results-revamp-2024-CO1-expeditionb_Updated_asvTaxonomyTable_fixed.txt", header=TRUE, stringsAsFactors=FALSE)

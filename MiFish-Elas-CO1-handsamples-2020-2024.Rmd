@@ -252,6 +252,63 @@ phylo_elas_2024 <- phyloseq(ASV_elas_2024, TAX_elas_2024, samples_elas_2024)
 
 
 
+## CO1
+### 2024 data
+Need to combine the 3 CO1 runs: a, b, c
+```{r}
+asv_counta <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1a/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+asv_countb <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1b/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+asv_countc <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1c/ASV2Taxonomy/ASVs_counts_NOUNKNOWNS.tsv", header=TRUE, stringsAsFactors=FALSE)
+
+# ASV numbers are unique to each of the subsets of data and overlap across datasets. Put a marker in ASV name to indicate whether it's from library a, b, or c
+asv_counta <- asv_counta %>% mutate(x = paste0(x, "_a"))
+asv_countb <- asv_countb %>% mutate(x = paste0(x, "_b"))
+asv_countc <- asv_countc %>% mutate(x = paste0(x, "_c"))
+
+asv_count <- full_join(asv_counta, asv_countb) %>%
+  full_join(asv_countc)
+
+row.names(asv_count) <- asv_count$x
+asv_count <- asv_count %>% select(-x)
+asv_count_mat <- as.matrix(asv_count)
+
+
+asv_taxonomya <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1a/ASV2Taxonomy/results-revamp-2024-CO1a_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+asv_taxonomyb <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1b/ASV2Taxonomy/results-revamp-2024-CO1b_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+asv_taxonomyc <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1c/ASV2Taxonomy/results-revamp-2024-CO1c_asvTaxonomyTable_NOUNKNOWNS.txt", header=TRUE, stringsAsFactors=FALSE)
+
+
+# ASV numbers are unique to each of the subsets of data, a and b. Marker into ASV name to indicate whether it's from library a or b
+asv_taxonomya <- asv_taxonomya %>% mutate(ASV = paste0(ASV, "_a"))
+asv_taxonomyb <- asv_taxonomyb %>% mutate(ASV = paste0(ASV, "_b"))
+asv_taxonomyc <- asv_taxonomyc %>% mutate(ASV = paste0(ASV, "_c"))
+
+asv_taxonomy <- full_join(asv_taxonomya, asv_taxonomyb) %>%
+  full_join(asv_taxonomyc)
+
+row.names(asv_taxonomy) <- asv_taxonomy$ASV
+asv_taxonomy <- asv_taxonomy %>% select(-ASV)
+asv_taxonomy_mat <- as.matrix(asv_taxonomy)
+
+sample_metadataa <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1a/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadatab <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1b/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadatac <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1c/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+
+sample_metadata_co1 <- full_join(sample_metadataa, sample_metadatab) %>%
+  full_join(sample_metadatac)
+
+row.names(sample_metadata_co1) <- sample_metadata_co1$Sample
+sample_metadata_co1 <- sample_metadata_co1 %>% select(-Sample)
+ASV_co1_2024 = otu_table(asv_count_mat, taxa_are_rows = TRUE)
+TAX_co1_2024 = tax_table(asv_taxonomy_mat)
+samples_co1_2024 = sample_data(sample_metadata_co1)
+
+phylo_co1_2024 <- phyloseq(ASV_co1_2024, TAX_co1_2024, samples_co1_2024)
+
+```
+
+
+
 # Filtering & QC
 ## How many taxa before filtering
 First change names of phyloseq objects. Retain `phylo_XX_XX`, which is the unfiltered object. Make new objects, `ps_XX_XX`, which will be what remains after the following filtering steps:
@@ -266,6 +323,8 @@ ps_elas_2021 <- phylo_elas_2021
 ps_elas_2023 <- phylo_elas_2023
 ps_elas_2024 <- phylo_elas_2024
 
+ps_co1_2024 <- phylo_co1_2024
+
 # How many taxa before filtering?
 nrow(tax_table(phylo_mifish_2020)) 
 nrow(tax_table(phylo_mifish_2021)) 
@@ -276,6 +335,8 @@ nrow(tax_table(phylo_mifish_2024))
 nrow(tax_table(phylo_elas_2021)) 
 nrow(tax_table(phylo_elas_2023)) 
 nrow(tax_table(phylo_elas_2024)) 
+
+nrow(tax_table(phylo_co1_2024)) 
 
 ```
 
@@ -295,6 +356,7 @@ tax_table(ps_elas_2021) <- tax_table(fantaxtic::name_na_taxa(ps_elas_2021, inclu
 tax_table(ps_elas_2023) <- tax_table(fantaxtic::name_na_taxa(ps_elas_2023, include_rank = T))
 tax_table(ps_elas_2024) <- tax_table(fantaxtic::name_na_taxa(ps_elas_2024, include_rank = T))
 
+tax_table(ps_co1_2024) <- tax_table(fantaxtic::name_na_taxa(ps_co1_2024, include_rank = T))
 
 
 ```
@@ -312,6 +374,8 @@ unique(tax_table(ps_mifish_2024)[, "Kingdom"])
 unique(tax_table(ps_elas_2021)[, "Kingdom"])
 unique(tax_table(ps_elas_2023)[, "Kingdom"])
 unique(tax_table(ps_elas_2024)[, "Kingdom"])
+
+unique(tax_table(ps_co1_2024)[, "Kingdom"])
 ```
 
 remove
@@ -323,7 +387,7 @@ ps_mifish_2023 <- subset_taxa(ps_mifish_2023, !Kingdom == 'Bacteria')
 ps_mifish_2024 <- subset_taxa(ps_mifish_2024, !Kingdom == 'Bacteria')
 
 
-# no prokaryotes are in elas objects
+# no prokaryotes are in elas nor co1 objects
 
 ```
 
@@ -339,11 +403,13 @@ unique(tax_table(ps_mifish_2024)[, "Kingdom"])
 unique(tax_table(ps_elas_2021)[, "Kingdom"])
 unique(tax_table(ps_elas_2023)[, "Kingdom"])
 unique(tax_table(ps_elas_2024)[, "Kingdom"])
+
+unique(tax_table(ps_co1_2024)[, "Kingdom"])
 ```
 
 
 ## Remove non-marine mammals
-
+# 9/29/25 STOPPED HERE- not sure what to do about CO1. There are many many many classes compared to other 2 markers
 check unique classes
 ```{r}
 unique(tax_table(ps_mifish_2020)[, "Class"])
@@ -355,6 +421,8 @@ unique(tax_table(ps_mifish_2024)[, "Class"])
 unique(tax_table(ps_elas_2021)[, "Class"])
 unique(tax_table(ps_elas_2023)[, "Class"])
 unique(tax_table(ps_elas_2024)[, "Class"])
+
+unique(tax_table(ps_co1_2024)[, "Class"])
 ```
 
 all ps objects have Mammalia
