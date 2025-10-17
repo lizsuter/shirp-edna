@@ -99,7 +99,7 @@ else
             -o "$(realpath --relative-to="$BASE_DIR" "$CHORDATA_BLAST_DIR")"
 fi
 
-# 🚀 Ensure REVAMP has fully completed before moving on
+# Ensure REVAMP has fully completed before moving on
 wait  
 
 # Step 9: ✅ Now that REVAMP is done, merge reBLAST taxonomy back into MIDORI results

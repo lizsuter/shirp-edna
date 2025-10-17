@@ -33,7 +33,66 @@ library(paletteer)
 
 ```
 
-#  Import and prepare data
+# Map
+
+Import geo data for Shinn bay and make basemap
+```{r}
+# lets get a box to make a smaller sized objects and facilitate the examples:
+geo.box <- c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9)
+
+sf_use_s2(FALSE)
+
+# Shoreline data for us detail
+gshhg.l1 <- sf::read_sf("raw_data/gshhg-shp-2.3.7/GSHHS_shp/f/GSHHS_f_L1.shp") %>% st_crop(geo.box)
+plot(gshhg.l1["id"])
+
+# make ggplot object
+shinnbay_map <- ggplot(data = gshhg.l1) +
+  geom_sf(aes(geometry = geometry)) +
+    scale_x_continuous(breaks = seq(-72.6, -72.4, 0.1)) +
+    scale_y_continuous(breaks = seq(40.80, 40.9, 0.05))
+
+shinnbay_map
+
+```
+
+Import station GPS locations and plot ontop of base map
+```{r}
+station_gps <- read_csv("raw_data/Salzmanetal_GPS_locations.csv")
+station_gps
+
+station_map <- shinnbay_map +
+  geom_point(
+    data = station_gps,
+    aes(x = Lon, y = Lat, color = `Sample Type`),
+    size = 4) +
+  scale_color_manual(name = NULL,
+                     values = c(Trawl = "chartreuse2",
+                                'Oyster reef' = "cadetblue",
+                                'Clam sanctuary' = "darkorange")) +
+  guides(color = guide_legend(title.position = "top",
+      title.hjust = 0.5,
+      nrow = 1,
+      byrow = TRUE,
+      override.aes = list(size = 4))) +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 9),
+    legend.key.width = unit(1.2, "lines"),
+    legend.key.height = unit(0.8, "lines",),
+    axis.title = element_blank(),)
+
+station_map
+
+ggsave("figures-salzman-etal-elasmos/map.jpg", plot = station_map)
+
+  
+```
+
+
+#  Import and prepare eDNA data
 
 Import-
 I am creating the equivalent of "phylo1" from REVAMP, the dataset is the ASV-based, raw reads, not qual filtered dataset; "qual filtered" means the unknown ASVs have been removed, & low effort samples removed. The only filtering that has been done is the unknown ASVs have been removed.
