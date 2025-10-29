@@ -30,6 +30,7 @@ library(metagMisc)
 library(fantaxtic)
 library(ggrepel)
 library(paletteer)
+library(sf)
 
 ```
 
@@ -427,7 +428,7 @@ elas02_2021_sample_data_taxbased <- data.frame(sample_data(ps2021glommed))
 
 # add on common names to tax_table
 commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
-elas02_2021_tax_table_taxbased <- left_join(elas02_2021_tax_table_taxbased, commonnames, by = "Species")
+elas02_2021_tax_table_taxbased <- left_join(elas02_2021_tax_table_taxbased, commonnames, by = c("Species" = "Taxon"))
 
 # view
 elas02_2021_asv_table_taxbased
@@ -449,7 +450,7 @@ elas02_2023_sample_data_taxbased <- data.frame(sample_data(ps2023glommed))
 
 # add on common names to tax_table
 commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
-elas02_2023_tax_table_taxbased <- left_join(elas02_2023_tax_table_taxbased, commonnames, by = "Species")
+elas02_2023_tax_table_taxbased <- left_join(elas02_2023_tax_table_taxbased, commonnames, by = c("Species" = "Taxon"))
 
 # view
 elas02_2023_asv_table_taxbased
@@ -509,29 +510,62 @@ ps2023_ra_barplot
 ## Examine controls 
 
 Plot positive controls
+- remove AMW RB1 - Libby is not confident about that one, wasn't present when collected
+- change other labels: 
+
+AMW_S2 = Aquarium
+CCE1 = S. retifer tank 1 
+CCE2 = S. retifer tank 2
+MC1 = M. canis tissue
+SA1 = S. acanthias tissue
+Shark_blood = M. canis blood
 
 ```{r}
+# remove AMW_RB1:
+ps2021glommed <- subset_samples(ps2021glommed, replicates != "AMW_RB1")
+ps2021glommed_ra <- subset_samples(ps2021glommed_ra, replicates != "AMW_RB1")
 
+label_map <- c(
+  AMW_S2      = "Aquarium",
+  CCE1        = "S. retifer tank 1",
+  CCE2        = "S. retifer tank 2",
+  MC1         = "M. canis tissue",
+  SA1         = "S. acanthias tissue",
+  Shark_blood = "M. canis blood"
+)
 
-ps2021_posctl_barplot <- plot_bar(subset_samples(ps2021glommed, controls=="positive"), x = "replicates", fill = "Species", title = "2021 Positive Controls: Read Abundance") + 
-  scale_y_continuous(name="Read Abundance")+
-  theme(axis.title.x=element_blank())+
+ps2021_posctl_barplot <- plot_bar(
+    subset_samples(ps2021glommed, controls=="positive"),
+    x    = "replicates",
+    fill = "Species",
+    title= "2021 Positive Controls: Read Abundance"
+  ) +
+  scale_y_continuous(name="Read Abundance") +
+  scale_x_discrete(labels = label_map) +
+  theme(axis.title.x = element_blank()) +
   scale_fill_paletteer_d("MetBrewer::Signac")
+
+ps2021_posctl_ra_barplot <- plot_bar(
+    subset_samples(ps2021glommed_ra, controls=="positive"),
+    x    = "replicates",
+    fill = "Species",
+    title= "2021 Positive Controls: Relative Abundance"
+  ) +
+  scale_y_continuous(name="Relative Abundance") +
+  scale_x_discrete(labels = label_map) +
+  theme(axis.title.x = element_blank()) +
+  scale_fill_paletteer_d("MetBrewer::Signac")
+
+
 ps2021_posctl_barplot
-
-ps2021_posctl_ra_barplot <- plot_bar(subset_samples(ps2021glommed_ra, controls=="positive"), x = "replicates", fill = "Species", title = "2021 Positive Controls: Relative Abundance") + 
-  scale_y_continuous(name="Relative Abundance")+
-  theme(axis.title.x=element_blank())+
-    scale_fill_paletteer_d("MetBrewer::Signac")
 ps2021_posctl_ra_barplot
-
-
-
 
 
 # save
 ggsave(plot = ps2021_posctl_barplot, filename = "figures-salzman-etal-elasmos/2021_posctl_barplot.eps", width = 7, height = 5, units = "in")
+ggsave(plot = ps2021_posctl_barplot, filename = "figures-salzman-etal-elasmos/2021_posctl_barplot.jpg", width = 7, height = 5, units = "in")
 ggsave(plot = ps2021_posctl_ra_barplot, filename = "figures-salzman-etal-elasmos/2021_posctl_ra_barplot.eps", width = 7, height = 5, units = "in")
+ggsave(plot = ps2021_posctl_ra_barplot, filename = "figures-salzman-etal-elasmos/2021_posctl_ra_barplot.jpg", width = 7, height = 5, units = "in")
 
 # export data of pos ctls for text of manuscript
 ps2021_posctls <- data.frame(otu_table(subset_samples(ps2021glommed, controls == "positive")))
@@ -619,10 +653,10 @@ ps2021glommed_ra_df <-  filter(ps2021glommed_ra_df, !is.na(Abundance))
 ps2023glommed_ra_df <-  filter(ps2023glommed_ra_df, !is.na(Abundance))
 
 # add in common names
-ps2021glommed_df <- left_join(ps2021glommed_df, commonnames, by = "Species")
-ps2023glommed_df <- left_join(ps2023glommed_df, commonnames, by = "Species")
-ps2021glommed_ra_df <- left_join(ps2021glommed_ra_df, commonnames, by = "Species")
-ps2023glommed_ra_df <- left_join(ps2023glommed_ra_df, commonnames, by = "Species")
+ps2021glommed_df <- left_join(ps2021glommed_df, commonnames, by = c("Species" = "Taxon"))
+ps2023glommed_df <- left_join(ps2023glommed_df, commonnames, by = c("Species" = "Taxon"))
+ps2021glommed_ra_df <- left_join(ps2021glommed_ra_df, commonnames, by = c("Species" = "Taxon"))
+ps2023glommed_ra_df <- left_join(ps2023glommed_ra_df, commonnames, by = c("Species" = "Taxon"))
 
 # and view
 ps2021glommed_df
@@ -646,8 +680,8 @@ sitelevels <- c("1","2","3","4","5","6","7","8","9","10","11","12","13","TI","WS
 
 # set colors so Com name and Sp name are consistent across plots
 # have 16 unique species
-myColors_sciname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","orchid1","#FDBF6F","gold1","#FB9A99","khaki2"), commonnames$Species[which(commonnames$Species %in% unique(c(ps2021glommed_df$Species, ps2023glommed_df$Species)))])
-myColors_comname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","orchid1","#FDBF6F","gold1","#FB9A99","khaki2"),commonnames$CommonName[which(commonnames$Species %in% unique(c(ps2021glommed_df$Species, ps2023glommed_df$Species)))])
+myColors_sciname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","orchid1","#FDBF6F","gold1","#FB9A99","khaki2"), commonnames$Taxon[which(commonnames$Taxon %in% unique(c(ps2021glommed_df$Species, ps2023glommed_df$Species)))])
+myColors_comname <- setNames(c("steelblue4","#DF536B","#61D04F","#2297E6","#28E2E5","#CD0BBC", "#F5C710","brown","#6A3D9A","#FF7F00","gray","orchid1","#FDBF6F","gold1","#FB9A99","khaki2"),commonnames$CommonName[which(commonnames$Taxon %in% unique(c(ps2021glommed_df$Species, ps2023glommed_df$Species)))])
 
 # and check they are listed in same order
 myColors_sciname
@@ -716,6 +750,11 @@ ggsave(plot = bubbleplot_comname_2021, filename = "figures-salzman-etal-elasmos/
 ggsave(plot = bubbleplot_sciname_2021, filename = "figures-salzman-etal-elasmos/bubbleplot_sciname_2021.eps", width = 6, height = 7, units = "in")
 ggsave(plot = bubbleplot_comname_2021_ra, filename = "figures-salzman-etal-elasmos/bubbleplot_comname_2021_ra.eps", width = 7, height = 7, units = "in")
 ggsave(plot = bubbleplot_sciname_2021_ra, filename = "figures-salzman-etal-elasmos/bubbleplot_sciname_2021_ra.eps", width = 6, height = 7, units = "in")
+
+ggsave(plot = bubbleplot_comname_2021, filename = "figures-salzman-etal-elasmos/bubbleplot_comname_2021.jpg", width = 7, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2021, filename = "figures-salzman-etal-elasmos/bubbleplot_sciname_2021.jpg", width = 6, height = 7, units = "in")
+ggsave(plot = bubbleplot_comname_2021_ra, filename = "figures-salzman-etal-elasmos/bubbleplot_comname_2021_ra.jpg", width = 7, height = 7, units = "in")
+ggsave(plot = bubbleplot_sciname_2021_ra, filename = "figures-salzman-etal-elasmos/bubbleplot_sciname_2021_ra.jpg", width = 6, height = 7, units = "in")
 ```
 
 
@@ -789,63 +828,6 @@ ggsave(plot = bubbleplot_sciname_2023_ra, filename = "figures-salzman-etal-elasm
 ```
 
 
-
-## Pie charts
-
-Summarize fractional abundances across whole dataset-
-```{r}
-ps2021_whole <- ps2021glommed_df %>%
-  group_by(Species) %>%
-    summarize(total_reads = sum(Abundance)) %>%
-  mutate(rel_abun = total_reads/sum(across(total_reads))) %>%
-  mutate(rel_abun_percent = rel_abun*100) %>%
-  mutate(csum = rev(cumsum(rev(rel_abun))), 
-         pos = rel_abun/2 + lead(csum, 1),
-         pos = if_else(is.na(pos), rel_abun/2, pos)) %>%
-  left_join(commonnames, by = "Species")
-
-ps2023_whole <- ps2023glommed_df %>%
-  group_by(Species) %>%
-    summarize(total_reads = sum(Abundance)) %>%
-  mutate(rel_abun = total_reads/sum(across(total_reads))) %>%
-  mutate(rel_abun_percent = rel_abun*100) %>%
-  mutate(csum = rev(cumsum(rev(rel_abun))), 
-         pos = rel_abun/2 + lead(csum, 1),
-         pos = if_else(is.na(pos), rel_abun/2, pos)) %>%
-
-  left_join(commonnames, by = "Species")
-
-ps2021_whole
-ps2023_whole
-```
-
-Apparently there is no geom for pie charts but you can [build a stacked geom_bar and make polar coordinates](https://r-graph-gallery.com/piechart-ggplot2.html)
-```{r}
-ggplot(ps2021_whole, aes(x="", y = rel_abun, fill=CommonName)) +
-  geom_bar(stat="identity", width=1) +
-  coord_polar("y", start=0) +
-  xlab("")+
-  ylab("")+
-  labs(fill = "")+
-  theme_bw() +
-  scale_fill_manual(values = myColors_comname) +
-  theme(axis.title.x=element_blank()) +
-  geom_text(aes(label = round(rel_abun_percent,1)),
-            position = position_stack(vjust = 0.5))
-
-ggplot(ps2023_whole, aes(x="", y = rel_abun, fill=CommonName)) +
-  geom_bar(stat="identity", width=1) +
-  coord_polar("y", start=0) +
-  xlab("")+
-  ylab("")+
-  labs(fill = "")+
-  theme_bw() +
-  scale_fill_manual(values = myColors_comname) +
-  theme(axis.title.x=element_blank()) +
-  geom_text(aes(label = round(rel_abun_percent,1)),
-            position = position_stack(vjust = 0.5))
-
-```
 
 
 ## Time Series Plots
