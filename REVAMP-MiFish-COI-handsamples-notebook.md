@@ -3700,3 +3700,952 @@ awk '{
   print $0
 }' OFS='\t' results-revamp-2024-CO1c_Updated_asvTaxonomyTable.txt > results-revamp-2024-CO1c_Updated_asvTaxonomyTable_fixed.txt 
 ```
+
+
+## 2025 Field Season Samples
+
+### 10/31/25
+
+New laptop- tried setting up based on notebook, `REVAMP-Elas02-handsamples-notebook.md`, let's see how this goes.
+
+### 11/12/25
+
+Initial error about names.dmp, etc files. Set up taxon tools by copying to home directory (see Elas notebook)
+
+Initiaite REVAMPenv (otherwise can't find cutadapt_
+
+Try running 2025 CO1 samples. Set up directories and config files for revamp
+
+(NOTE after failed run, fastq file names get changed. Change back if rerunning:
+
+```
+for file in * ; do
+    echo mv -v "$file" "${file#*_}"
+done
+
+for file in * ; do
+    mv -v "$file" "${file#*_}"
+done
+```
+
+Also need to remove suffix after R1/R2 from file names (without removing .fastq.gz)
+
+```
+for file in *; do mv "${file}" "${file/_001/}"; done
+```
+
+
+
+
+Run REVAMP
+For some reason now requires -t flag
+
+```
+cd /Volumes/easystore/eDNA/shirp-edna
+
+revamp.sh -p 01_config_file_CO1_2025.txt -f 02_figure_config_file_CO1_2025.txt -s 03_sample_metadata_CO1_2025.txt  -r raw_data/2025-CO1 -o results-revamp-2025-CO1 -t 2
+
+```
+
+Cutadapt output:
+
+```
+Running Cutadapt: Wed Nov 12 09:47:29 EST 2025
+Finished Cutadapt: Wed Nov 12 10:14:40 EST 2025
+Sample	Passing Reads	Passing bp
+MP_ABlank_S14_L002	98.4%	88.2%
+MP_AC4_S14_L002	98.1%	87.9%
+MP_AC5_S14_L002	98.1%	87.9%
+MP_APN_S14_L002	97.9%	87.8%
+MP_AS1_S14_L002	98.2%	88.0%
+MP_AS1_1_S14_L002	98.0%	87.8%
+MP_AS1_2_S14_L002	98.2%	88.0%
+MP_AS3_S14_L002	98.2%	87.9%
+MP_AS6_S14_L002	98.4%	88.1%
+MP_AS9_S14_L002	98.5%	88.2%
+MP_AT1_S14_L002	98.2%	88.0%
+MP_AT2_S15_L002	98.2%	88.1%
+MP_AT3_S15_L002	98.0%	87.8%
+MP_AT3_1_S15_L002	98.0%	87.9%
+MP_AT3_2_S15_L002	97.9%	87.7%
+MP_AT4_S15_L002	97.9%	87.7%
+MP_AT5_S15_L002	97.9%	87.8%
+MP_JBlank_S14_L002	98.2%	88.0%
+MP_JC4_S14_L002	98.4%	88.1%
+MP_JC5_S14_L002	98.4%	88.2%
+MP_JPN_S14_L002	98.1%	87.9%
+MP_JS1_S14_L002	98.3%	88.1%
+MP_JS1_1_S14_L002	98.1%	88.0%
+MP_JS1_2_S14_L002	98.2%	88.0%
+MP_JS3_S14_L002	98.0%	87.8%
+MP_JS6_S14_L002	98.3%	88.1%
+MP_JS9_S14_L002	98.2%	88.0%
+MP_JT1_S14_L002	98.3%	88.1%
+MP_JT2_S14_L002	98.2%	88.0%
+MP_JT3_S14_L002	98.6%	88.3%
+MP_JT4_S14_L002	98.4%	88.2%
+MP_JT4_1_S14_L002	98.6%	88.3%
+MP_JT4_2_S14_L002	98.3%	88.1%
+MP_JT5_S14_L002	98.5%	88.3%
+MP_Positive_BP_S14_L002	98.4%	88.0%
+MP_Positive_GP_S14_L002	98.7%	88.4%
+MP_SBlank_S14_L002	97.8%	87.7%
+MP_SC4_S14_L002	98.4%	88.2%
+MP_SC5_S14_L002	98.3%	88.1%
+MP_SPN_S14_L002	98.2%	88.0%
+MP_SS1_S14_L002	98.2%	88.0%
+MP_SS1_1_S14_L002	98.2%	88.1%
+MP_SS1_2_S14_L002	98.3%	88.1%
+MP_SS3_S14_L002	98.0%	87.9%
+MP_SS6_S14_L002	98.4%	88.2%
+MP_SS9_S14_L002	98.2%	88.0%
+MP_ST1_S15_L002	97.7%	87.6%
+MP_ST2_S15_L002	97.9%	87.8%
+MP_ST3_S15_L002	98.3%	88.1%
+MP_ST4_S15_L002	98.3%	88.0%
+MP_ST4_1_S15_L002	98.5%	88.2%
+MP_ST4_2_S15_L002	98.4%	88.2%
+MP_ST5_S15_L002	98.4%	88.1%
+MP_T1Blank_S12_L002	98.3%	88.1%
+MP_T1S1_S12_L002	98.0%	87.8%
+MP_T1S10_S12_L002	98.1%	87.9%
+MP_T1S11_S12_L002	97.8%	87.6%
+MP_T1S2_S12_L002	98.0%	87.9%
+MP_T1S3_S12_L002	98.5%	88.3%
+MP_T1S4_S12_L002	98.3%	88.1%
+MP_T1S5_S12_L002	98.5%	88.2%
+MP_T1S6_S12_L002	98.2%	88.0%
+MP_T1S7_S12_L002	98.3%	88.1%
+MP_T1S8_S12_L002	98.1%	88.0%
+MP_T1S9_S12_L002	98.3%	88.1%
+MP_T1STiana_S12_L002	98.4%	88.2%
+MP_T1SWessuck_S12_L002	97.9%	87.7%
+MP_T2Blank_S12_L002	98.1%	87.9%
+MP_T2S1_S12_L002	98.4%	88.1%
+MP_T2S10_S12_L002	98.5%	88.3%
+MP_T2S11_S12_L002	98.5%	88.2%
+MP_T2S2_S12_L002	98.5%	88.3%
+MP_T2S2_1_S12_L002	98.4%	88.2%
+MP_T2S2_2_S12_L002	98.7%	88.4%
+MP_T2S3_S12_L002	98.3%	88.1%
+MP_T2S4_S12_L002	98.5%	88.3%
+MP_T2S5_S12_L002	98.6%	88.4%
+MP_T2S6_S12_L002	98.6%	88.4%
+MP_T2S7_S12_L002	98.4%	88.1%
+MP_T2S8_S12_L002	98.5%	88.2%
+MP_T2S9_S12_L002	98.3%	88.1%
+MP_T2S9_1_S12_L002	98.6%	88.4%
+MP_T2S9_2_S12_L002	98.3%	88.1%
+MP_T2STiana_S12_L002	98.4%	88.2%
+MP_T2SWessuck_S12_L002	98.4%	88.2%
+MP_T3Blank_S12_L002	98.4%	88.2%
+MP_T3S1_S12_L002	98.2%	88.1%
+MP_T3S10_S12_L002	98.5%	88.3%
+MP_T3S11_S12_L002	98.4%	88.2%
+MP_T3S2_S12_L002	98.2%	88.0%
+MP_T3S2_1_S12_L002	98.3%	88.1%
+MP_T3S2_2_S12_L002	98.6%	88.3%
+MP_T3S3_S12_L002	98.2%	88.0%
+MP_T3S4_S12_L002	98.7%	88.4%
+MP_T3S5_S12_L002	98.4%	88.2%
+MP_T3S6_S12_L002	98.6%	88.3%
+MP_T3S7_S12_L002	98.3%	88.1%
+MP_T3S8_S12_L002	98.4%	88.2%
+MP_T3S9_S12_L002	98.5%	88.3%
+MP_T3S9_1_S12_L002	98.0%	87.9%
+MP_T3S9_2_S12_L002	98.0%	87.9%
+MP_T3STiana_S13_L002	98.5%	88.3%
+MP_T3SWessuck_S13_L002	98.3%	88.1%
+MP_T4Blank_S13_L002	97.6%	87.5%
+MP_T4S1_S13_L002	98.4%	88.1%
+MP_T4S10_S13_L002	98.5%	88.3%
+MP_T4S11_S13_L002	98.3%	88.1%
+MP_T4S2_S13_L002	98.5%	88.2%
+MP_T4S2_1_S13_L002	98.6%	88.3%
+MP_T4S2_2_S13_L002	98.5%	88.3%
+MP_T4S3_S13_L002	98.5%	88.2%
+MP_T4S4_S13_L002	98.6%	88.3%
+MP_T4S5_S13_L002	98.6%	88.3%
+MP_T4S6_S13_L002	98.3%	88.1%
+MP_T4S7_S13_L002	98.5%	88.2%
+MP_T4S8_S13_L002	98.7%	88.4%
+MP_T4S9_S13_L002	98.6%	88.3%
+MP_T4S9_1_S13_L002	98.5%	88.2%
+MP_T4S9_2_S13_L002	98.4%	88.2%
+MP_T4STiana_S13_L002	98.2%	88.0%
+MP_T4SWessuck_S13_L002	98.0%	87.8%
+MP_T5Blank_S13_L002	98.4%	88.2%
+MP_T5S1_S13_L002	98.5%	88.2%
+MP_T5S10_S13_L002	98.7%	88.4%
+MP_T5S11_S13_L002	98.5%	88.2%
+MP_T5S2_S13_L002	98.3%	88.1%
+MP_T5S2_1_S13_L002	98.6%	88.3%
+MP_T5S2_2_S13_L002	98.4%	88.1%
+MP_T5S3_S13_L002	98.4%	88.2%
+MP_T5S4_S13_L002	98.4%	88.2%
+MP_T5S5_S13_L002	98.4%	88.2%
+MP_T5S6_S13_L002	98.8%	88.5%
+MP_T5S7_S13_L002	98.5%	88.2%
+MP_T5S8_S13_L002	98.6%	88.3%
+MP_T5S9_S13_L002	98.7%	88.4%
+MP_T5S9_1_S13_L002	98.7%	88.4%
+MP_T5S9_2_S13_L002	98.5%	88.2%
+MP_T5STiana_S13_L002	98.4%	88.1%
+MP_T5SWessuck_S13_L002	98.6%	88.3%
+MP_T6Blank_S13_L002	98.7%	88.4%
+MP_T6S1_S13_L002	98.6%	88.3%
+MP_T6S10_S14_L002	98.3%	88.1%
+MP_T6S11_S14_L002	98.4%	88.1%
+MP_T6S2_S13_L002	98.4%	88.2%
+MP_T6S2_1_S13_L002	98.3%	88.1%
+MP_T6S2_2_S13_L002	98.5%	88.2%
+MP_T6S3_S13_L002	98.5%	88.2%
+MP_T6S4_S13_L002	98.5%	88.2%
+MP_T6S5_S13_L002	98.5%	88.2%
+MP_T6S6_S13_L002	98.5%	88.3%
+MP_T6S7_S13_L002	98.4%	88.1%
+MP_T6S8_S14_L002	98.5%	88.2%
+MP_T6S9_S14_L002	98.5%	88.2%
+MP_T6S9_1_S14_L002	98.5%	88.2%
+MP_T6S9_2_S14_L002	98.3%	88.1%
+MP_T6STiana_S14_L002	97.4%	87.3%
+MP_T6SWessuck_S14_L002	97.9%	87.8%
+```
+
+```
+Running DADA2: Wed Nov 12 10:15:09 EST 2025
+Trim and filter in DADA2...
+
+DADA2 Filtering results:
+Sample	% Reads Passing
+MP_ABlank_S14_L002_R1_trimmed.fq.gz 95.0666
+MP_AC4_S14_L002_R1_trimmed.fq.gz 95.4445
+MP_AC5_S14_L002_R1_trimmed.fq.gz 95.3307
+MP_APN_S14_L002_R1_trimmed.fq.gz 95.3781
+MP_AS1_S14_L002_R1_trimmed.fq.gz 95.5525
+MP_AS1_1_S14_L002_R1_trimmed.fq.gz 95.7499
+MP_AS1_2_S14_L002_R1_trimmed.fq.gz 95.2098
+MP_AS3_S14_L002_R1_trimmed.fq.gz 95.1545
+MP_AS6_S14_L002_R1_trimmed.fq.gz 95.3983
+MP_AS9_S14_L002_R1_trimmed.fq.gz 95.2762
+MP_AT1_S14_L002_R1_trimmed.fq.gz 95.3249
+MP_AT2_S15_L002_R1_trimmed.fq.gz 95.342
+MP_AT3_S15_L002_R1_trimmed.fq.gz 95.3331
+MP_AT3_1_S15_L002_R1_trimmed.fq.gz 95.2301
+MP_AT3_2_S15_L002_R1_trimmed.fq.gz 95.4108
+MP_AT4_S15_L002_R1_trimmed.fq.gz 95.3354
+MP_AT5_S15_L002_R1_trimmed.fq.gz 94.7234
+MP_JBlank_S14_L002_R1_trimmed.fq.gz 95.4958
+MP_JC4_S14_L002_R1_trimmed.fq.gz 94.8834
+MP_JC5_S14_L002_R1_trimmed.fq.gz 94.8825
+MP_JPN_S14_L002_R1_trimmed.fq.gz 95.2839
+MP_JS1_S14_L002_R1_trimmed.fq.gz 95.4709
+MP_JS1_1_S14_L002_R1_trimmed.fq.gz 94.8324
+MP_JS1_2_S14_L002_R1_trimmed.fq.gz 94.8357
+MP_JS3_S14_L002_R1_trimmed.fq.gz 95.1865
+MP_JS6_S14_L002_R1_trimmed.fq.gz 95.3324
+MP_JS9_S14_L002_R1_trimmed.fq.gz 95.2462
+MP_JT1_S14_L002_R1_trimmed.fq.gz 94.8643
+MP_JT2_S14_L002_R1_trimmed.fq.gz 94.7183
+MP_JT3_S14_L002_R1_trimmed.fq.gz 95.3126
+MP_JT4_S14_L002_R1_trimmed.fq.gz 95.1756
+MP_JT4_1_S14_L002_R1_trimmed.fq.gz 94.6477
+MP_JT4_2_S14_L002_R1_trimmed.fq.gz 95.173
+MP_JT5_S14_L002_R1_trimmed.fq.gz 93.7767
+MP_Positive_BP_S14_L002_R1_trimmed.fq.gz 94.7823
+MP_Positive_GP_S14_L002_R1_trimmed.fq.gz 94.7854
+MP_SBlank_S14_L002_R1_trimmed.fq.gz 95.3122
+MP_SC4_S14_L002_R1_trimmed.fq.gz 95.4279
+MP_SC5_S14_L002_R1_trimmed.fq.gz 95.2812
+MP_SPN_S14_L002_R1_trimmed.fq.gz 94.8765
+MP_SS1_S14_L002_R1_trimmed.fq.gz 95.4481
+MP_SS1_1_S14_L002_R1_trimmed.fq.gz 95.3663
+MP_SS1_2_S14_L002_R1_trimmed.fq.gz 95.7366
+MP_SS3_S14_L002_R1_trimmed.fq.gz 95.6357
+MP_SS6_S14_L002_R1_trimmed.fq.gz 95.3208
+MP_SS9_S14_L002_R1_trimmed.fq.gz 95.1412
+MP_ST1_S15_L002_R1_trimmed.fq.gz 95.3873
+MP_ST2_S15_L002_R1_trimmed.fq.gz 94.9733
+MP_ST3_S15_L002_R1_trimmed.fq.gz 95.0041
+MP_ST4_S15_L002_R1_trimmed.fq.gz 95.3232
+MP_ST4_1_S15_L002_R1_trimmed.fq.gz 95.118
+MP_ST4_2_S15_L002_R1_trimmed.fq.gz 95.5668
+MP_ST5_S15_L002_R1_trimmed.fq.gz 94.884
+MP_T1Blank_S12_L002_R1_trimmed.fq.gz 94.5605
+MP_T1S1_S12_L002_R1_trimmed.fq.gz 94.8866
+MP_T1S10_S12_L002_R1_trimmed.fq.gz 94.9989
+MP_T1S11_S12_L002_R1_trimmed.fq.gz 95.6722
+MP_T1S2_S12_L002_R1_trimmed.fq.gz 95.2115
+MP_T1S3_S12_L002_R1_trimmed.fq.gz 95.3538
+MP_T1S4_S12_L002_R1_trimmed.fq.gz 95.1517
+MP_T1S5_S12_L002_R1_trimmed.fq.gz 95.2784
+MP_T1S6_S12_L002_R1_trimmed.fq.gz 95.2242
+MP_T1S7_S12_L002_R1_trimmed.fq.gz 95.2989
+MP_T1S8_S12_L002_R1_trimmed.fq.gz 95.2288
+MP_T1S9_S12_L002_R1_trimmed.fq.gz 95.3816
+MP_T1STiana_S12_L002_R1_trimmed.fq.gz 95.4913
+MP_T1SWessuck_S12_L002_R1_trimmed.fq.gz 95.2992
+MP_T2Blank_S12_L002_R1_trimmed.fq.gz 94.9654
+MP_T2S1_S12_L002_R1_trimmed.fq.gz 95.3959
+MP_T2S10_S12_L002_R1_trimmed.fq.gz 94.7491
+MP_T2S11_S12_L002_R1_trimmed.fq.gz 94.9992
+MP_T2S2_S12_L002_R1_trimmed.fq.gz 95.1823
+MP_T2S2_1_S12_L002_R1_trimmed.fq.gz 94.9526
+MP_T2S2_2_S12_L002_R1_trimmed.fq.gz 94.7023
+MP_T2S3_S12_L002_R1_trimmed.fq.gz 94.9366
+MP_T2S4_S12_L002_R1_trimmed.fq.gz 94.8208
+MP_T2S5_S12_L002_R1_trimmed.fq.gz 94.391
+MP_T2S6_S12_L002_R1_trimmed.fq.gz 95.2235
+MP_T2S7_S12_L002_R1_trimmed.fq.gz 94.9539
+MP_T2S8_S12_L002_R1_trimmed.fq.gz 94.6179
+MP_T2S9_S12_L002_R1_trimmed.fq.gz 95.0304
+MP_T2S9_1_S12_L002_R1_trimmed.fq.gz 94.1811
+MP_T2S9_2_S12_L002_R1_trimmed.fq.gz 95.4106
+MP_T2STiana_S12_L002_R1_trimmed.fq.gz 95.4037
+MP_T2SWessuck_S12_L002_R1_trimmed.fq.gz 95.1687
+MP_T3Blank_S12_L002_R1_trimmed.fq.gz 95.3748
+MP_T3S1_S12_L002_R1_trimmed.fq.gz 95.0912
+MP_T3S10_S12_L002_R1_trimmed.fq.gz 95.8005
+MP_T3S11_S12_L002_R1_trimmed.fq.gz 95.4806
+MP_T3S2_S12_L002_R1_trimmed.fq.gz 95.4757
+MP_T3S2_1_S12_L002_R1_trimmed.fq.gz 95.3875
+MP_T3S2_2_S12_L002_R1_trimmed.fq.gz 95.2435
+MP_T3S3_S12_L002_R1_trimmed.fq.gz 95.2305
+MP_T3S4_S12_L002_R1_trimmed.fq.gz 95.0605
+MP_T3S5_S12_L002_R1_trimmed.fq.gz 95.5636
+MP_T3S6_S12_L002_R1_trimmed.fq.gz 95.312
+MP_T3S7_S12_L002_R1_trimmed.fq.gz 95.9182
+MP_T3S8_S12_L002_R1_trimmed.fq.gz 95.0743
+MP_T3S9_S12_L002_R1_trimmed.fq.gz 95.3073
+MP_T3S9_1_S12_L002_R1_trimmed.fq.gz 95.5785
+MP_T3S9_2_S12_L002_R1_trimmed.fq.gz 95.1882
+MP_T3STiana_S13_L002_R1_trimmed.fq.gz 94.9381
+MP_T3SWessuck_S13_L002_R1_trimmed.fq.gz 94.8779
+MP_T4Blank_S13_L002_R1_trimmed.fq.gz 95.0037
+MP_T4S1_S13_L002_R1_trimmed.fq.gz 95.3287
+MP_T4S10_S13_L002_R1_trimmed.fq.gz 95.1266
+MP_T4S11_S13_L002_R1_trimmed.fq.gz 95.0918
+MP_T4S2_S13_L002_R1_trimmed.fq.gz 95.4386
+MP_T4S2_1_S13_L002_R1_trimmed.fq.gz 95.0388
+MP_T4S2_2_S13_L002_R1_trimmed.fq.gz 94.9622
+MP_T4S3_S13_L002_R1_trimmed.fq.gz 95.3313
+MP_T4S4_S13_L002_R1_trimmed.fq.gz 95.2069
+MP_T4S5_S13_L002_R1_trimmed.fq.gz 95.4453
+MP_T4S6_S13_L002_R1_trimmed.fq.gz 95.5092
+MP_T4S7_S13_L002_R1_trimmed.fq.gz 95.0701
+MP_T4S8_S13_L002_R1_trimmed.fq.gz 95.1496
+MP_T4S9_S13_L002_R1_trimmed.fq.gz 95.2415
+MP_T4S9_1_S13_L002_R1_trimmed.fq.gz 95.131
+MP_T4S9_2_S13_L002_R1_trimmed.fq.gz 95.3171
+MP_T4STiana_S13_L002_R1_trimmed.fq.gz 95.449
+MP_T4SWessuck_S13_L002_R1_trimmed.fq.gz 95.4581
+MP_T5Blank_S13_L002_R1_trimmed.fq.gz 95.3487
+MP_T5S1_S13_L002_R1_trimmed.fq.gz 95.7917
+MP_T5S10_S13_L002_R1_trimmed.fq.gz 94.7281
+MP_T5S11_S13_L002_R1_trimmed.fq.gz 95.1004
+MP_T5S2_S13_L002_R1_trimmed.fq.gz 95.7769
+MP_T5S2_1_S13_L002_R1_trimmed.fq.gz 95.517
+MP_T5S2_2_S13_L002_R1_trimmed.fq.gz 95.3197
+MP_T5S3_S13_L002_R1_trimmed.fq.gz 95.31
+MP_T5S4_S13_L002_R1_trimmed.fq.gz 95.3494
+MP_T5S5_S13_L002_R1_trimmed.fq.gz 94.8516
+MP_T5S6_S13_L002_R1_trimmed.fq.gz 94.8379
+MP_T5S7_S13_L002_R1_trimmed.fq.gz 94.9334
+MP_T5S8_S13_L002_R1_trimmed.fq.gz 94.8498
+MP_T5S9_S13_L002_R1_trimmed.fq.gz 94.8013
+MP_T5S9_1_S13_L002_R1_trimmed.fq.gz 95.127
+MP_T5S9_2_S13_L002_R1_trimmed.fq.gz 94.8859
+MP_T5STiana_S13_L002_R1_trimmed.fq.gz 95.4147
+MP_T5SWessuck_S13_L002_R1_trimmed.fq.gz 94.4821
+MP_T6Blank_S13_L002_R1_trimmed.fq.gz 90.1524
+MP_T6S1_S13_L002_R1_trimmed.fq.gz 95.1791
+MP_T6S10_S14_L002_R1_trimmed.fq.gz 95.1496
+MP_T6S11_S14_L002_R1_trimmed.fq.gz 95.3142
+MP_T6S2_S13_L002_R1_trimmed.fq.gz 94.921
+MP_T6S2_1_S13_L002_R1_trimmed.fq.gz 95.2993
+MP_T6S2_2_S13_L002_R1_trimmed.fq.gz 95.4566
+MP_T6S3_S13_L002_R1_trimmed.fq.gz 94.8783
+MP_T6S4_S13_L002_R1_trimmed.fq.gz 95.2505
+MP_T6S5_S13_L002_R1_trimmed.fq.gz 95.2134
+MP_T6S6_S13_L002_R1_trimmed.fq.gz 95.1548
+MP_T6S7_S13_L002_R1_trimmed.fq.gz 94.9811
+MP_T6S8_S14_L002_R1_trimmed.fq.gz 95.1807
+MP_T6S9_S14_L002_R1_trimmed.fq.gz 95.5566
+MP_T6S9_1_S14_L002_R1_trimmed.fq.gz 95.3201
+MP_T6S9_2_S14_L002_R1_trimmed.fq.gz 95.9246
+MP_T6STiana_S14_L002_R1_trimmed.fq.gz 95.0852
+MP_T6SWessuck_S14_L002_R1_trimmed.fq.gz 95.6553
+
+```
+
+
+### 11/14/25
+
+Dada2 steps complete (took 1.5 days for CO1 on two cores)- but didn't crash yay.
+
+Was having trouble with blastn. Had installed. 2.6 on computer but REVAMP documentation wants 2.13. Also they updated REVAMP a bit in the last few months and there was one new parameter in the config file- now instead of the user putting in the length over which you wanted the blast hits to match, you put a percent. Still choosing 90% PID but this is a more straighforward way of doing this since it aligns with lingo from NCBI....
+
+Used chatgpt to help uninstall blast+ 2.6 and install 2.13 in my conda environment. Not straightforward bc there is no 2.13 for Mac silicon chips/ arm64. But there is a way to force terminal to use x86_64
+
+Check system with `uname -m`. This Mac is reporting arm64. Now everytime I activate the conda environment, I also need it to force the Rosetta shell/ x86_64:
+
+
+#### Now workflow always needs to start with 2 lines:
+
+or 3 lines?
+
+```
+arch -x86_64 zsh 
+conda activate REVAMPenv
+export TAXONKIT_DB=~/.taxonkit
+```
+
+check system with `uname -m` and check blast version with `blastn -version`
+
+
+
+Never finished the making plots steps (took more than 2 days on that step alone) so cancelled. Will proceed with processing tables. Krona plots also were generated
+
+### 11/26/25
+Natalia successfuly ran 2025 MiFish but had to split into 3 subsets and was later having trouble with cutadapt while attempting Elas02. Run it on shirp laptop to compare results
+
+Test with 7 threads (this computer has 14 cores (10 performance and 4 efficiency)
+
+Remove suffix
+```
+for file in *; do mv "${file}" "${file/_001/}"; done
+```
+
+Remove prefix after bad run
+
+```
+for file in * ; do
+    echo mv -v "$file" "${file#*_}"
+done
+
+for file in * ; do
+    mv -v "$file" "${file#*_}"
+done
+```
+
+Also need to remove suffix after R1/R2 from file names (without removing .fastq.gz)
+
+
+
+
+```
+cd /Volumes/easystore/eDNA/shirp-edna
+
+arch -x86_64 zsh 
+conda activate REVAMPenv
+export TAXONKIT_DB=~/.taxonkit
+
+
+revamp.sh -p 01_config_file_MIFish-2025.txt -f 02_figure_config_file_MiFish-2025.txt -s 03_sample_metadata_MiFish-2025.txt  -r raw_data/2025-MiFish-U -o results-revamp-2025-MiFish -t 7
+```
+
+Cutadapt otuput:
+
+```
+Running Cutadapt: Wed Nov 26 09:22:30 EST 2025
+Finished Cutadapt: Wed Nov 26 09:44:39 EST 2025
+Sample	Passing Reads	Passing bp
+MP_ABlank_S3_L001	99.5%	76.4%
+MP_AC4_S3_L001	99.6%	77.4%
+MP_AC5_S3_L001	99.6%	77.3%
+MP_APN_S3_L001	99.5%	78.0%
+MP_AS1_S3_L001	99.5%	78.7%
+MP_AS1_1_S3_L001	99.6%	78.6%
+MP_AS1_2_S3_L001	99.4%	77.3%
+MP_AS3_S3_L001	99.5%	77.2%
+MP_AS6_S3_L001	99.5%	77.4%
+MP_AS9_S3_L001	99.6%	77.4%
+MP_AT1_S3_L001	99.4%	79.8%
+MP_AT2_S4_L001	99.5%	77.7%
+MP_AT3_S4_L001	99.5%	81.2%
+MP_AT3_1_S4_L001	99.2%	79.7%
+MP_AT3_2_S4_L001	99.5%	79.6%
+MP_AT4_S4_L001	99.5%	78.1%
+MP_AT5_S4_L001	99.4%	78.9%
+MP_JBlank_S3_L001	99.6%	76.5%
+MP_JC4_S3_L001	99.4%	78.9%
+MP_JC5_S3_L001	99.5%	79.4%
+MP_JPN_S3_L001	99.1%	78.7%
+MP_JS1_S3_L001	99.6%	79.2%
+MP_JS1_1_S3_L001	99.6%	79.2%
+MP_JS1_2_S3_L001	99.5%	79.2%
+MP_JS3_S3_L001	99.5%	79.2%
+MP_JS6_S3_L001	99.5%	79.1%
+MP_JS9_S3_L001	99.6%	77.7%
+MP_JT1_S3_L001	99.5%	77.6%
+MP_JT2_S3_L001	99.6%	77.1%
+MP_JT3_S3_L001	99.6%	76.6%
+MP_JT4_S3_L001	99.6%	78.7%
+MP_JT4_1_S3_L001	99.6%	77.0%
+MP_JT4_2_S3_L001	99.6%	78.0%
+MP_JT5_S3_L001	99.5%	77.2%
+MP_Positive_BP_S3_L001	99.7%	76.4%
+MP_Positive_GP_S3_L001	99.5%	76.1%
+MP_SBlank_S3_L001	99.6%	76.6%
+MP_SC4_S3_L001	99.5%	76.9%
+MP_SC5_S3_L001	99.4%	79.4%
+MP_SPN_S3_L001	99.6%	76.6%
+MP_SS1_S3_L001	99.6%	78.1%
+MP_SS1_1_S3_L001	99.6%	78.7%
+MP_SS1_2_S3_L001	99.5%	77.4%
+MP_SS3_S3_L001	99.5%	77.7%
+MP_SS6_S3_L001	99.6%	77.5%
+MP_SS9_S3_L001	99.6%	79.3%
+MP_ST1_S4_L001	99.2%	81.4%
+MP_ST2_S4_L001	99.5%	79.4%
+MP_ST3_S4_L001	99.4%	79.2%
+MP_ST4_S4_L001	99.3%	79.5%
+MP_ST4_1_S4_L001	99.5%	80.2%
+MP_ST4_2_S4_L001	99.5%	79.1%
+MP_ST5_S4_L001	99.4%	81.1%
+MP_T1Blank_S1_L001	99.6%	85.8%
+MP_T1S1_S1_L001	99.6%	78.6%
+MP_T1S10_S1_L001	99.6%	77.2%
+MP_T1S11_S1_L001	99.5%	78.6%
+MP_T1S2_S1_L001	99.5%	79.0%
+MP_T1S3_S1_L001	99.5%	78.4%
+MP_T1S4_S1_L001	99.5%	80.3%
+MP_T1S5_S1_L001	99.5%	77.6%
+MP_T1S6_S1_L001	99.5%	77.4%
+MP_T1S7_S1_L001	99.5%	77.0%
+MP_T1S8_S1_L001	99.5%	76.7%
+MP_T1S9_S1_L001	99.6%	78.5%
+MP_T1STiana_S1_L001	99.5%	77.5%
+MP_T1SWessuck_S1_L001	99.4%	78.3%
+MP_T2Blank_S1_L001	99.6%	76.6%
+MP_T2S1_S1_L001	99.4%	77.6%
+MP_T2S10_S1_L001	99.4%	76.5%
+MP_T2S11_S1_L001	99.5%	78.5%
+MP_T2S2_S1_L001	99.6%	78.6%
+MP_T2S2_1_S1_L001	99.0%	78.0%
+MP_T2S2_2_S1_L001	99.4%	77.9%
+MP_T2S3_S1_L001	99.6%	76.9%
+MP_T2S4_S1_L001	99.5%	78.9%
+MP_T2S5_S1_L001	99.5%	77.2%
+MP_T2S6_S1_L001	99.5%	78.2%
+MP_T2S7_S1_L001	99.6%	77.1%
+MP_T2S8_S1_L001	99.5%	77.1%
+MP_T2S9_S1_L001	99.5%	77.2%
+MP_T2S9_1_S1_L001	99.6%	77.9%
+MP_T2S9_2_S1_L001	99.1%	79.4%
+MP_T2STiana_S1_L001	99.6%	77.2%
+MP_T2SWessuck_S1_L001	99.5%	77.1%
+MP_T3Blank_S1_L001	99.6%	76.6%
+MP_T3S1_S1_L001	99.5%	77.6%
+MP_T3S10_S1_L001	99.5%	76.6%
+MP_T3S11_S1_L001	99.6%	76.8%
+MP_T3S2_S1_L001	99.5%	79.9%
+MP_T3S2_1_S1_L001	99.5%	77.5%
+MP_T3S2_2_S1_L001	99.5%	78.0%
+MP_T3S3_S1_L001	99.6%	76.9%
+MP_T3S4_S1_L001	99.5%	76.9%
+MP_T3S5_S1_L001	99.6%	77.2%
+MP_T3S6_S1_L001	99.6%	76.9%
+MP_T3S7_S1_L001	99.5%	77.2%
+MP_T3S8_S1_L001	99.6%	77.4%
+MP_T3S9_S1_L001	99.6%	76.9%
+MP_T3S9_1_S1_L001	99.5%	77.3%
+MP_T3S9_2_S1_L001	99.6%	76.6%
+MP_T3STiana_S2_L001	99.6%	77.9%
+MP_T3SWessuck_S2_L001	99.6%	77.3%
+MP_T4Blank_S2_L001	99.7%	76.5%
+MP_T4S1_S2_L001	99.2%	82.1%
+MP_T4S10_S2_L001	99.5%	77.7%
+MP_T4S11_S2_L001	99.4%	77.8%
+MP_T4S2_S2_L001	99.3%	80.3%
+MP_T4S2_1_S2_L001	99.5%	78.4%
+MP_T4S2_2_S2_L001	99.5%	78.8%
+MP_T4S3_S2_L001	99.6%	76.8%
+MP_T4S4_S2_L001	99.5%	77.5%
+MP_T4S5_S2_L001	99.5%	78.0%
+MP_T4S6_S2_L001	99.6%	77.2%
+MP_T4S7_S2_L001	99.5%	78.4%
+MP_T4S8_S2_L001	99.5%	76.9%
+MP_T4S9_S2_L001	99.5%	77.4%
+MP_T4S9_1_S2_L001	99.6%	77.8%
+MP_T4S9_2_S2_L001	99.4%	77.7%
+MP_T4STiana_S2_L001	99.5%	78.9%
+MP_T4SWessuck_S2_L001	99.4%	78.1%
+MP_T5Blank_S2_L001	99.5%	87.8%
+MP_T5S1_S2_L001	99.4%	78.1%
+MP_T5S10_S2_L001	99.5%	76.9%
+MP_T5S11_S2_L001	99.5%	77.3%
+MP_T5S2_S2_L001	99.5%	78.5%
+MP_T5S2_1_S2_L001	99.6%	77.4%
+MP_T5S2_2_S2_L001	99.6%	78.5%
+MP_T5S3_S2_L001	99.6%	76.9%
+MP_T5S4_S2_L001	99.6%	77.1%
+MP_T5S5_S2_L001	99.5%	77.4%
+MP_T5S6_S2_L001	99.5%	77.1%
+MP_T5S7_S2_L001	99.6%	78.1%
+MP_T5S8_S2_L001	99.5%	77.5%
+MP_T5S9_S2_L001	99.6%	77.5%
+MP_T5S9_1_S2_L001	99.5%	77.6%
+MP_T5S9_2_S2_L001	99.5%	77.4%
+MP_T5STiana_S2_L001	99.6%	79.1%
+MP_T5SWessuck_S2_L001	99.4%	77.9%
+MP_T6Blank_S2_L001	99.6%	76.4%
+MP_T6S1_S2_L001	99.6%	78.1%
+MP_T6S10_S3_L001	99.5%	79.0%
+MP_T6S11_S3_L001	99.5%	76.6%
+MP_T6S2_S2_L001	99.6%	80.9%
+MP_T6S2_1_S2_L001	99.5%	79.5%
+MP_T6S2_2_S2_L001	99.6%	78.9%
+MP_T6S3_S2_L001	99.7%	77.1%
+MP_T6S4_S2_L001	99.6%	77.4%
+MP_T6S5_S2_L001	99.5%	77.1%
+MP_T6S6_S2_L001	99.5%	77.7%
+MP_T6S7_S2_L001	99.6%	77.0%
+MP_T6S8_S3_L001	99.6%	77.6%
+MP_T6S9_S3_L001	99.6%	77.4%
+MP_T6S9_1_S3_L001	99.3%	77.7%
+MP_T6S9_2_S3_L001	99.5%	79.4%
+MP_T6STiana_S3_L001	99.5%	77.6%
+MP_T6SWessuck_S3_L001	99.5%	78.2%
+```
+
+
+
+Dada2 filtering:
+
+```
+
+Running DADA2: Wed Nov 26 09:53:36 EST 2025
+Trim and filter in DADA2...
+
+DADA2 Filtering results:
+Sample	% Reads Passing
+MP_ABlank_S3_L001_R1_trimmed.fq.gz 96.0921
+MP_AC4_S3_L001_R1_trimmed.fq.gz 97.5121
+MP_AC5_S3_L001_R1_trimmed.fq.gz 97.4972
+MP_APN_S3_L001_R1_trimmed.fq.gz 96.8066
+MP_AS1_S3_L001_R1_trimmed.fq.gz 97.3026
+MP_AS1_1_S3_L001_R1_trimmed.fq.gz 96.6051
+MP_AS1_2_S3_L001_R1_trimmed.fq.gz 97.0519
+MP_AS3_S3_L001_R1_trimmed.fq.gz 97.197
+MP_AS6_S3_L001_R1_trimmed.fq.gz 97.1023
+MP_AS9_S3_L001_R1_trimmed.fq.gz 97.4377
+MP_AT1_S3_L001_R1_trimmed.fq.gz 97.2503
+MP_AT2_S4_L001_R1_trimmed.fq.gz 97.2948
+MP_AT3_S4_L001_R1_trimmed.fq.gz 96.7123
+MP_AT3_1_S4_L001_R1_trimmed.fq.gz 96.5553
+MP_AT3_2_S4_L001_R1_trimmed.fq.gz 96.4877
+MP_AT4_S4_L001_R1_trimmed.fq.gz 97.2308
+MP_AT5_S4_L001_R1_trimmed.fq.gz 96.7921
+MP_JBlank_S3_L001_R1_trimmed.fq.gz 96.8727
+MP_JC4_S3_L001_R1_trimmed.fq.gz 97.2109
+MP_JC5_S3_L001_R1_trimmed.fq.gz 97.024
+MP_JPN_S3_L001_R1_trimmed.fq.gz 97.0845
+MP_JS1_S3_L001_R1_trimmed.fq.gz 96.9718
+MP_JS1_1_S3_L001_R1_trimmed.fq.gz 96.696
+MP_JS1_2_S3_L001_R1_trimmed.fq.gz 97.0091
+MP_JS3_S3_L001_R1_trimmed.fq.gz 96.4617
+MP_JS6_S3_L001_R1_trimmed.fq.gz 96.6394
+MP_JS9_S3_L001_R1_trimmed.fq.gz 97.2605
+MP_JT1_S3_L001_R1_trimmed.fq.gz 97.6318
+MP_JT2_S3_L001_R1_trimmed.fq.gz 97.3229
+MP_JT3_S3_L001_R1_trimmed.fq.gz 97.3317
+MP_JT4_S3_L001_R1_trimmed.fq.gz 97.7751
+MP_JT4_1_S3_L001_R1_trimmed.fq.gz 97.5087
+MP_JT4_2_S3_L001_R1_trimmed.fq.gz 96.2764
+MP_JT5_S3_L001_R1_trimmed.fq.gz 97.2751
+MP_Positive_BP_S3_L001_R1_trimmed.fq.gz 97.2468
+MP_Positive_GP_S3_L001_R1_trimmed.fq.gz 96.2584
+MP_SBlank_S3_L001_R1_trimmed.fq.gz 96.9875
+MP_SC4_S3_L001_R1_trimmed.fq.gz 97.5025
+MP_SC5_S3_L001_R1_trimmed.fq.gz 96.0281
+MP_SPN_S3_L001_R1_trimmed.fq.gz 97.2472
+MP_SS1_S3_L001_R1_trimmed.fq.gz 97.1161
+MP_SS1_1_S3_L001_R1_trimmed.fq.gz 96.9578
+MP_SS1_2_S3_L001_R1_trimmed.fq.gz 97.2087
+MP_SS3_S3_L001_R1_trimmed.fq.gz 97.02
+MP_SS6_S3_L001_R1_trimmed.fq.gz 97.0676
+MP_SS9_S3_L001_R1_trimmed.fq.gz 96.6047
+MP_ST1_S4_L001_R1_trimmed.fq.gz 96.4149
+MP_ST2_S4_L001_R1_trimmed.fq.gz 96.4391
+MP_ST3_S4_L001_R1_trimmed.fq.gz 96.4916
+MP_ST4_S4_L001_R1_trimmed.fq.gz 96.6558
+MP_ST4_1_S4_L001_R1_trimmed.fq.gz 96.1911
+MP_ST4_2_S4_L001_R1_trimmed.fq.gz 96.6641
+MP_ST5_S4_L001_R1_trimmed.fq.gz 96.0735
+MP_T1Blank_S1_L001_R1_trimmed.fq.gz 95.8873
+MP_T1S1_S1_L001_R1_trimmed.fq.gz 96.7894
+MP_T1S10_S1_L001_R1_trimmed.fq.gz 96.9678
+MP_T1S11_S1_L001_R1_trimmed.fq.gz 96.929
+MP_T1S2_S1_L001_R1_trimmed.fq.gz 96.4644
+MP_T1S3_S1_L001_R1_trimmed.fq.gz 96.9063
+MP_T1S4_S1_L001_R1_trimmed.fq.gz 97.0812
+MP_T1S5_S1_L001_R1_trimmed.fq.gz 96.9429
+MP_T1S6_S1_L001_R1_trimmed.fq.gz 97.0567
+MP_T1S7_S1_L001_R1_trimmed.fq.gz 96.8151
+MP_T1S8_S1_L001_R1_trimmed.fq.gz 96.9171
+MP_T1S9_S1_L001_R1_trimmed.fq.gz 97.067
+MP_T1STiana_S1_L001_R1_trimmed.fq.gz 96.9305
+MP_T1SWessuck_S1_L001_R1_trimmed.fq.gz 96.6912
+MP_T2Blank_S1_L001_R1_trimmed.fq.gz 96.9276
+MP_T2S1_S1_L001_R1_trimmed.fq.gz 97.4006
+MP_T2S10_S1_L001_R1_trimmed.fq.gz 97.1565
+MP_T2S11_S1_L001_R1_trimmed.fq.gz 97.1098
+MP_T2S2_S1_L001_R1_trimmed.fq.gz 97.0832
+MP_T2S2_1_S1_L001_R1_trimmed.fq.gz 97.1312
+MP_T2S2_2_S1_L001_R1_trimmed.fq.gz 96.7208
+MP_T2S3_S1_L001_R1_trimmed.fq.gz 97.4061
+MP_T2S4_S1_L001_R1_trimmed.fq.gz 96.5007
+MP_T2S5_S1_L001_R1_trimmed.fq.gz 96.9889
+MP_T2S6_S1_L001_R1_trimmed.fq.gz 97.2895
+MP_T2S7_S1_L001_R1_trimmed.fq.gz 96.8322
+MP_T2S8_S1_L001_R1_trimmed.fq.gz 97.4802
+MP_T2S9_S1_L001_R1_trimmed.fq.gz 97.4784
+MP_T2S9_1_S1_L001_R1_trimmed.fq.gz 97.3996
+MP_T2S9_2_S1_L001_R1_trimmed.fq.gz 96.5248
+MP_T2STiana_S1_L001_R1_trimmed.fq.gz 97.4839
+MP_T2SWessuck_S1_L001_R1_trimmed.fq.gz 97.0507
+MP_T3Blank_S1_L001_R1_trimmed.fq.gz 97.0815
+MP_T3S1_S1_L001_R1_trimmed.fq.gz 97.2037
+MP_T3S10_S1_L001_R1_trimmed.fq.gz 97.1366
+MP_T3S11_S1_L001_R1_trimmed.fq.gz 97.4618
+MP_T3S2_S1_L001_R1_trimmed.fq.gz 96.554
+MP_T3S2_1_S1_L001_R1_trimmed.fq.gz 97.5761
+MP_T3S2_2_S1_L001_R1_trimmed.fq.gz 96.4782
+MP_T3S3_S1_L001_R1_trimmed.fq.gz 97.532
+MP_T3S4_S1_L001_R1_trimmed.fq.gz 97.0992
+MP_T3S5_S1_L001_R1_trimmed.fq.gz 97.7736
+MP_T3S6_S1_L001_R1_trimmed.fq.gz 97.7159
+MP_T3S7_S1_L001_R1_trimmed.fq.gz 97.5013
+MP_T3S8_S1_L001_R1_trimmed.fq.gz 97.3175
+MP_T3S9_S1_L001_R1_trimmed.fq.gz 97.8497
+MP_T3S9_1_S1_L001_R1_trimmed.fq.gz 97.5406
+MP_T3S9_2_S1_L001_R1_trimmed.fq.gz 96.6087
+MP_T3STiana_S2_L001_R1_trimmed.fq.gz 97.2456
+MP_T3SWessuck_S2_L001_R1_trimmed.fq.gz 97.4107
+MP_T4Blank_S2_L001_R1_trimmed.fq.gz 96.7975
+MP_T4S1_S2_L001_R1_trimmed.fq.gz 96.5391
+MP_T4S10_S2_L001_R1_trimmed.fq.gz 97.1324
+MP_T4S11_S2_L001_R1_trimmed.fq.gz 97.2412
+MP_T4S2_S2_L001_R1_trimmed.fq.gz 96.912
+MP_T4S2_1_S2_L001_R1_trimmed.fq.gz 96.7015
+MP_T4S2_2_S2_L001_R1_trimmed.fq.gz 96.6123
+MP_T4S3_S2_L001_R1_trimmed.fq.gz 96.8337
+MP_T4S4_S2_L001_R1_trimmed.fq.gz 96.9014
+MP_T4S5_S2_L001_R1_trimmed.fq.gz 97.1005
+MP_T4S6_S2_L001_R1_trimmed.fq.gz 96.7797
+MP_T4S7_S2_L001_R1_trimmed.fq.gz 96.8178
+MP_T4S8_S2_L001_R1_trimmed.fq.gz 96.8281
+MP_T4S9_S2_L001_R1_trimmed.fq.gz 96.8946
+MP_T4S9_1_S2_L001_R1_trimmed.fq.gz 97.2321
+MP_T4S9_2_S2_L001_R1_trimmed.fq.gz 97.3758
+MP_T4STiana_S2_L001_R1_trimmed.fq.gz 97.1252
+MP_T4SWessuck_S2_L001_R1_trimmed.fq.gz 96.5946
+MP_T5Blank_S2_L001_R1_trimmed.fq.gz 95.4472
+MP_T5S1_S2_L001_R1_trimmed.fq.gz 96.8356
+MP_T5S10_S2_L001_R1_trimmed.fq.gz 96.8073
+MP_T5S11_S2_L001_R1_trimmed.fq.gz 97.6092
+MP_T5S2_S2_L001_R1_trimmed.fq.gz 97.2106
+MP_T5S2_1_S2_L001_R1_trimmed.fq.gz 97.2404
+MP_T5S2_2_S2_L001_R1_trimmed.fq.gz 97.1227
+MP_T5S3_S2_L001_R1_trimmed.fq.gz 97.5763
+MP_T5S4_S2_L001_R1_trimmed.fq.gz 97.4449
+MP_T5S5_S2_L001_R1_trimmed.fq.gz 96.7182
+MP_T5S6_S2_L001_R1_trimmed.fq.gz 97.0071
+MP_T5S7_S2_L001_R1_trimmed.fq.gz 97.092
+MP_T5S8_S2_L001_R1_trimmed.fq.gz 97.151
+MP_T5S9_S2_L001_R1_trimmed.fq.gz 97.3666
+MP_T5S9_1_S2_L001_R1_trimmed.fq.gz 97.1972
+MP_T5S9_2_S2_L001_R1_trimmed.fq.gz 97.2107
+MP_T5STiana_S2_L001_R1_trimmed.fq.gz 97.3346
+MP_T5SWessuck_S2_L001_R1_trimmed.fq.gz 96.5486
+MP_T6Blank_S2_L001_R1_trimmed.fq.gz 97.0966
+MP_T6S1_S2_L001_R1_trimmed.fq.gz 96.9104
+MP_T6S10_S3_L001_R1_trimmed.fq.gz 97.3179
+MP_T6S11_S3_L001_R1_trimmed.fq.gz 97.2057
+MP_T6S2_S2_L001_R1_trimmed.fq.gz 96.9194
+MP_T6S2_1_S2_L001_R1_trimmed.fq.gz 97.1932
+MP_T6S2_2_S2_L001_R1_trimmed.fq.gz 96.7856
+MP_T6S3_S2_L001_R1_trimmed.fq.gz 97.8592
+MP_T6S4_S2_L001_R1_trimmed.fq.gz 97.4416
+MP_T6S5_S2_L001_R1_trimmed.fq.gz 96.3864
+MP_T6S6_S2_L001_R1_trimmed.fq.gz 97.0516
+MP_T6S7_S2_L001_R1_trimmed.fq.gz 97.4785
+MP_T6S8_S3_L001_R1_trimmed.fq.gz 97.4484
+MP_T6S9_S3_L001_R1_trimmed.fq.gz 97.3326
+MP_T6S9_1_S3_L001_R1_trimmed.fq.gz 96.9094
+MP_T6S9_2_S3_L001_R1_trimmed.fq.gz 97.0767
+MP_T6STiana_S3_L001_R1_trimmed.fq.gz 96.7977
+MP_T6SWessuck_S3_L001_R1_trimmed.fq.gz 97.0246
+
+Parameters to modify:
+minLen,rm.phix,truncQ,maxEE-primer1,maxEE-primer2,trimRight,trimLeft
+Current settings:
+75,TRUE,2,2,2,25,0
+Please check DADA2 filtering success. Proceed? [y/n/m]
+
+```
+
+
+```
+FINAL DADA2 STATS
+Note: Please check for a failed merge of forward/reverse sequences
+Sample	%Reads Retained
+MP_ABlank_S3_L001 90.6
+MP_AC4_S3_L001 87.4
+MP_AC5_S3_L001 90.3
+MP_APN_S3_L001 91.4
+MP_AS1_S3_L001 88.6
+MP_AS1_1_S3_L001 88.6
+MP_AS1_2_S3_L001 88.5
+MP_AS3_S3_L001 87.9
+MP_AS6_S3_L001 88.4
+MP_AS9_S3_L001 89.5
+MP_AT1_S3_L001 86.6
+MP_AT2_S4_L001 83.5
+MP_AT3_S4_L001 83.4
+MP_AT3_1_S4_L001 79
+MP_AT3_2_S4_L001 82.9
+MP_AT4_S4_L001 84
+MP_AT5_S4_L001 82.3
+MP_JBlank_S3_L001 81
+MP_JC4_S3_L001 83.5
+MP_JC5_S3_L001 79.2
+MP_JPN_S3_L001 88.1
+MP_JS1_S3_L001 87.4
+MP_JS1_1_S3_L001 86.3
+MP_JS1_2_S3_L001 85.8
+MP_JS3_S3_L001 85
+MP_JS6_S3_L001 74.7
+MP_JS9_S3_L001 88.2
+MP_JT1_S3_L001 88.3
+MP_JT2_S3_L001 89.6
+MP_JT3_S3_L001 83.2
+MP_JT4_S3_L001 87.9
+MP_JT4_1_S3_L001 90.1
+MP_JT4_2_S3_L001 86.8
+MP_JT5_S3_L001 88.6
+MP_Positive_BP_S3_L001 94.7
+MP_Positive_GP_S3_L001 94.4
+MP_SBlank_S3_L001 89.8
+MP_SC4_S3_L001 86.9
+MP_SC5_S3_L001 90
+MP_SPN_S3_L001 92.3
+MP_SS1_S3_L001 91.2
+MP_SS1_1_S3_L001 89.8
+MP_SS1_2_S3_L001 92.1
+MP_SS3_S3_L001 89.8
+MP_SS6_S3_L001 88.3
+MP_SS9_S3_L001 89.7
+MP_ST1_S4_L001 86.5
+MP_ST2_S4_L001 81.8
+MP_ST3_S4_L001 84.1
+MP_ST4_S4_L001 81.6
+MP_ST4_1_S4_L001 84.8
+MP_ST4_2_S4_L001 85.2
+MP_ST5_S4_L001 81.1
+MP_T1Blank_S1_L001 86.2
+MP_T1S1_S1_L001 86.7
+MP_T1S10_S1_L001 87.3
+MP_T1S11_S1_L001 85.3
+MP_T1S2_S1_L001 86.5
+MP_T1S3_S1_L001 84.7
+MP_T1S4_S1_L001 83.8
+MP_T1S5_S1_L001 87.5
+MP_T1S6_S1_L001 86.3
+MP_T1S7_S1_L001 87.2
+MP_T1S8_S1_L001 77.6
+MP_T1S9_S1_L001 85.7
+MP_T1STiana_S1_L001 86.3
+MP_T1SWessuck_S1_L001 85.4
+MP_T2Blank_S1_L001 88
+MP_T2S1_S1_L001 86.9
+MP_T2S10_S1_L001 87.6
+MP_T2S11_S1_L001 86.8
+MP_T2S2_S1_L001 85.4
+MP_T2S2_1_S1_L001 87.3
+MP_T2S2_2_S1_L001 86.5
+MP_T2S3_S1_L001 86.7
+MP_T2S4_S1_L001 87.8
+MP_T2S5_S1_L001 90.4
+MP_T2S6_S1_L001 86
+MP_T2S7_S1_L001 83.8
+MP_T2S8_S1_L001 88.5
+MP_T2S9_S1_L001 88.1
+MP_T2S9_1_S1_L001 85.5
+MP_T2S9_2_S1_L001 86.6
+MP_T2STiana_S1_L001 87.6
+MP_T2SWessuck_S1_L001 86
+MP_T3Blank_S1_L001 87
+MP_T3S1_S1_L001 87
+MP_T3S10_S1_L001 87.2
+MP_T3S11_S1_L001 86.4
+MP_T3S2_S1_L001 88.1
+MP_T3S2_1_S1_L001 88.2
+MP_T3S2_2_S1_L001 86.5
+MP_T3S3_S1_L001 86.7
+MP_T3S4_S1_L001 86.7
+MP_T3S5_S1_L001 87.8
+MP_T3S6_S1_L001 87.2
+MP_T3S7_S1_L001 87.9
+MP_T3S8_S1_L001 83
+MP_T3S9_S1_L001 89.2
+MP_T3S9_1_S1_L001 86.2
+MP_T3S9_2_S1_L001 88.7
+MP_T3STiana_S2_L001 87.5
+MP_T3SWessuck_S2_L001 85.9
+MP_T4Blank_S2_L001 88.1
+MP_T4S1_S2_L001 85.7
+MP_T4S10_S2_L001 85.5
+MP_T4S11_S2_L001 85.7
+MP_T4S2_S2_L001 85
+MP_T4S2_1_S2_L001 85.7
+MP_T4S2_2_S2_L001 87.5
+MP_T4S3_S2_L001 84.5
+MP_T4S4_S2_L001 86.8
+MP_T4S5_S2_L001 83.4
+MP_T4S6_S2_L001 82.6
+MP_T4S7_S2_L001 86.1
+MP_T4S8_S2_L001 85.7
+MP_T4S9_S2_L001 85.7
+MP_T4S9_1_S2_L001 85.7
+MP_T4S9_2_S2_L001 85.5
+MP_T4STiana_S2_L001 82.7
+MP_T4SWessuck_S2_L001 87.8
+MP_T5Blank_S2_L001 87.1
+MP_T5S1_S2_L001 87.9
+MP_T5S10_S2_L001 90.5
+MP_T5S11_S2_L001 88.4
+MP_T5S2_S2_L001 86.1
+MP_T5S2_1_S2_L001 89.1
+MP_T5S2_2_S2_L001 88.9
+MP_T5S3_S2_L001 89.2
+MP_T5S4_S2_L001 88.5
+MP_T5S5_S2_L001 88.9
+MP_T5S6_S2_L001 87.8
+MP_T5S7_S2_L001 87.5
+MP_T5S8_S2_L001 89.4
+MP_T5S9_S2_L001 88.8
+MP_T5S9_1_S2_L001 87.7
+MP_T5S9_2_S2_L001 86.4
+MP_T5STiana_S2_L001 86.3
+MP_T5SWessuck_S2_L001 88.7
+MP_T6Blank_S2_L001 90.8
+MP_T6S1_S2_L001 84.9
+MP_T6S10_S3_L001 72.3
+MP_T6S11_S3_L001 85.4
+MP_T6S2_S2_L001 87.9
+MP_T6S2_1_S2_L001 87.1
+MP_T6S2_2_S2_L001 87.7
+MP_T6S3_S2_L001 87.3
+MP_T6S4_S2_L001 87.5
+MP_T6S5_S2_L001 87.5
+MP_T6S6_S2_L001 86.7
+MP_T6S7_S2_L001 88.2
+MP_T6S8_S3_L001 86.6
+MP_T6S9_S3_L001 89.2
+MP_T6S9_1_S3_L001 88.5
+MP_T6S9_2_S3_L001 87.5
+MP_T6STiana_S3_L001 89.3
+MP_T6SWessuck_S3_L001 85
+```

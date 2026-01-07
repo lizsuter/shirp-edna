@@ -68,9 +68,11 @@ conda install -c bioconda krona=2.7.1
 conda list
 
 ```
+
 To deactivate environment, `conda deactivate`
 
 **EDIT 1, 7/8/24** later on having trouble with krona installation. Uninstalled using conda (in REVAMPenv) using `conda remove krona`.  Then install manually following [this](https://github.com/marbl/Krona/issues/46):
+
 
 ```
 cd ~/software
@@ -80,7 +82,9 @@ cd KronaTools-2.7
 ./install.pl
 ```
 
+
 I think it worked:
+
 
 ```
 Creating links...
@@ -102,14 +106,16 @@ Run ./updateAccessions.sh to use scripts that get taxonomy IDs from accessions:
 
 ```
 
+
 Then according to ducmentation, need to run updateTaxonomy.sh, from within KronaTool-2.7 folder:
+
 ```
 ./updateTaxonomy.sh
 
 ```
 
 May need to run update accessions too but this is a much bigger file and will take long time. Wait for now:
-./updateAccessions.sh 
+`./updateAccessions.sh `
 
 ### TaxonKit
 Install [TaxonKit](https://bioinf.shenwei.me/taxonkit/download/). I searched for the v0.5.0 darwin 64-bit tar file and unzipped it into my software folder. Had to right-click/ force open the `taxonkit` unix file the first time bc it was from untrusted developer. Then it would run in terminal as long as `export PATH=~/software:$PATH` is in my `.zshrc` file.
@@ -1384,4 +1390,735 @@ MP_ST4_S5_L002 92.9
 
 ```
 
+## Elas02 Manual Samples from 2025 field season
+### 11/25/25
+
+Attempt Elas02 from 2025 field season. Natalia was able to do MiFish but is getting problems in dada2 step with Learn Errors...
+
+Remove suffix from file names
+
+```
+cd /Volumes/easystore/eDNA/shirp-edna/raw_data/2025-Elas 
+for file in *; do mv "${file}" "${file/_001/}"; done
+
+```
+
+run increase to 4 threads to test it out
+
+```
+cd /Volumes/easystore/eDNA/shirp-edna
+
+conda activate REVAMPenv
+arch -x86_64 zsh 
+export TAXONKIT_DB=~/.taxonkit
+
+revamp.sh -p 01_config_file_Elas02-2025.txt -f 02_figure_config_file_Elas02-2025.txt -s 03_sample_metadata_Elas02-2025.txt  -r raw_data/2025-Elas02 -o results-revamp-2025-Elas02 -t 4
+
+```
+
+Output (took a couple of days- these Elas libraries are much bigger than in the past)
+
+```
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % revamp.sh -p 01_config_file_Elas02-2025.txt -f 02_figure_config_file_Elas02-2025.txt -s 03_sample_metadata_Elas02-2025.txt  -r raw_data/2025-Elas02 -o results-revamp-2025-Elas02 -t 4
+Config files identical
+Sample metadata files identical
+/Users/shinnecockbayrestorationprogram/software/REVAMP/revamp.sh: line 227: results-revamp-2025-Elas02/progress.txt: No such file or directory
+mv: rename results-revamp-2025-Elas02/run.log to results-revamp-2025-Elas02/run_logs/runlog_Mon_Nov_24_15_58_16_EST_2025.txt: No such file or directory
+
+Start of run:
+Mon Nov 24 15:58:16 EST 2025
+
+Invoked script options:
+/Users/shinnecockbayrestorationprogram/software/REVAMP/revamp.sh -p 01_config_file_Elas02-2025.txt -f 02_figure_config_file_Elas02-2025.txt -s 03_sample_metadata_Elas02-2025.txt -r raw_data/2025-Elas02 -o results-revamp-2025-Elas02 -t 4
+
+cp: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump/names.dmp: No such file or directory
+cp: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump/nodes.dmp: No such file or directory
+cp: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump/delnodes.dmp: No such file or directory
+cp: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump/merged.dmp: No such file or directory
+Running Cutadapt: Mon Nov 24 15:58:42 EST 2025
+Finished Cutadapt: Mon Nov 24 16:54:31 EST 2025
+Sample	Passing Reads	Passing bp
+MP_ABlank_S4_L001	84.8%	64.3%
+MP_AC4_S4_L001	85.4%	70.1%
+MP_AC5_S4_L001	97.2%	80.1%
+MP_APN_S4_L001	54.8%	46.8%
+MP_AS1_S4_L001	92.3%	74.4%
+MP_AS1_1_S4_L001	92.5%	76.5%
+MP_AS1_2_S4_L001	96.8%	79.7%
+MP_AS3_S4_L001	96.1%	79.0%
+MP_AS6_S4_L001	90.9%	80.0%
+MP_AS9_S4_L001	95.3%	77.5%
+MP_AT1_S6_L002	91.3%	80.1%
+MP_AT2_S6_L002	96.0%	77.3%
+MP_AT3_S6_L002	86.8%	72.4%
+MP_AT3_1_S6_L002	97.4%	76.6%
+MP_AT3_2_S6_L002	98.2%	77.9%
+MP_AT4_S6_L002	94.3%	76.6%
+MP_AT5_S6_L002	97.5%	78.2%
+MP_JBlank_S4_L001	98.7%	76.1%
+MP_JC4_S4_L001	96.6%	84.5%
+MP_JC5_S4_L001	85.5%	75.8%
+MP_JPN_S4_L001	98.0%	87.3%
+MP_JS1_S4_L001	98.1%	86.7%
+MP_JS1_1_S4_L001	96.1%	84.6%
+MP_JS1_2_S4_L001	97.9%	84.7%
+MP_JS3_S4_L001	98.5%	85.5%
+MP_JS6_S4_L001	96.0%	86.7%
+MP_JS9_S4_L001	95.6%	82.5%
+MP_JT1_S6_L002	98.0%	80.2%
+MP_JT2_S6_L002	98.3%	77.9%
+MP_JT3_S6_L002	95.7%	73.5%
+MP_JT4_S6_L002	98.0%	77.5%
+MP_JT4_1_S6_L002	96.8%	77.7%
+MP_JT4_2_S6_L002	98.4%	77.4%
+MP_JT5_S6_L002	97.8%	76.0%
+MP_Positive_BP_S6_L002	98.3%	75.8%
+MP_Positive_GP_S6_L002	98.2%	75.4%
+MP_SBlank_S4_L001	97.3%	74.8%
+MP_SC4_S6_L002	97.9%	76.8%
+MP_SC5_S6_L002	98.2%	85.6%
+MP_SPN_S6_L002	87.4%	70.0%
+MP_SS1_S6_L002	96.9%	79.9%
+MP_SS1_1_S6_L002	91.5%	75.3%
+MP_SS1_2_S6_L002	91.4%	74.8%
+MP_SS3_S6_L002	98.6%	81.5%
+MP_SS6_S6_L002	88.1%	77.4%
+MP_SS9_S6_L002	97.6%	78.5%
+MP_ST1_S6_L002	61.8%	51.6%
+MP_ST2_S6_L002	98.1%	75.4%
+MP_ST3_S6_L002	97.0%	76.9%
+MP_ST4_S6_L002	93.9%	75.4%
+MP_ST4_1_S6_L002	91.1%	71.0%
+MP_ST4_2_S6_L002	94.4%	75.3%
+MP_ST5_S6_L002	98.4%	78.8%
+MP_T1Blank_S1_L001	89.0%	66.5%
+MP_T1S1_S1_L001	93.0%	81.3%
+MP_T1S10_S1_L001	76.2%	63.8%
+MP_T1S11_S1_L001	81.7%	70.1%
+MP_T1S2_S1_L001	94.5%	81.8%
+MP_T1S3_S1_L001	98.2%	84.2%
+MP_T1S4_S1_L001	96.2%	83.9%
+MP_T1S5_S1_L001	93.4%	79.2%
+MP_T1S6_S1_L001	84.8%	71.3%
+MP_T1S7_S1_L001	89.3%	71.3%
+MP_T1S8_S1_L001	88.4%	76.6%
+MP_T1S9_S1_L001	87.0%	74.8%
+MP_T1STiana_S1_L001	89.8%	79.7%
+MP_T1SWessuck_S1_L001	98.6%	88.3%
+MP_T2Blank_S1_L001	98.6%	82.1%
+MP_T2S1_S1_L001	87.7%	72.3%
+MP_T2S10_S1_L001	96.8%	77.6%
+MP_T2S11_S1_L001	98.0%	79.3%
+MP_T2S2_S1_L001	90.4%	71.9%
+MP_T2S2_1_S1_L001	95.5%	82.8%
+MP_T2S2_2_S1_L001	84.2%	72.6%
+MP_T2S3_S1_L001	88.0%	74.4%
+MP_T2S4_S1_L001	94.4%	80.9%
+MP_T2S5_S1_L001	97.2%	78.7%
+MP_T2S6_S1_L001	92.7%	75.6%
+MP_T2S7_S1_L001	90.1%	72.3%
+MP_T2S8_S1_L001	91.7%	77.7%
+MP_T2S9_S1_L001	79.6%	66.6%
+MP_T2S9_1_S1_L001	95.0%	78.6%
+MP_T2S9_2_S1_L001	53.5%	47.3%
+MP_T2STiana_S1_L001	90.2%	77.9%
+MP_T2SWessuck_S1_L001	84.0%	72.3%
+MP_T3Blank_S2_L001	98.3%	76.2%
+MP_T3S1_S2_L001	88.4%	73.7%
+MP_T3S10_S2_L001	91.1%	72.9%
+MP_T3S11_S2_L001	93.6%	74.9%
+MP_T3S2_S2_L001	93.9%	81.2%
+MP_T3S2_1_S2_L001	88.9%	76.6%
+MP_T3S2_2_S2_L001	96.7%	82.9%
+MP_T3S3_S2_L001	83.5%	70.8%
+MP_T3S4_S2_L001	85.5%	71.3%
+MP_T3S5_S2_L001	90.5%	75.1%
+MP_T3S6_S2_L001	90.6%	74.3%
+MP_T3S7_S2_L001	74.6%	61.7%
+MP_T3S8_S2_L001	67.2%	55.1%
+MP_T3S9_S2_L001	91.0%	76.1%
+MP_T3S9_1_S2_L001	83.5%	67.8%
+MP_T3S9_2_S2_L001	90.0%	73.0%
+MP_T3STiana_S2_L001	74.5%	63.2%
+MP_T3SWessuck_S2_L001	83.8%	70.1%
+MP_T4Blank_S2_L001	95.1%	74.4%
+MP_T4S1_S2_L001	89.1%	74.5%
+MP_T4S10_S3_L001	92.9%	72.7%
+MP_T4S11_S3_L001	95.3%	73.7%
+MP_T4S2_S2_L001	39.3%	31.6%
+MP_T4S2_1_S2_L001	91.4%	81.7%
+MP_T4S2_2_S2_L001	94.3%	74.1%
+MP_T4S3_S2_L001	97.5%	76.1%
+MP_T4S4_S2_L001	97.6%	79.8%
+MP_T4S5_S2_L001	97.9%	77.9%
+MP_T4S6_S2_L001	97.8%	77.3%
+MP_T4S7_S2_L001	96.2%	78.2%
+MP_T4S8_S2_L001	98.3%	79.0%
+MP_T4S9_S2_L001	97.1%	80.0%
+MP_T4S9_1_S2_L001	96.4%	78.5%
+MP_T4S9_2_S2_L001	95.8%	75.7%
+MP_T4STiana_S3_L001	96.5%	83.8%
+MP_T4SWessuck_S3_L001	90.9%	73.4%
+MP_T5Blank_S3_L001	99.0%	77.5%
+MP_T5S1_S3_L001	97.2%	81.5%
+MP_T5S10_S3_L001	97.8%	77.0%
+MP_T5S11_S3_L001	97.4%	77.7%
+MP_T5S2_S3_L001	97.9%	84.1%
+MP_T5S2_1_S3_L001	91.0%	79.8%
+MP_T5S2_2_S3_L001	96.5%	77.5%
+MP_T5S3_S3_L001	89.9%	71.0%
+MP_T5S4_S3_L001	97.7%	85.2%
+MP_T5S5_S3_L001	87.7%	68.4%
+MP_T5S6_S3_L001	97.8%	76.7%
+MP_T5S7_S3_L001	97.4%	77.8%
+MP_T5S8_S3_L001	92.6%	72.8%
+MP_T5S9_S3_L001	96.6%	77.2%
+MP_T5S9_1_S3_L001	98.3%	77.4%
+MP_T5S9_2_S3_L001	97.4%	78.1%
+MP_T5STiana_S3_L001	92.7%	76.8%
+MP_T5SWessuck_S3_L001	98.4%	79.1%
+MP_T6Blank_S3_L001	98.3%	75.3%
+MP_T6S1_S3_L001	97.3%	79.7%
+MP_T6S10_S4_L001	88.1%	70.2%
+MP_T6S11_S4_L001	97.2%	77.2%
+MP_T6S2_S3_L001	96.1%	83.4%
+MP_T6S2_1_S3_L001	97.4%	78.9%
+MP_T6S2_2_S3_L001	93.4%	74.0%
+MP_T6S3_S3_L001	97.2%	79.1%
+MP_T6S4_S3_L001	97.0%	78.4%
+MP_T6S5_S3_L001	97.6%	78.4%
+MP_T6S6_S3_L001	96.4%	79.6%
+MP_T6S7_S3_L001	97.2%	78.4%
+MP_T6S8_S4_L001	96.7%	79.5%
+MP_T6S9_S4_L001	94.4%	76.1%
+MP_T6S9_1_S4_L001	96.6%	78.5%
+MP_T6S9_2_S4_L001	97.6%	79.5%
+MP_T6STiana_S4_L001	96.8%	76.2%
+MP_T6SWessuck_S4_L001	95.7%	75.9%
+
+Please check Cutadapt success. Proceed? [y/n]
+y
+Continuing!
+
+Running DADA2: Mon Nov 24 20:24:04 EST 2025
+Trim and filter in DADA2...
+
+DADA2 Filtering results:
+Sample	% Reads Passing
+MP_ABlank_S4_L001_R1_trimmed.fq.gz 3.34966
+MP_AC4_S4_L001_R1_trimmed.fq.gz 71.2562
+MP_AC5_S4_L001_R1_trimmed.fq.gz 93.7192
+MP_APN_S4_L001_R1_trimmed.fq.gz 65.3575
+MP_AS1_S4_L001_R1_trimmed.fq.gz 83.9206
+MP_AS1_1_S4_L001_R1_trimmed.fq.gz 58.7342
+MP_AS1_2_S4_L001_R1_trimmed.fq.gz 88.4675
+MP_AS3_S4_L001_R1_trimmed.fq.gz 93.1265
+MP_AS6_S4_L001_R1_trimmed.fq.gz 77.8695
+MP_AS9_S4_L001_R1_trimmed.fq.gz 80.0579
+MP_AT1_S6_L002_R1_trimmed.fq.gz 76.8438
+MP_AT2_S6_L002_R1_trimmed.fq.gz 70.7205
+MP_AT3_S6_L002_R1_trimmed.fq.gz 93.0086
+MP_AT3_1_S6_L002_R1_trimmed.fq.gz 56.6402
+MP_AT3_2_S6_L002_R1_trimmed.fq.gz 80.7919
+MP_AT4_S6_L002_R1_trimmed.fq.gz 87.4167
+MP_AT5_S6_L002_R1_trimmed.fq.gz 80.6934
+MP_JBlank_S4_L001_R1_trimmed.fq.gz 2.04575
+MP_JC4_S4_L001_R1_trimmed.fq.gz 84.1925
+MP_JC5_S4_L001_R1_trimmed.fq.gz 82.474
+MP_JPN_S4_L001_R1_trimmed.fq.gz 85.6913
+MP_JS1_S4_L001_R1_trimmed.fq.gz 80.3127
+MP_JS1_1_S4_L001_R1_trimmed.fq.gz 78.0014
+MP_JS1_2_S4_L001_R1_trimmed.fq.gz 86.4928
+MP_JS3_S4_L001_R1_trimmed.fq.gz 55.8219
+MP_JS6_S4_L001_R1_trimmed.fq.gz 95.5116
+MP_JS9_S4_L001_R1_trimmed.fq.gz 88.691
+MP_JT1_S6_L002_R1_trimmed.fq.gz 62.0044
+MP_JT2_S6_L002_R1_trimmed.fq.gz 43.3276
+MP_JT3_S6_L002_R1_trimmed.fq.gz 4.56621
+MP_JT4_S6_L002_R1_trimmed.fq.gz 61.4572
+MP_JT4_1_S6_L002_R1_trimmed.fq.gz 70.2471
+MP_JT4_2_S6_L002_R1_trimmed.fq.gz 34.877
+MP_JT5_S6_L002_R1_trimmed.fq.gz 54.7613
+MP_Positive_BP_S6_L002_R1_trimmed.fq.gz 2.05728
+MP_Positive_GP_S6_L002_R1_trimmed.fq.gz 2.90614
+MP_SBlank_S4_L001_R1_trimmed.fq.gz 1.90231
+MP_SC4_S6_L002_R1_trimmed.fq.gz 20.9166
+MP_SC5_S6_L002_R1_trimmed.fq.gz 60.8512
+MP_SPN_S6_L002_R1_trimmed.fq.gz 27.6377
+MP_SS1_S6_L002_R1_trimmed.fq.gz 83.8279
+MP_SS1_1_S6_L002_R1_trimmed.fq.gz 84.9206
+MP_SS1_2_S6_L002_R1_trimmed.fq.gz 74.1203
+MP_SS3_S6_L002_R1_trimmed.fq.gz 83.52
+MP_SS6_S6_L002_R1_trimmed.fq.gz 78.434
+MP_SS9_S6_L002_R1_trimmed.fq.gz 94.5401
+MP_ST1_S6_L002_R1_trimmed.fq.gz 54.7577
+MP_ST2_S6_L002_R1_trimmed.fq.gz 4.2505
+MP_ST3_S6_L002_R1_trimmed.fq.gz 68.8638
+MP_ST4_S6_L002_R1_trimmed.fq.gz 27.6264
+MP_ST4_1_S6_L002_R1_trimmed.fq.gz 13.57
+MP_ST4_2_S6_L002_R1_trimmed.fq.gz 48.323
+MP_ST5_S6_L002_R1_trimmed.fq.gz 11.0587
+MP_T1Blank_S1_L001_R1_trimmed.fq.gz 1.57113
+MP_T1S1_S1_L001_R1_trimmed.fq.gz 72.1671
+MP_T1S10_S1_L001_R1_trimmed.fq.gz 75.0065
+MP_T1S11_S1_L001_R1_trimmed.fq.gz 78.0342
+MP_T1S2_S1_L001_R1_trimmed.fq.gz 82.5478
+MP_T1S3_S1_L001_R1_trimmed.fq.gz 94.9992
+MP_T1S4_S1_L001_R1_trimmed.fq.gz 88.5448
+MP_T1S5_S1_L001_R1_trimmed.fq.gz 74.1133
+MP_T1S6_S1_L001_R1_trimmed.fq.gz 54.2937
+MP_T1S7_S1_L001_R1_trimmed.fq.gz 86.3809
+MP_T1S8_S1_L001_R1_trimmed.fq.gz 62.6077
+MP_T1S9_S1_L001_R1_trimmed.fq.gz 51.8329
+MP_T1STiana_S1_L001_R1_trimmed.fq.gz 77.6623
+MP_T1SWessuck_S1_L001_R1_trimmed.fq.gz 63.0143
+MP_T2Blank_S1_L001_R1_trimmed.fq.gz 46.3237
+MP_T2S1_S1_L001_R1_trimmed.fq.gz 73.7513
+MP_T2S10_S1_L001_R1_trimmed.fq.gz 89.9913
+MP_T2S11_S1_L001_R1_trimmed.fq.gz 92.0576
+MP_T2S2_S1_L001_R1_trimmed.fq.gz 85.4794
+MP_T2S2_1_S1_L001_R1_trimmed.fq.gz 85.907
+MP_T2S2_2_S1_L001_R1_trimmed.fq.gz 65.4856
+MP_T2S3_S1_L001_R1_trimmed.fq.gz 63.8916
+MP_T2S4_S1_L001_R1_trimmed.fq.gz 79.6964
+MP_T2S5_S1_L001_R1_trimmed.fq.gz 94.2042
+MP_T2S6_S1_L001_R1_trimmed.fq.gz 88.2145
+MP_T2S7_S1_L001_R1_trimmed.fq.gz 92.919
+MP_T2S8_S1_L001_R1_trimmed.fq.gz 88.8759
+MP_T2S9_S1_L001_R1_trimmed.fq.gz 75.2033
+MP_T2S9_1_S1_L001_R1_trimmed.fq.gz 86.8185
+MP_T2S9_2_S1_L001_R1_trimmed.fq.gz 81.2635
+MP_T2STiana_S1_L001_R1_trimmed.fq.gz 66.7677
+MP_T2SWessuck_S1_L001_R1_trimmed.fq.gz 67.9457
+MP_T3Blank_S2_L001_R1_trimmed.fq.gz 12.9321
+MP_T3S1_S2_L001_R1_trimmed.fq.gz 47.7285
+MP_T3S10_S2_L001_R1_trimmed.fq.gz 83.6954
+MP_T3S11_S2_L001_R1_trimmed.fq.gz 83.6692
+MP_T3S2_S2_L001_R1_trimmed.fq.gz 67.2474
+MP_T3S2_1_S2_L001_R1_trimmed.fq.gz 87.0509
+MP_T3S2_2_S2_L001_R1_trimmed.fq.gz 70.8369
+MP_T3S3_S2_L001_R1_trimmed.fq.gz 71.261
+MP_T3S4_S2_L001_R1_trimmed.fq.gz 70.7881
+MP_T3S5_S2_L001_R1_trimmed.fq.gz 87.9833
+MP_T3S6_S2_L001_R1_trimmed.fq.gz 76.3569
+MP_T3S7_S2_L001_R1_trimmed.fq.gz 80.7664
+MP_T3S8_S2_L001_R1_trimmed.fq.gz 90.8545
+MP_T3S9_S2_L001_R1_trimmed.fq.gz 68.9165
+MP_T3S9_1_S2_L001_R1_trimmed.fq.gz 80.403
+MP_T3S9_2_S2_L001_R1_trimmed.fq.gz 65.4658
+MP_T3STiana_S2_L001_R1_trimmed.fq.gz 76.7002
+MP_T3SWessuck_S2_L001_R1_trimmed.fq.gz 62.4927
+MP_T4Blank_S2_L001_R1_trimmed.fq.gz 14.1943
+MP_T4S1_S2_L001_R1_trimmed.fq.gz 50.458
+MP_T4S10_S3_L001_R1_trimmed.fq.gz 96.2638
+MP_T4S11_S3_L001_R1_trimmed.fq.gz 4.74677
+MP_T4S2_S2_L001_R1_trimmed.fq.gz 43.2648
+MP_T4S2_1_S2_L001_R1_trimmed.fq.gz 87.5087
+MP_T4S2_2_S2_L001_R1_trimmed.fq.gz 91.0778
+MP_T4S3_S2_L001_R1_trimmed.fq.gz 38.8226
+MP_T4S4_S2_L001_R1_trimmed.fq.gz 69.7634
+MP_T4S5_S2_L001_R1_trimmed.fq.gz 89.3573
+MP_T4S6_S2_L001_R1_trimmed.fq.gz 94.9086
+MP_T4S7_S2_L001_R1_trimmed.fq.gz 79.99
+MP_T4S8_S2_L001_R1_trimmed.fq.gz 49.6358
+MP_T4S9_S2_L001_R1_trimmed.fq.gz 93.9029
+MP_T4S9_1_S2_L001_R1_trimmed.fq.gz 95.9235
+MP_T4S9_2_S2_L001_R1_trimmed.fq.gz 96.0764
+MP_T4STiana_S3_L001_R1_trimmed.fq.gz 68.0098
+MP_T4SWessuck_S3_L001_R1_trimmed.fq.gz 95.3019
+MP_T5Blank_S3_L001_R1_trimmed.fq.gz 96.3515
+MP_T5S1_S3_L001_R1_trimmed.fq.gz 88.5663
+MP_T5S10_S3_L001_R1_trimmed.fq.gz 94.8077
+MP_T5S11_S3_L001_R1_trimmed.fq.gz 87.2972
+MP_T5S2_S3_L001_R1_trimmed.fq.gz 57.5711
+MP_T5S2_1_S3_L001_R1_trimmed.fq.gz 78.2313
+MP_T5S2_2_S3_L001_R1_trimmed.fq.gz 93.0613
+MP_T5S3_S3_L001_R1_trimmed.fq.gz 88.4397
+MP_T5S4_S3_L001_R1_trimmed.fq.gz 13.0863
+MP_T5S5_S3_L001_R1_trimmed.fq.gz 91.6287
+MP_T5S6_S3_L001_R1_trimmed.fq.gz 95.5227
+MP_T5S7_S3_L001_R1_trimmed.fq.gz 90.5737
+MP_T5S8_S3_L001_R1_trimmed.fq.gz 90.9249
+MP_T5S9_S3_L001_R1_trimmed.fq.gz 93.8393
+MP_T5S9_1_S3_L001_R1_trimmed.fq.gz 90.6131
+MP_T5S9_2_S3_L001_R1_trimmed.fq.gz 94.5932
+MP_T5STiana_S3_L001_R1_trimmed.fq.gz 88.5372
+MP_T5SWessuck_S3_L001_R1_trimmed.fq.gz 48.4173
+MP_T6Blank_S3_L001_R1_trimmed.fq.gz 2.70624
+MP_T6S1_S3_L001_R1_trimmed.fq.gz 86.6527
+MP_T6S10_S4_L001_R1_trimmed.fq.gz 93.3584
+MP_T6S11_S4_L001_R1_trimmed.fq.gz 77.8187
+MP_T6S2_S3_L001_R1_trimmed.fq.gz 42.2839
+MP_T6S2_1_S3_L001_R1_trimmed.fq.gz 78.4838
+MP_T6S2_2_S3_L001_R1_trimmed.fq.gz 64.5503
+MP_T6S3_S3_L001_R1_trimmed.fq.gz 88.3397
+MP_T6S4_S3_L001_R1_trimmed.fq.gz 89.0606
+MP_T6S5_S3_L001_R1_trimmed.fq.gz 73.9868
+MP_T6S6_S3_L001_R1_trimmed.fq.gz 93.4781
+MP_T6S7_S3_L001_R1_trimmed.fq.gz 81.0587
+MP_T6S8_S4_L001_R1_trimmed.fq.gz 85.6576
+MP_T6S9_S4_L001_R1_trimmed.fq.gz 90.5487
+MP_T6S9_1_S4_L001_R1_trimmed.fq.gz 87.7693
+MP_T6S9_2_S4_L001_R1_trimmed.fq.gz 83.3415
+MP_T6STiana_S4_L001_R1_trimmed.fq.gz 94.3427
+MP_T6SWessuck_S4_L001_R1_trimmed.fq.gz 85.6155
+
+Parameters to modify:
+minLen,rm.phix,truncQ,maxEE-primer1,maxEE-primer2,trimRight,trimLeft
+Current settings:
+100,TRUE,2,2,2,75,0
+Please check DADA2 filtering success. Proceed? [y/n/m]
+y
+Continuing!
+
+Learning error, Dereplication, Merge, and ASVs in DADA2...
+Please be patient, may take a while. Messages printed to Rscript log.
+
+
+FINAL DADA2 STATS
+Note: Please check for a failed merge of forward/reverse sequences
+Sample	%Reads Retained
+MP_ABlank_S4_L001 2.9
+MP_AC4_S4_L001 66.3
+MP_AC5_S4_L001 88
+MP_APN_S4_L001 56.8
+MP_AS1_S4_L001 78.5
+MP_AS1_1_S4_L001 54.6
+MP_AS1_2_S4_L001 81.7
+MP_AS3_S4_L001 85.8
+MP_AS6_S4_L001 66
+MP_AS9_S4_L001 75.5
+MP_AT1_S6_L002 71.4
+MP_AT2_S6_L002 65.6
+MP_AT3_S6_L002 86.3
+MP_AT3_1_S6_L002 53.4
+MP_AT3_2_S6_L002 75.8
+MP_AT4_S6_L002 81.5
+MP_AT5_S6_L002 77
+MP_JBlank_S4_L001 1.9
+MP_JC4_S4_L001 74.2
+MP_JC5_S4_L001 74.3
+MP_JPN_S4_L001 74.3
+MP_JS1_S4_L001 71.6
+MP_JS1_1_S4_L001 69.6
+MP_JS1_2_S4_L001 79.2
+MP_JS3_S4_L001 52.7
+MP_JS6_S4_L001 87.8
+MP_JS9_S4_L001 82.9
+MP_JT1_S6_L002 57.2
+MP_JT2_S6_L002 40.7
+MP_JT3_S6_L002 4.1
+MP_JT4_S6_L002 57.2
+MP_JT4_1_S6_L002 67
+MP_JT4_2_S6_L002 32.6
+MP_JT5_S6_L002 50.5
+MP_Positive_BP_S6_L002 1.8
+MP_Positive_GP_S6_L002 2.7
+MP_SBlank_S4_L001 1.8
+MP_SC4_S6_L002 19.9
+MP_SC5_S6_L002 51.9
+MP_SPN_S6_L002 25.5
+MP_SS1_S6_L002 78
+MP_SS1_1_S6_L002 78.5
+MP_SS1_2_S6_L002 69.7
+MP_SS3_S6_L002 77.7
+MP_SS6_S6_L002 72.3
+MP_SS9_S6_L002 89.3
+MP_ST1_S6_L002 48.5
+MP_ST2_S6_L002 3.8
+MP_ST3_S6_L002 65.5
+MP_ST4_S6_L002 21.5
+MP_ST4_1_S6_L002 12.6
+MP_ST4_2_S6_L002 45.1
+MP_ST5_S6_L002 10.7
+MP_T1Blank_S1_L001 1.4
+MP_T1S1_S1_L001 65.9
+MP_T1S10_S1_L001 68.7
+MP_T1S11_S1_L001 71.4
+MP_T1S2_S1_L001 71.1
+MP_T1S3_S1_L001 88.9
+MP_T1S4_S1_L001 79.8
+MP_T1S5_S1_L001 68.9
+MP_T1S6_S1_L001 50.1
+MP_T1S7_S1_L001 81.4
+MP_T1S8_S1_L001 57.7
+MP_T1S9_S1_L001 47.9
+MP_T1STiana_S1_L001 70.5
+MP_T1SWessuck_S1_L001 57.1
+MP_T2Blank_S1_L001 43
+MP_T2S1_S1_L001 69.5
+MP_T2S10_S1_L001 85.3
+MP_T2S11_S1_L001 86.6
+MP_T2S2_S1_L001 81.1
+MP_T2S2_1_S1_L001 79.9
+MP_T2S2_2_S1_L001 58.6
+MP_T2S3_S1_L001 58.7
+MP_T2S4_S1_L001 66.3
+MP_T2S5_S1_L001 88.4
+MP_T2S6_S1_L001 82.4
+MP_T2S7_S1_L001 87
+MP_T2S8_S1_L001 83.1
+MP_T2S9_S1_L001 69.1
+MP_T2S9_1_S1_L001 79.5
+MP_T2S9_2_S1_L001 71.5
+MP_T2STiana_S1_L001 61.5
+MP_T2SWessuck_S1_L001 61.7
+MP_T3Blank_S2_L001 12.5
+MP_T3S1_S2_L001 42.2
+MP_T3S10_S2_L001 78.1
+MP_T3S11_S2_L001 77.3
+MP_T3S2_S2_L001 58.8
+MP_T3S2_1_S2_L001 77
+MP_T3S2_2_S2_L001 63.5
+MP_T3S3_S2_L001 64.9
+MP_T3S4_S2_L001 65
+MP_T3S5_S2_L001 79.7
+MP_T3S6_S2_L001 69.8
+MP_T3S7_S2_L001 73.3
+MP_T3S8_S2_L001 84.8
+MP_T3S9_S2_L001 64.2
+MP_T3S9_1_S2_L001 73.8
+MP_T3S9_2_S2_L001 59.8
+MP_T3STiana_S2_L001 70.3
+MP_T3SWessuck_S2_L001 56.6
+MP_T4Blank_S2_L001 13.3
+MP_T4S1_S2_L001 45.4
+MP_T4S10_S3_L001 90
+MP_T4S11_S3_L001 4.4
+MP_T4S2_S2_L001 38.3
+MP_T4S2_1_S2_L001 79.4
+MP_T4S2_2_S2_L001 83.6
+MP_T4S3_S2_L001 36.6
+MP_T4S4_S2_L001 64.5
+MP_T4S5_S2_L001 84.1
+MP_T4S6_S2_L001 88.5
+MP_T4S7_S2_L001 72.5
+MP_T4S8_S2_L001 46.7
+MP_T4S9_S2_L001 88.8
+MP_T4S9_1_S2_L001 89.2
+MP_T4S9_2_S2_L001 89.7
+MP_T4STiana_S3_L001 63.9
+MP_T4SWessuck_S3_L001 89.6
+MP_T5Blank_S3_L001 94
+MP_T5S1_S3_L001 81.6
+MP_T5S10_S3_L001 89.6
+MP_T5S11_S3_L001 81.9
+MP_T5S2_S3_L001 53.7
+MP_T5S2_1_S3_L001 72
+MP_T5S2_2_S3_L001 88.1
+MP_T5S3_S3_L001 83
+MP_T5S4_S3_L001 12.3
+MP_T5S5_S3_L001 86.6
+MP_T5S6_S3_L001 89.5
+MP_T5S7_S3_L001 84.9
+MP_T5S8_S3_L001 86.4
+MP_T5S9_S3_L001 87
+MP_T5S9_1_S3_L001 84.5
+MP_T5S9_2_S3_L001 88.4
+MP_T5STiana_S3_L001 82.1
+MP_T5SWessuck_S3_L001 45.9
+MP_T6Blank_S3_L001 2
+MP_T6S1_S3_L001 82
+MP_T6S10_S4_L001 87.2
+MP_T6S11_S4_L001 72.9
+MP_T6S2_S3_L001 39.5
+MP_T6S2_1_S3_L001 73.9
+MP_T6S2_2_S3_L001 58.1
+MP_T6S3_S3_L001 83.4
+MP_T6S4_S3_L001 81.9
+MP_T6S5_S3_L001 69.9
+MP_T6S6_S3_L001 87.3
+MP_T6S7_S3_L001 75.7
+MP_T6S8_S4_L001 80.4
+MP_T6S9_S4_L001 84.6
+MP_T6S9_1_S4_L001 83.2
+MP_T6S9_2_S4_L001 79
+MP_T6STiana_S4_L001 88.7
+MP_T6SWessuck_S4_L001 80.7
+
+Do you wish to Proceed? [y/n]
+y
+Continuing!
+
+Running BLASTn: Tue Nov 25 20:07:54 EST 2025
+BLAST Database error: No alias or index file found for nucleotide database [/Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/nt] in search path [/Volumes/easystore/eDNA/shirp-edna::]
+
+
+Reformatting BLAST output: Tue Nov 25 20:07:59 EST 2025
+
+
+Running ASV-2-Taxonomy Script: Tue Nov 25 20:08:01 EST 2025
+cat: results-revamp-2025-Elas02/blast_results/ASV_blastn_nt_formatted.txt: No such file or directory
+20:08:01.631 [ERRO] taxonomy data not found, please download and uncompress ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz, and copy "names.dmp", "nodes.dmp", "delnodes.dmp", and "merged.dmp" to /Users/shinnecockbayrestorationprogram/.taxonkit
+20:08:01.638 [ERRO] taxonomy data not found, please download and uncompress ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz, and copy "names.dmp", "nodes.dmp", "delnodes.dmp", and "merged.dmp" to /Users/shinnecockbayrestorationprogram/.taxonkit
+
+Reformatted taxon strings created. Options:
+Continue without changes [c]
+Manually edit file and replace in same location with identical file structure [m]
+    (Make choice when file is modified and you are ready to proceed)
+Automatically fill gaps in reformatted taxonkit hierarchy [a]
+a
+Reformatting...
+Original reformatted taxonkit out stored at results-revamp-2025-Elas02/ASV2Taxonomy/reformatted_taxonkit_out_ORIGINAL.txt
+Continuing!
+
+
+There is no ../blast_results/ASV_blastn_nt_formatted.txt file!!
+
+cat: results-revamp-2025-Elas02_asvTaxonomyTable.txt: No such file or directory
+cat: results-revamp-2025-Elas02/ASV2Taxonomy/results-revamp-2025-Elas02_unknown_asvids.txt: No such file or directory
+
+
+There is no results-revamp-2025-Elas02/ASV2Taxonomy/results-revamp-2025-Elas02_asvTaxonomyTable.txt file!!
+
+mv: rename results-revamp-2025-Elas02/ASV2Taxonomy/results-revamp-2025-Elas02_allin_KRONA.txt to results-revamp-2025-Elas02/ASV2Taxonomy/results-revamp-2025-Elas02_allin_TaxonomyASVSampleCount_byline.txt: No such file or directory
+mv: rename results-revamp-2025-Elas02/ASV2Taxonomy/MP_*_KRONA.txt to results-revamp-2025-Elas02/ASV2Taxonomy/KRONA_plots/KRONA_inputs/MP_*_KRONA.txt: No such file or directory
+mv: rename results-revamp-2025-Elas02/ASV2Taxonomy/results-revamp-2025-Elas02_wholeKRONA.txt to results-revamp-2025-Elas02/ASV2Taxonomy/KRONA_plots/KRONA_inputs/results-revamp-2025-Elas02_samplesSummedKRONA.txt: No such file or directory
+mv: rename results-revamp-2025-Elas02/ASV2Taxonomy/results-revamp-2025-Elas02_master_krona.html to results-revamp-2025-Elas02/ASV2Taxonomy/KRONA_plots/results-revamp-2025-Elas02_master_krona.html: No such file or directory
+mv: rename results-revamp-2025-Elas02/ASV2Taxonomy/results-revamp-2025-Elas02_wholeKRONA.html to results-revamp-2025-Elas02/ASV2Taxonomy/KRONA_plots/results-revamp-2025-Elas02_samplesSummedKRONA.html: No such file or directory
+Use of uninitialized value $sampleheaders_coll in scalar chomp at /Users/shinnecockbayrestorationprogram/software/REVAMP/assets/stats.pl line 52.
+Use of uninitialized value $sampleheaders_coll in split at /Users/shinnecockbayrestorationprogram/software/REVAMP/assets/stats.pl line 53.
+Use of uninitialized value in string ne at /Users/shinnecockbayrestorationprogram/software/REVAMP/assets/stats.pl line 67.
+
+
+Sample header order does not match between ASV and collapsed ASV file
+
+
+
+NADA results-revamp-2025-Elas02/ASV2Taxonomy/results-revamp-2025-Elas02_barchart_forR.txt file!!
+
+
+
+There is no results-revamp-2025-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_percentabund.tsv file!!
+
+
+
+NADA results-revamp-2025-Elas02/processed_tables/ASVs_counts_controlsRemoved.tsv file!!
+
+
+
+NADA results-revamp-2025-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv file!!
+
+
+
+NADA results-revamp-2025-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_controlsRemoved.tsv file!!
+
+
+
+NADA results-revamp-2025-Elas02/processed_tables/ASVs_counts_controlsRemoved.tsv file!!
+
+
+
+NADA results-revamp-2025-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_controlsRemoved.tsv file!!
+
+
+
+NADA results-revamp-2025-Elas02/processed_tables/ASVs_counts_NOUNKNOWNS_collapsedOnTaxonomy_controlsRemoved.tsv file!!
+
+YOU MADE IT!
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % 
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % 
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % export TAXONKIT_DB=~/.taxonkit
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % revamp.sh -p 01_config_file_Elas02-2025.txt -f 02_figure_config_file_Elas02-2025.txt -s 03_sample_metadata_Elas02-2025.txt  -r raw_data/2025-Elas02 -o results-revamp-2025-Elas02 -t 4
+Config files identical
+Sample metadata files identical
+
+Start of run:
+Tue Nov 25 20:20:18 EST 2025
+
+Invoked script options:
+/Users/shinnecockbayrestorationprogram/software/REVAMP/revamp.sh -p 01_config_file_Elas02-2025.txt -f 02_figure_config_file_Elas02-2025.txt -s 03_sample_metadata_Elas02-2025.txt -r raw_data/2025-Elas02 -o results-revamp-2025-Elas02 -t 4
+
+rm: names.dmp: No such file or directory
+rm: nodes.dmp: No such file or directory
+rm: delnodes.dmp: No such file or directory
+rm: merged.dmp: No such file or directory
+cp: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump/names.dmp: No such file or directory
+cp: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump/nodes.dmp: No such file or directory
+cp: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump/delnodes.dmp: No such file or directory
+cp: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump/merged.dmp: No such file or directory
+Cutadapt from prior run
+DADA2 from prior run
+
+Running BLASTn: Tue Nov 25 20:20:28 EST 2025
+BLAST Database error: No alias or index file found for nucleotide database [/Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/nt] in search path [/Volumes/easystore/eDNA/shirp-edna::]
+
+
+Reformatting BLAST output: Tue Nov 25 20:20:29 EST 2025
+
+
+Running ASV-2-Taxonomy Script: Tue Nov 25 20:20:30 EST 2025
+cat: results-revamp-2025-Elas02/blast_results/ASV_blastn_nt_formatted.txt: No such file or directory
+20:20:30.300 [ERRO] taxonomy data not found, please download and uncompress ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz, and copy "names.dmp", "nodes.dmp", "delnodes.dmp", and "merged.dmp" to /Users/shinnecockbayrestorationprogram/.taxonkit
+20:20:30.323 [ERRO] taxonomy data not found, please download and uncompress ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz, and copy "names.dmp", "nodes.dmp", "delnodes.dmp", and "merged.dmp" to /Users/shinnecockbayrestorationprogram/.taxonkit
+
+Reformatted taxon strings created. Options:
+Continue without changes [c]
+Manually edit file and replace in same location with identical file structure [m]
+    (Make choice when file is modified and you are ready to proceed)
+Automatically fill gaps in reformatted taxonkit hierarchy [a]
+^[
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % Inv/Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump
+ls: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump: No such file or directory
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % 
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % 
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % 
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % 
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % 
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % 
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % 
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % ls /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump/ 
+ls: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb/taxdump/: No such file or directory
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % ls ~/Volumcd /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb
+ls: /Users/shinnecockbayrestorationprogram/Volumcd: No such file or directory
+ls: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb: No such file or directory
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % cd /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb
+cd: no such file or directory: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % cd /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb
+cd: no such file or directory: /Volumes/MyPassportforMac/eDNA-backup/databases/Taberlet-elas02-local-20240612/blastdb
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % cd /Volumes/MyPassportforMac/eDNA-backup/eDNA-databases/Taberlet-elas02-local-20240612/blastdb 
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP blastdb % cd /Volumes/easystore/eDNA/shirp-edna                                                              
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % revamp.sh -p 01_config_file_Elas02-2025.txt -f 02_figure_config_file_Elas02-2025.txt -s 03_sample_metadata_Elas02-2025.txt  -r raw_data/2025-Elas02 -o results-revamp-2025-Elas02 -t 4
+Config files differ between runs, choose a different out directory
+(REVAMPenv) shinnecockbayrestorationprogram@ShiRPs-MBP shirp-edna % revamp.sh -p 01_config_file_Elas02-2025.txt -f 02_figure_config_file_Elas02-2025.txt -s 03_sample_metadata_Elas02-2025.txt  -r raw_data/2025-Elas02 -o results-revamp-2025-Elas02 -t 4
+Config files identical
+Sample metadata files identical
+
+Start of run:
+Tue Nov 25 21:30:57 EST 2025
+
+Invoked script options:
+/Users/shinnecockbayrestorationprogram/software/REVAMP/revamp.sh -p 01_config_file_Elas02-2025.txt -f 02_figure_config_file_Elas02-2025.txt -s 03_sample_metadata_Elas02-2025.txt -r raw_data/2025-Elas02 -o results-revamp-2025-Elas02 -t 4
+
+rm: names.dmp: No such file or directory
+rm: nodes.dmp: No such file or directory
+rm: delnodes.dmp: No such file or directory
+rm: merged.dmp: No such file or directory
+Cutadapt from prior run
+DADA2 from prior run
+
+Running BLASTn: Tue Nov 25 21:31:12 EST 2025
+
+
+Reformatting BLAST output: Tue Nov 25 21:31:24 EST 2025
+
+
+Running ASV-2-Taxonomy Script: Tue Nov 25 21:31:25 EST 2025
+
+Reformatted taxon strings created. Options:
+Continue without changes [c]
+Manually edit file and replace in same location with identical file structure [m]
+    (Make choice when file is modified and you are ready to proceed)
+Automatically fill gaps in reformatted taxonkit hierarchy [a]
+a
+Reformatting...
+Original reformatted taxonkit out stored at results-revamp-2025-Elas02/ASV2Taxonomy/reformatted_taxonkit_out_ORIGINAL.txt
+Continuing!
+Writing results-revamp-2025-Elas02_master_krona.html...
+Writing results-revamp-2025-Elas02_wholeKRONA.html...
+YOU MADE IT!
+```
+
+
+REVAMP still not making figures after Krona plots and maps... Not sure why. It doesn't matter to my own pipeline since I do a lot of curating and own analysis + figures but I would like to figure this out at some point. Could be version issues with R packages since doing this on a new computer
 
