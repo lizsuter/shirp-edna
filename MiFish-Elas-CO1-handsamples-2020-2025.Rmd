@@ -28,6 +28,37 @@ library(pals)
 ```
 
 #  Import and prepare data
+## Stations master data
+Some sample_data files have incorrect entries for lat long, east west, etc. Grab this from the stations metadata db which is manually and frequently updated
+```{r}
+stations_master <- readr::read_csv("../eDNA-databases/stationsmetadata.csv",
+                                  show_col_types = FALSE)
+
+fix_sample_metadata <- function(sample_md, stations_md = stations_master) {
+
+  stations_lu <- bind_rows(
+    stations_md %>%
+      transmute(join_key = as.character(site_altname),
+                sites = as.character(sites),
+                site_altname, lat, long, Station = name, Bayside, Habitat, `Site-type`),
+    stations_md %>%
+      transmute(join_key = as.character(sites),
+                sites = as.character(sites),
+                site_altname, lat, long, Station = name, Bayside, Habitat, `Site-type`)
+  ) %>%
+    distinct(join_key, .keep_all = TRUE)
+
+  sample_md %>%
+    mutate(join_key = as.character(sites)) %>%
+    select(-any_of(c("sites","site_altname","Station","lat","long","Bayside","Habitat","Site-type","Site.type"))) %>%
+    left_join(stations_lu, by = "join_key") %>%
+    select(-join_key) %>%
+    rename(`Site.type` = `Site-type`)
+}
+
+```
+
+
 ## MiFish
 ### 2020 MiFish data
 ```{r}
@@ -42,8 +73,10 @@ asv_taxonomy <- asv_taxonomy %>% select(-ASV)
 asv_taxonomy_mat <- as.matrix(asv_taxonomy)
 
 sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2020-MiFIsh/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadata <- fix_sample_metadata(sample_metadata, stations_master)
 row.names(sample_metadata) <- sample_metadata$Sample
 sample_metadata <- sample_metadata %>% select(-Sample)
+
 
 ASV_mifish_2020 = otu_table(asv_count_mat, taxa_are_rows = TRUE)
 TAX_mifish_2020 = tax_table(asv_taxonomy_mat)
@@ -67,6 +100,7 @@ asv_taxonomy <- asv_taxonomy %>% select(-ASV)
 asv_taxonomy_mat <- as.matrix(asv_taxonomy)
 
 sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2021-MiFIsh/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadata <- fix_sample_metadata(sample_metadata, stations_master)
 row.names(sample_metadata) <- sample_metadata$Sample
 sample_metadata <- sample_metadata %>% select(-Sample)
 
@@ -109,6 +143,8 @@ asv_taxonomy_mat <- as.matrix(asv_taxonomy)
 
 sample_metadataa <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2022-MiFisha/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
 sample_metadatab <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2022-MiFishb/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadataa <- fix_sample_metadata(sample_metadataa, stations_master)
+sample_metadatab <- fix_sample_metadata(sample_metadatab, stations_master)
 
 sample_metadata <- full_join(sample_metadataa, sample_metadatab)
 
@@ -142,6 +178,7 @@ asv_taxonomy <- asv_taxonomy %>% select(-ASV)
 asv_taxonomy_mat <- as.matrix(asv_taxonomy)
 
 sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-MiFIsh/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadata <- fix_sample_metadata(sample_metadata, stations_master)
 row.names(sample_metadata) <- sample_metadata$Sample
 sample_metadata <- sample_metadata %>% select(-Sample)
 
@@ -166,6 +203,7 @@ asv_taxonomy <- asv_taxonomy %>% select(-ASV)
 asv_taxonomy_mat <- as.matrix(asv_taxonomy)
 
 sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-MiFIsh/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadata <- fix_sample_metadata(sample_metadata, stations_master)
 row.names(sample_metadata) <- sample_metadata$Sample
 sample_metadata <- sample_metadata %>% select(-Sample)
 
@@ -190,6 +228,7 @@ asv_taxonomy <- asv_taxonomy %>% select(-ASV)
 asv_taxonomy_mat <- as.matrix(asv_taxonomy)
 
 sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2025-MiFIsh/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadata <- fix_sample_metadata(sample_metadata, stations_master)
 row.names(sample_metadata) <- sample_metadata$Sample
 sample_metadata <- sample_metadata %>% select(-Sample)
 
@@ -217,6 +256,7 @@ asv_taxonomy <- asv_taxonomy %>% select(-ASV)
 asv_taxonomy_mat <- as.matrix(asv_taxonomy)
 
 sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2021-Elas02/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadata <- fix_sample_metadata(sample_metadata, stations_master)
 row.names(sample_metadata) <- sample_metadata$Sample
 sample_metadata <- sample_metadata %>% select(-Sample)
 
@@ -241,6 +281,7 @@ asv_taxonomy <- asv_taxonomy %>% select(-ASV)
 asv_taxonomy_mat <- as.matrix(asv_taxonomy)
 
 sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2023-Elas02/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadata <- fix_sample_metadata(sample_metadata, stations_master)
 row.names(sample_metadata) <- sample_metadata$Sample
 sample_metadata <- sample_metadata %>% select(-Sample)
 
@@ -266,6 +307,7 @@ asv_taxonomy <- asv_taxonomy %>% select(-ASV)
 asv_taxonomy_mat <- as.matrix(asv_taxonomy)
 
 sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-Elas02/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadata <- fix_sample_metadata(sample_metadata, stations_master)
 row.names(sample_metadata) <- sample_metadata$Sample
 sample_metadata <- sample_metadata %>% select(-Sample)
 
@@ -290,6 +332,7 @@ asv_taxonomy <- asv_taxonomy %>% select(-ASV)
 asv_taxonomy_mat <- as.matrix(asv_taxonomy)
 
 sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2025-Elas02/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadata <- fix_sample_metadata(sample_metadata, stations_master)
 row.names(sample_metadata) <- sample_metadata$Sample
 sample_metadata <- sample_metadata %>% select(-Sample)
 
@@ -343,6 +386,10 @@ sample_metadataa <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revam
 sample_metadatab <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1b/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
 sample_metadatac <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2024-CO1c/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
 
+sample_metadataa <- fix_sample_metadata(sample_metadataa, stations_master)
+sample_metadatab <- fix_sample_metadata(sample_metadatab, stations_master)
+sample_metadatac <- fix_sample_metadata(sample_metadatac, stations_master)
+
 sample_metadata_co1 <- full_join(sample_metadataa, sample_metadatab) %>%
   full_join(sample_metadatac)
 
@@ -373,6 +420,7 @@ asv_taxonomy <- asv_taxonomy %>% select(-ASV)
 asv_taxonomy_mat <- as.matrix(asv_taxonomy)
 
 sample_metadata <- read.delim("/Volumes/easystore/eDNA/shirp-edna/results-revamp-2025-CO1/sample_metadata_forR.txt", header=TRUE, stringsAsFactors=TRUE)
+sample_metadata <- fix_sample_metadata(sample_metadata, stations_master)
 row.names(sample_metadata) <- sample_metadata$Sample
 sample_metadata <- sample_metadata %>% select(-Sample)
 
