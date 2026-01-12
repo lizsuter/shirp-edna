@@ -653,4 +653,58 @@ speciesoccurrence_bayside
 ggsave(plot = speciesoccurrence_bayside, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_mifish/speciesoccurrence_bayside.jpg", width = 12, height = 8, units = "in")
 
 
+
+## Bar plots of top species from whole dataset
+# Convert to dataframe
+
+mifish_species_abundance <- data.frame(otu_table(phylo_2025_mifish_glommed)) %>%
+  mutate(ASV = rownames(.))
+
+# Create dataframe of tax info
+
+tax_info_mifish <- as.data.frame(tax_table(phylo_2025_mifish_glommed))
+tax_info_mifish <- tax_info_mifish %>%
+  mutate(ASV = rownames(tax_info_mifish))
+
+# Add back in tax info
+
+mifish_species_abundance <- mifish_species_abundance %>%
+  left_join(tax_info_mifish, by = c("ASV" = "ASV"))
+  
+# Group and sum
+
+mifish_species_abundance <- mifish_species_abundance %>%
+  group_by(Taxon.CommonName) %>%
+  summarise(TotalAbundance = sum(across(where(is.numeric)))) %>%
+  ungroup()
+  
+# Calculate relative abundances across the whole dataset
+
+mifish_species_abundance <- mifish_species_abundance %>%
+  mutate(RelativeAbundance = TotalAbundance / sum(TotalAbundance))
+  
+# Retain only most abundant species
+
+mifish_species_abundance <- mifish_species_abundance %>%
+  arrange(desc(RelativeAbundance)) %>%
+  slice_head(n = 12) # Show top 12 species
+  
+# Plot
+
+mifish_top_species_barplot <- ggplot(mifish_species_abundance, aes(
+    y = RelativeAbundance,
+    fill = Taxon.CommonName)) +
+    geom_bar(aes(x = "Sample"), stat = "identity", color = "black") +
+    labs(x = NULL, y = "Relative Abundance", fill = NULL) +
+    theme_minimal() +
+    scale_fill_manual(values = myColors_Sci_comname) +
+    guides(fill = guide_legend(ncol = 1)) +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+mifish_top_species_barplot
+
+# Save
+
+ggsave(plot = mifish_top_species_barplot, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_mifish/mifish_top_species_barplot.jpg", width = 6, height = 7, units = "in")
+
 # DONE
