@@ -667,6 +667,8 @@ Some of these are very interesting but not the target of the trawl, so remove fo
 
 Zygnemophyceae are green algae, can remove from MiFish
 
+Remove teleost fish from elas02
+
 ```{r}
 ps_mifish_2020 <- subset_taxa(ps_mifish_2020, !Class == 'Aves')
 ps_mifish_2021 <- subset_taxa(ps_mifish_2021, !Class == 'Aves')
@@ -676,10 +678,10 @@ ps_mifish_2024 <- subset_taxa(ps_mifish_2024, !Class == 'Aves')
 ps_mifish_2025 <- subset_taxa(ps_mifish_2025, !Class == 'Aves' & !Class == 'Zygnemophyceae')
 
 
-ps_elas_2021 <- subset_taxa(ps_elas_2021, !Class == 'Aves') # & !Class == 'Actinopteri')
-ps_elas_2023 <- subset_taxa(ps_elas_2023, !Class == 'Aves') # & !Class == 'Actinopteri')
-ps_elas_2024 <- subset_taxa(ps_elas_2024, !Class == 'Aves') # & !Class == 'Actinopteri')
-ps_elas_2025 <- subset_taxa(ps_elas_2025, !Class == 'Aves') # & !Class == 'Actinopteri')
+ps_elas_2021 <- subset_taxa(ps_elas_2021, !Class == 'Aves' & !Class == 'Actinopteri')
+ps_elas_2023 <- subset_taxa(ps_elas_2023, !Class == 'Aves' & !Class == 'Actinopteri')
+ps_elas_2024 <- subset_taxa(ps_elas_2024, !Class == 'Aves' & !Class == 'Actinopteri')
+ps_elas_2025 <- subset_taxa(ps_elas_2025, !Class == 'Aves' & !Class == 'Actinopteri')
 
 
 ps_co1_2024 <- subset_taxa(ps_co1_2024, !Class == 'Aves')
@@ -694,12 +696,17 @@ unique(tax_table(ps_mifish_2021)[, "Class"])
 unique(tax_table(ps_mifish_2022)[, "Class"])
 unique(tax_table(ps_mifish_2023)[, "Class"])
 unique(tax_table(ps_mifish_2024)[, "Class"])
+unique(tax_table(ps_mifish_2025)[, "Class"])
 
 unique(tax_table(ps_elas_2021)[, "Class"])
 unique(tax_table(ps_elas_2023)[, "Class"])
 unique(tax_table(ps_elas_2024)[, "Class"])
+unique(tax_table(ps_elas_2025)[, "Class"])
+
 
 unique(tax_table(ps_co1_2024)[, "Class"])
+unique(tax_table(ps_co1_2025)[, "Class"])
+
 ```
 
 
