@@ -1,0 +1,554 @@
+---
+title: "2025 elas plots"
+output: html_document
+date: "2025-12-04"
+---
+
+## Code is from Liz Suter's notebook (<https://github.com/lizsuter/shirp-edna/blob/main/2024-eDNA-plots.nb.Rmd>) modified for 2025 mifish samples
+
+# Load packages
+
+library(tidyverse) 
+library(phyloseq) 
+library(vegan)
+library(RColorBrewer) 
+library(microbiome) 
+library(metagMisc)
+library(fantaxtic) 
+library(ggrepel) 
+library(paletteer) 
+library(pals)
+library(compositions) 
+library(hms) 
+library(ggvegan)
+
+# Import cleaned up data tables
+
+asv_count_elas <- read.csv("/Volumes/NB_2/filtered_eDNA_data/2025_elas/elas_2025_glommed_asv_table.csv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_count_elas) <- asv_count_elas$X
+asv_count_elas <- asv_count_elas %>% select(-X)
+asv_count_elas_mat <- as.matrix(asv_count_elas)
+
+asv_taxonomy_elas <- read.csv("/Volumes/NB_2/filtered_eDNA_data/2025_elas/elas_2025_glommed_tax_table.csv", header=TRUE, stringsAsFactors=FALSE)
+row.names(asv_taxonomy_elas) <- asv_taxonomy_elas$X1stRepresentative_ASV
+asv_taxonomy_elas <- asv_taxonomy_elas %>% select(-X1stRepresentative_ASV)
+asv_taxonomy_elas_mat <- as.matrix(asv_taxonomy_elas)
+
+sample_metadata_elas <- read.csv("/Volumes/NB_2/filtered_eDNA_data/2025_elas/elas_2025_sample_data.csv", header=TRUE, stringsAsFactors=TRUE)
+row.names(sample_metadata_elas) <- sample_metadata_elas$X
+sample_metadata_elas <- sample_metadata_elas %>% select(-X)
+
+# Change E and W to EAST and WEST
+
+levels(sample_metadata_elas$Bayside)[levels(sample_metadata_elas$Bayside) == "W"] <- "WEST"
+levels(sample_metadata_elas$Bayside)[levels(sample_metadata_elas$Bayside) == "E"] <- "EAST"
+
+ASV_2025_elas = otu_table(asv_count_elas_mat, taxa_are_rows = TRUE)
+TAX_2025_elas = tax_table(asv_taxonomy_elas_mat)
+samples_2025_elas = sample_data(sample_metadata_elas)
+
+phylo_2025_elas <- phyloseq(ASV_2025_elas, TAX_2025_elas, samples_2025_elas)
+
+
+
+
+## Common names
+
+# Import common names database and set color scheme
+
+commonnames <- read_csv(file = "/Volumes/NB_2/filtered_eDNA_data/eDNA_databases/commonnames.csv")
+
+myColors_sciname <- setNames(commonnames$Color, commonnames$Taxon)
+myColors_comname <- setNames(commonnames$Color, commonnames$CommonName)
+myColors_Sci_comname <- setNames(commonnames$Color, commonnames$Taxon.CommonName)
+
+head(myColors_sciname)
+head(myColors_comname)
+head(myColors_Sci_comname)
+
+## Plots
+### Prepare data
+## Glom by Taxon.CommonName, and convert to dataframe
+
+phylo_2025_elas_glommed <- tax_glom(phylo_2025_elas, "Taxon.CommonName")
+elas_df <- subset_samples(phylo_2025_elas_glommed)
+elas_df <- psmelt(elas_df)
+
+# relative abund ps object
+
+phylo_2025_elas_glommed_ra <- tax_glom(phylo_2025_elas, "Taxon.CommonName")
+elas_df_ra <- subset_samples(phylo_2025_elas_glommed_ra) 
+elas_df_ra <- microbiome::transform(elas_df_ra, transform = "compositional") 
+elas_df_ra <- psmelt(elas_df_ra)
+
+# replace zeroes in the table with NA
+
+elas_df[elas_df == 0] <- NA
+elas_df_ra[elas_df_ra == 0] <- NA
+
+# and remove rows with NAs (so they don't appear as small dots in plot)
+
+elas_df <-  filter(elas_df, !is.na(Abundance))
+elas_df_ra <-  filter(elas_df_ra, !is.na(Abundance))
+
+# and view
+
+elas_df
+elas_df_ra
+
+
+
+### Prepare for plot
+#### Remove controls from dataframes
+
+elas_df <- elas_df %>% filter(is.na(controls))
+elas_df_ra <- elas_df_ra %>% filter(is.na(controls))
+
+#### Sort levels
+
+sitelevels <- as.character(sort(as.numeric(unique(c(elas_df$sites)))))
+sitelevels
+
+# put east/west in geographic/sensible order (not alphabetic)
+
+elas_df$Bayside_f= factor(elas_df$Bayside, levels=c('WEST','EAST'))
+elas_df_ra$Bayside_f= factor(elas_df_ra$Bayside, levels=c('WEST','EAST'))
+
+# put months in time/sensible order (not alphabetic)
+
+elas_df$Month_f= factor(elas_df$Month, levels=sort(unique(elas_df$Month)))
+elas_df_ra$Month_f= factor(elas_df_ra$Month, levels=sort(unique(elas_df$Month)))
+
+
+
+
+### Elas02 Bubble Plots
+#### By bayside
+# First average replicates at same sites
+
+elas_df_bayside <- elas_df %>%
+    group_by(sites, Bayside_f, `Taxon.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_bayside
+
+# Plot
+
+bubbleplot_elas_Bayside <- ggplot(elas_df_bayside, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(100,1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 9), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Bayside_f, scales = "free", space = "free", drop= TRUE)
+bubbleplot_elas_Bayside
+
+# Save
+
+ggsave(plot = bubbleplot_elas_Bayside, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_elas/bubbleplot_elas_Bayside.jpg", width = 10, height = 4, units = "in")
+
+
+### By month
+# First average replicates from same month
+
+elas_df_month <- elas_df %>%
+    group_by(sites, Month_f, `Taxon.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_month
+
+# Plot
+
+bubbleplot_elas_Month <- ggplot(elas_df_month, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(), 
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_wrap(~Month_f, drop= TRUE, nrow = 1)  
+bubbleplot_elas_Month
+
+# Save
+
+ggsave(plot = bubbleplot_elas_Month, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_elas/bubbleplot_elas_Month.jpg", width = 16, height = 4, units = "in")
+
+
+
+#### By month, trawl sites only
+### First average replicates from same month
+
+elas_df_month_trawl <- elas_df %>%
+  filter(sites %in% c(1,2,3,4,5,6,7,8,9,10,11,12,13)) %>%
+    group_by(sites, Month_f, `Taxon.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_month_trawl
+
+# Plot
+
+bubbleplot_elas_Month_trawlonly <- ggplot(elas_df_month_trawl, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(), 
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_wrap(~Month_f, drop= TRUE, nrow = 1)  
+bubbleplot_elas_Month_trawlonly
+
+# Save
+
+ggsave(plot = bubbleplot_elas_Month_trawlonly, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_elas/bubbleplot_elas_Month_trawlonly.jpg", width = 11, height = 3, units = "in")
+
+
+#### Plot by othet habitat types:
+### Eelgrass
+# First average replicates from same month
+
+elas_df_month_eelgrass <- elas_df %>%
+  filter(Habitat == "EELGRASS") %>%
+    group_by(sites, Month_f, `Taxon.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_month_eelgrass
+
+# Plot
+
+bubbleplot_elas_Month_eelgrass <- ggplot(elas_df_month_eelgrass, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Month_f, drop = TRUE, scales = "free", space = "free")
+bubbleplot_elas_Month_eelgrass
+
+# Save
+
+ggsave(plot = bubbleplot_elas_Month_eelgrass, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_elas/bubbleplot_elas_Month_eelgrass.jpg", width = 9, height = 2.5, units = "in")
+
+
+## Clam sanctuary
+# First average replicates from same month
+
+elas_df_month_clam <- elas_df %>%
+  filter(Habitat == "CLAM SANCTUARY") %>%
+    group_by(sites, Month_f, `Taxon.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_month_clam
+
+# Plot
+
+bubbleplot_elas_Month_clam <- ggplot(elas_df_month_clam, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Month_f, drop = TRUE, scales = "free", space = "free")
+bubbleplot_elas_Month_clam
+
+# Save
+
+ggsave(plot = bubbleplot_elas_Month_clam, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_elas/bubbleplot_elas_Month_clam.jpg", width = 7, height = 2, units = "in")
+
+
+## Oyster reef
+# First average replicates from same month
+
+elas_df_month_oysterreef <- elas_df %>%
+  filter(Habitat == "OYSTER REEF") %>%
+    group_by(sites, Month_f, `Taxon.CommonName`) %>%
+    dplyr::summarize(Abundance = mean(Abundance))
+elas_df_month_oysterreef
+
+# Plot
+
+bubbleplot_elas_Month_oysterreef <- ggplot(elas_df_month_oysterreef, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
+  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
+  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+  xlab("")+
+  ylab("")+
+  labs(size="Read Abundance", fill = "")+
+  theme_bw() +
+  scale_fill_manual(values = myColors_Sci_comname)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size = 12), 
+        axis.text.y = element_text(size = 10), 
+        legend.position = "bottom") +
+  guides(fill="none") +
+  facet_grid(~Month_f, drop = TRUE, scales = "free", space = "free")
+bubbleplot_elas_Month_oysterreef
+
+# Save
+
+ggsave(plot = bubbleplot_elas_Month_oysterreef, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_elas/bubbleplot_elas_Month_oysterreef.jpg", width = 9, height = 2.5, units = "in")
+
+
+## Tropical site
+# First average replicates from each site
+
+elas_df_month_tropical <- elas_df %>% filter(sites %in% c(48)) %>% group_by(sites, Month_f, `Taxon.CommonName`) %>% dplyr::summarize(Abundance = mean(Abundance)) 
+elas_df_month_tropical
+
+# Plot
+
+bubbleplot_elas_Month_tropical <- ggplot(elas_df_month_tropical, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
+geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) + 
+scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
+xlab("")+ 
+ylab("")+ 
+labs(size="Read Abundance", fill = "")+ 
+theme_bw() +
+scale_fill_manual(values = myColors_Sci_comname)+ 
+theme(axis.title.x=element_blank(), axis.text.x = element_text(angle = 45, hjust = 1, size = 12), axis.text.y = element_text(size = 10), legend.position = "bottom") + 
+guides(fill="none") + 
+facet_grid(~Month_f, drop = TRUE, scales = "free") 
+bubbleplot_elas_Month_tropical
+
+#Save
+
+ggsave(plot = bubbleplot_elas_Month_tropical, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_elas/bubbleplot_elas_Month_tropical.jpg", width = 9, height = 3, units = "in")
+
+
+
+
+### Diversity
+## Species richness by month and habitat types
+# First: define all months and habitats you'd expect
+
+all_months <- unique(c(elas_df$Month))
+all_habitats <- unique(c(elas_df$Habitat))
+
+species_counts_2025_elas <- elas_df %>% group_by(Habitat, Month) %>% summarise(UniqueSpeciesCount = n_distinct(`Taxon.CommonName`), .groups = "drop") %>% complete(Habitat = all_habitats, Month = all_months, fill = list(UniqueSpeciesCount = 0))
+
+# Plot
+
+sp_richnesss_habitat_month_elas_plot <- ggplot(species_counts_2025_elas, aes(x = Month, y = UniqueSpeciesCount, group = Habitat, color = Habitat)) + 
+    geom_line(size = 1, alpha = 0.8) + 
+    geom_point(size = 2, alpha = 0.8) + 
+    scale_x_continuous(breaks = seq(7, 9, by = 1), limits = c(7, 9)) + 
+    scale_y_continuous(breaks = seq(0, 10, by = 5), limits = c(0, 10)) + 
+    labs(x = "Month", y = "Species Richness", title = "2025 Species Richness; Elas") + 
+    theme_minimal() + 
+    theme(axis.title = element_text(size = 12), axis.text = element_text(size = 12), legend.title = element_blank() ) + 
+    scale_color_manual(values = c("thistle", "wheat1", "chartreuse4", "cadetblue1", "darkgrey"))
+sp_richnesss_habitat_month_elas_plot
+
+# Save
+
+ggsave(plot = sp_richnesss_habitat_month_elas_plot, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_elas/sp_richnesss_habitat_month_elas_plot.jpg", width = 5, height = 3, units = "in")
+
+
+### View unique species for each habitat
+
+df1<- elas_df %>% group_by(Habitat) %>% summarise(UniqueSpeciesCount = n_distinct(`Taxon.CommonName`), .groups = "drop") %>% complete(Habitat = all_habitats, fill = list(UniqueSpeciesCount = 0))
+df1
+
+
+#### Plots from expedition analysis (https://github.com/lizsuter/shirp-edna/blob/main/Expedition-eDNA-Ecol-Analysis.Rmd)
+
+
+
+# Load packages
+
+library(tidyverse)
+library(phyloseq)
+library(vegan)
+library(RColorBrewer)
+library(microbiome)
+library(metagMisc)
+library(fantaxtic)
+library(ggrepel)
+library(paletteer)
+library(pals)
+library(compositions)
+library(hms)
+library(ggvegan)
+library(sf)
+library(ggimage)
+library(cowplot)
+library(patchwork)
+library(spOccupancy)
+library(corrplot)
+library(geosphere)
+library(plotly)
+library(glue)
+library(magick)
+library(rredlist)
+library(patchwork)
+library(coda)
+
+
+## Overall richness by site type
+
+species_counts_bayside_elas <- elas_df_bayside %>%
+  group_by(Bayside_f) %>%
+  summarise(UniqueSpeciesCount = n_distinct(`Taxon.CommonName`), .groups = "drop")
+species_counts_bayside_elas
+
+# Plot
+
+species_counts_by_bayside_elas_plot <- 
+ggplot(species_counts_bayside_elas, aes(x = Bayside_f, y = UniqueSpeciesCount)) +
+  geom_bar(stat = "identity", fill = c("cornflowerblue", "coral"), alpha = 0.8) +  
+  labs(x = "", y = "Total Species Richness") +  
+  theme_minimal() 
+species_counts_by_bayside_elas_plot
+
+# Save
+
+ggsave(plot = species_counts_by_bayside_elas_plot, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_elas/species_counts_by_bayside_elas_plot.jpg", width = 2.5, height = 4, units = "in")
+
+
+
+
+### East vs West Species Occurrence
+
+# Create dataframe from phyloseq object
+
+phylo_2025_elas_glommed_df <- psmelt(phylo_2025_elas_glommed)
+
+# filter out controls
+
+phylo_2025_elas_glommed_df <- phylo_2025_elas_glommed_df %>%
+    filter(is.na(controls))
+    
+# filter out abundance=0
+
+phylo_2025_elas_glommed_df <- phylo_2025_elas_glommed_df %>%
+    filter(Abundance > 0)
+    
+# in east vs west
+
+total_samples_EW <- as.data.frame(samples_2025_elas) %>%
+  group_by(Bayside) %>%
+  count(name = "Bayside_sample_total") %>%
+  filter(!Bayside=='Control')
+
+# join sample totals to dataframe so there is a denomenator for the calculation
+
+phylo_2025_elas_glommed_df_2 <- full_join(phylo_2025_elas_glommed_df, total_samples_EW, by = "Bayside")
+
+
+## Calculate site occupancy for each species
+
+species_occurrences_bayside <- phylo_2025_elas_glommed_df_2 %>% group_by(Taxon.CommonName, Bayside) %>% count(name = "Sp_occ_in_bayside")
+
+phylo_2025_elas_glommed_df_2 <- full_join(phylo_2025_elas_glommed_df_2, species_occurrences_bayside, by = c("Bayside"="Bayside","Taxon.CommonName"="Taxon.CommonName"))
+
+
+# Calculate occurrence over sample total
+
+species_occurrences_bayside <- phylo_2025_elas_glommed_df_2 %>%
+  group_by(Taxon.CommonName, Bayside, Bayside_sample_total, Sp_occ_in_bayside) %>%
+  mutate(species_occurrences_in_bayside = Sp_occ_in_bayside/Bayside_sample_total) %>%
+  select(species_occurrences_in_bayside, Taxon.CommonName, Bayside, species_occurrences_in_bayside) %>%
+  distinct()
+species_occurrences_bayside
+
+
+# Plot
+
+speciesoccurrence_bayside <- ggplot(data = species_occurrences_bayside, aes(x = Taxon.CommonName, y = species_occurrences_in_bayside, fill = Bayside))+
+  geom_bar(stat = "identity", position = position_dodge(preserve = "single"), color = "black", linewidth = 0.25)+ 
+  scale_y_continuous(breaks = seq(0, 1.0, by = 0.25), limits = c(0, 1.0))+ 
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        legend.title = element_blank(),
+        text = element_text(size = 14)) +
+  ylab("Species Occurrence")+
+  xlab("")+
+  scale_fill_manual(values = c("coral", "cornflowerblue"))
+speciesoccurrence_bayside
+
+# Save
+
+ggsave(plot = speciesoccurrence_bayside, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_elas/speciesoccurrence_bayside.jpg", width = 9, height = 8, units = "in")
+
+
+
+## Bar plot of top species from whole dataset
+# Convert to dataframe
+
+elas_species_abundance <- data.frame(otu_table(phylo_2025_elas_glommed)) %>%
+  mutate(ASV = rownames(.))
+
+# Create dataframe of tax info
+
+tax_info_elas <- as.data.frame(tax_table(phylo_2025_elas_glommed))
+tax_info_elas <- tax_info_elas %>%
+  mutate(ASV = rownames(tax_info_elas))
+
+# Add back in tax info
+
+elas_species_abundance <- elas_species_abundance %>%
+  left_join(tax_info_elas, by = c("ASV" = "ASV"))
+  
+# Group and sum
+
+elas_species_abundance <- elas_species_abundance %>%
+  group_by(Taxon.CommonName) %>%
+  summarise(TotalAbundance = sum(across(where(is.numeric)))) %>%
+  ungroup()
+  
+# Calculate relative abundances across the whole dataset
+
+elas_species_abundance <- elas_species_abundance %>%
+  mutate(RelativeAbundance = TotalAbundance / sum(TotalAbundance))
+  
+# Retain only most abundant species
+
+elas_species_abundance <- elas_species_abundance %>%
+  arrange(desc(RelativeAbundance)) %>%
+  slice_head(n = 2) # Show top 2 species
+  
+# Plot
+
+elas_top_species_barplot <- ggplot(elas_species_abundance, aes(
+    y = RelativeAbundance,
+    fill = Taxon.CommonName)) +
+    geom_bar(aes(x = "Sample"), stat = "identity", color = "black") +
+    labs(x = NULL, y = "Relative Abundance", fill = NULL) +
+    theme_minimal() +
+    scale_fill_manual(values = myColors_Sci_comname) +
+    guides(fill = guide_legend(ncol = 1)) +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+elas_top_species_barplot
+
+# Save
+
+ggsave(plot = elas_top_species_barplot, filename = "/Volumes/NB_2/filtered_eDNA_data/Figures/2025_elas/elas_top_species_barplot.jpg", width = 6, height = 7, units = "in")
+
+# DONE
