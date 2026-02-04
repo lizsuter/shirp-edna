@@ -3,7 +3,7 @@ title: "Data Clean up - all eDNA Hand Samples (MiFish, Elas02, mlCO1): 2020-2025
 output: html_notebook
 ---
 
-Updated 1/6/2025 to include 2025 data and to update min read abundance filtering.
+Last updated 1/29/2026 
 
 
 <br/>
@@ -553,6 +553,15 @@ unique(tax_table(ps_co1_2024)[, "Kingdom"])
 unique(tax_table(ps_co1_2025)[, "Kingdom"])
 ```
 
+## Retain a total CO1 dataset
+Below I am cleaning up CO1 to match it directly to trawl dataset (and naming it `_fortrawlcomparisononly`) but first retain. a full CO1 dataset with phytoplankton, all arthropods, echinoderms, etc for other analyses (invasive species, HABs, for example)...
+
+```{r}
+ps_co1_2024_total <- ps_co1_2024
+ps_co1_2025_total <- ps_co1_2025
+
+```
+
 
 ## Remove non-marine mammals
 check unique classes
@@ -796,10 +805,12 @@ unique(tax_table(ps_co1_2025)[, "Order"])
 
 
 
-## Add in Common Names
+# Add in Common Names
 Working with common names from lab group's trawl database,
 https://docs.google.com/spreadsheets/d/172eRb2JrIJvZHab2wK-DBpMfa1fjE4lp2AownH9Y6AY/edit?gid=0#gid=0
 and my own database of common names (matched to scientific names and with speficified color keys)
+
+Start working with both CO1 datasets again (trawl only and total)
 
 Import
 ```{r}
@@ -917,6 +928,14 @@ row.names(taxonomy_co1_2024) <- taxonomy_co1_2024$ASV
 taxonomy_co1_2024 <- taxonomy_co1_2024 %>% select(-ASV)
 tax_table(ps_co1_2024) <- as.matrix(taxonomy_co1_2024)
 
+taxonomy_co1_2024_total <- as.data.frame(tax_table(ps_co1_2024_total)) %>%
+  rownames_to_column("ASV") %>%
+  left_join(commonnames, by = c("Species" = "Taxon"))
+row.names(taxonomy_co1_2024_total) <- taxonomy_co1_2024_total$ASV
+taxonomy_co1_2024_total <- taxonomy_co1_2024_total %>% select(-ASV)
+tax_table(ps_co1_2024_total) <- as.matrix(taxonomy_co1_2024_total)
+
+
 #2025
 taxonomy_co1_2025 <- as.data.frame(tax_table(ps_co1_2025)) %>%
   rownames_to_column("ASV") %>%
@@ -925,6 +944,12 @@ row.names(taxonomy_co1_2025) <- taxonomy_co1_2025$ASV
 taxonomy_co1_2025 <- taxonomy_co1_2025 %>% select(-ASV)
 tax_table(ps_co1_2025) <- as.matrix(taxonomy_co1_2025)
 
+taxonomy_co1_2025_total <- as.data.frame(tax_table(ps_co1_2025_total)) %>%
+  rownames_to_column("ASV") %>%
+  left_join(commonnames, by = c("Species" = "Taxon"))
+row.names(taxonomy_co1_2025_total) <- taxonomy_co1_2025_total$ASV
+taxonomy_co1_2025_total <- taxonomy_co1_2025_total %>% select(-ASV)
+tax_table(ps_co1_2025_total) <- as.matrix(taxonomy_co1_2025_total)
 
 ```
 
@@ -948,25 +973,29 @@ as.data.frame(tax_table(ps_elas_2025)) %>% rownames_to_column("ASV") %>% filter(
 
 as.data.frame(tax_table(ps_co1_2024)) %>% rownames_to_column("ASV") %>% filter(is.na(CommonName))
 as.data.frame(tax_table(ps_co1_2025)) %>% rownames_to_column("ASV") %>% filter(is.na(CommonName))
+
+as.data.frame(tax_table(ps_co1_2024_total)) %>% rownames_to_column("ASV") %>% filter(is.na(CommonName))
+as.data.frame(tax_table(ps_co1_2025_total)) %>% rownames_to_column("ASV") %>% filter(is.na(CommonName))
+
 ```
 
 
-`missingtaxaincommonnamedb` is a list of species that are missing from the common names database- update db as needed
+
+a list of species that are missing from the common names database- update db as needed
 ```{r}
-missingtaxaincommonnamedb <- as.data.frame(tax_table(ps_co1_2024)) %>% rownames_to_column("ASV") %>% filter(is.na(CommonName)) %>% select(Species) %>% unique()
-
-missingtaxaincommonnamedb
+as.data.frame(tax_table(ps_co1_2024_total)) %>% rownames_to_column("ASV") %>% filter(is.na(CommonName)) %>% select(Species) %>% unique()
+as.data.frame(tax_table(ps_co1_2025_total)) %>% rownames_to_column("ASV") %>% filter(is.na(CommonName)) %>% select(Species) %>% unique()
 ```
 
+I will never be able to do all CO1 species but added in common names for some important ones, like Aureococcus anophagefferens and other HABs and invasives. Continue to supplement each year.
 
 
-
-## Remove Low Abundant ASVs
+# Remove Low Abundant ASVs
 For MiFish, Natalia reviewed each sequencing run to determine unique cutoff based on crossover from positive controls. Each year has a different threshold for ASV removal
 
 For Elas02, this was determined in 2021 with positive control tanks of non native species. Use 500 read threshold for all runs.
 
-For CO1, use 150 based on guinea pig bleedover in samples (max 132 reads). There is more in blanks but that is due to low abundance of everything else in blanks
+For CO1, use 0 for now. There is some guinea pig bleedover in 2025 samples (max 132 reads) but real/ rare species are very low abundance, like Blue crab, Crangon species, others...I want to see these detections for now.
 
 Based on some analysis in the `Expedition-eDNA-plots.Rmd` notebook, remove ASVs that have <500 reads in a sample
 ```{r}
@@ -1040,26 +1069,29 @@ ps_elas_2025 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
   minabund = 500,
   relabund = FALSE)
 data.frame(otu_table(ps_elas_2025)) # and after
-
-
-# CO1
-data.frame(otu_table(ps_co1_2024)) # compare before
-ps_co1_2024 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
-  ps_co1_2024,
-  minabund = 150,
-  relabund = FALSE)
-data.frame(otu_table(ps_co1_2024)) # and after
-
-data.frame(otu_table(ps_co1_2025)) # compare before
-ps_co1_2025 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
-  ps_co1_2025,
-  minabund = 150,
-  relabund = FALSE)
-data.frame(otu_table(ps_co1_2025)) # and after
 ```
 
 
-## Remove Low Effort Samples
+```{r}
+# # CO1
+# data.frame(otu_table(ps_co1_2024)) # compare before
+# ps_co1_2024 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+#   ps_co1_2024,
+#   minabund = 150,
+#   relabund = FALSE)
+# data.frame(otu_table(ps_co1_2024)) # and after
+# 
+# data.frame(otu_table(ps_co1_2025)) # compare before
+# ps_co1_2025 <- metagMisc::phyloseq_filter_sample_wise_abund_trim(
+#   ps_co1_2025,
+#   minabund = 150,
+#   relabund = FALSE)
+# data.frame(otu_table(ps_co1_2025)) # and after
+
+```
+
+
+# Remove Low Effort Samples
 
 Plot bar plots of total sequence reads across all samples
 ```{r}
@@ -1079,9 +1111,12 @@ plot_bar(ps_elas_2025)
 plot_bar(ps_co1_2024)
 plot_bar(ps_co1_2025)
 
+plot_bar(ps_co1_2024_total)
+plot_bar(ps_co1_2025_total)
+
 ```
 
-Cut out any sample with <25,000 reads from all libraries
+Cut out any sample with <10,000 reads from all libraries
 
 
 ```{r}
@@ -1105,7 +1140,8 @@ ps_co1_2024 <- prune_samples(sample_sums(ps_co1_2024)>=100,ps_co1_2024)
 ps_co1_2025 <- prune_samples(sample_sums(ps_co1_2025)>=100,ps_co1_2025)
 
 
-
+ps_co1_2024_total <- prune_samples(sample_sums(ps_co1_2024_total)>=100,ps_co1_2024_total)
+ps_co1_2025_total <- prune_samples(sample_sums(ps_co1_2025_total)>=100,ps_co1_2025_total)
 ```
 
 
@@ -1129,11 +1165,13 @@ plot_bar(ps_elas_2025)
 plot_bar(ps_co1_2024)
 plot_bar(ps_co1_2025)
 
+plot_bar(ps_co1_2024_total)
+plot_bar(ps_co1_2025_total)
 
 ```
 
 
-## Agglomerate 
+# Agglomerate 
 Function `tax_glom` will group by Species or other rank. But the function expects full taxonomy, Kingdonm --> Species and I am glomming by "Taxon.CommonName" which is not even an actual rank. This ends up keeping "Anchovies" separate, for example, even though then have the same Taxon.CommonName field bc they have dif genus/ species. Removing all of the rest of the ranks won't work because the dimensions of the tax_table are too small and it gets treated as a vector instead of matrix. Retain only one rank, Kingdom, so the matrix has enough dimensions
 
 ```{r}
@@ -1153,7 +1191,8 @@ ps_elas_2025_glommed <- ps_elas_2025
 ps_co1_2024_glommed <- ps_co1_2024
 ps_co1_2025_glommed <- ps_co1_2025
 
-
+ps_co1_2024_total_glommed <- ps_co1_2024_total
+ps_co1_2025_total_glommed <- ps_co1_2025_total
 
 
 
@@ -1174,6 +1213,8 @@ tax_table(ps_elas_2025_glommed) <- tax_table(ps_elas_2025_glommed)[,c(1, 9)]
 tax_table(ps_co1_2024_glommed) <- tax_table(ps_co1_2024_glommed)[,c(1, 9)]
 tax_table(ps_co1_2025_glommed) <- tax_table(ps_co1_2025_glommed)[,c(1, 9)]
 
+tax_table(ps_co1_2024_total_glommed) <- tax_table(ps_co1_2024_total_glommed)[,c(1, 7)]
+tax_table(ps_co1_2025_total_glommed) <- tax_table(ps_co1_2025_total_glommed)[,c(1, 7)]
 
 ```
 
@@ -1196,6 +1237,9 @@ ps_elas_2025_glommed <- tax_glom(ps_elas_2025_glommed, "Taxon.CommonName")
 
 ps_co1_2024_glommed <- tax_glom(ps_co1_2024_glommed, "Taxon.CommonName")
 ps_co1_2025_glommed <- tax_glom(ps_co1_2025_glommed, "Taxon.CommonName")
+
+ps_co1_2024_total_glommed <- tax_glom(ps_co1_2024_total_glommed, "Species")
+ps_co1_2025_total_glommed <- tax_glom(ps_co1_2025_total_glommed, "Species")
 
 ```
 
@@ -1254,10 +1298,19 @@ data.frame(tax_table(ps_co1_2025)) # to compare
 data.frame(tax_table(ps_co1_2025_glommed))
 data.frame(otu_table(ps_co1_2025_glommed))
 
+
+data.frame(tax_table(ps_co1_2024_total)) # to compare
+data.frame(tax_table(ps_co1_2024_total_glommed))
+data.frame(otu_table(ps_co1_2024_total_glommed))
+
+data.frame(tax_table(ps_co1_2025_total)) # to compare
+data.frame(tax_table(ps_co1_2025_total_glommed))
+data.frame(otu_table(ps_co1_2025_total_glommed))
+
 ```
 
 
-## krona plots
+# krona plots
 
 First need to remove weird taxonomy columns- make secondary, non-glommed ps object
 ```{r}
@@ -1401,7 +1454,7 @@ co1_2024_krona <- plot_krona(ps_co1_2024_2)
 co1_2025_krona <- plot_krona(ps_co1_2025_2) 
 
 
-## Export tables
+# Export tables
 Every year has 5 tables:
 1) ASV table
 2) Taxonomy table (corresponds to ASVs)
@@ -1621,4 +1674,48 @@ co1_2025_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_co1_202
 write.csv(co1_2025_glommed_tax_table,"filtered_data/co1_2025_glommed_tax_table_fortrawlcomparisononly.csv", row.names = FALSE)
 
 ```
+
+
+
+
+put "fortrawlcomparisononly" in file name because removed a lot of the organisms that will be interesting for other purposes
+```{r}
+
+#2024
+co1_2024_asv_table <- data.frame(otu_table(ps_co1_2024_total))
+write.csv(co1_2024_asv_table,"filtered_data/co1_2024_asv_table_total.csv", row.names = TRUE)
+
+co1_2024_tax_table <- rownames_to_column(data.frame(tax_table(ps_co1_2024_total)), var = "ASV")
+write.csv(co1_2024_tax_table,"filtered_data/co1_2024_tax_table_total.csv", row.names = FALSE)
+
+co1_2024_sample_data <- data.frame(sample_data(ps_co1_2024_total))
+write.csv(co1_2024_sample_data,"filtered_data/co1_2024_sample_data_total.csv", row.names = TRUE)
+
+co1_2024_glommed_asv_table <- data.frame(otu_table(ps_co1_2024_total_glommed))
+write.csv(co1_2024_glommed_asv_table,"filtered_data/co1_2024_glommed_asv_table_total.csv", row.names = TRUE)
+
+co1_2024_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_co1_2024_total_glommed)), var = "1stRepresentative_ASV")
+write.csv(co1_2024_glommed_tax_table,"filtered_data/co1_2024_glommed_tax_table_total.csv", row.names = FALSE)
+
+
+#2025
+co1_2025_asv_table <- data.frame(otu_table(ps_co1_2025_total))
+write.csv(co1_2025_asv_table,"filtered_data/co1_2025_asv_table_total.csv", row.names = TRUE)
+
+co1_2025_tax_table <- rownames_to_column(data.frame(tax_table(ps_co1_2025_total)), var = "ASV")
+write.csv(co1_2025_tax_table,"filtered_data/co1_2025_tax_table_total.csv", row.names = FALSE)
+
+co1_2025_sample_data <- data.frame(sample_data(ps_co1_2025_total))
+write.csv(co1_2025_sample_data,"filtered_data/co1_2025_sample_data_total.csv", row.names = TRUE)
+
+co1_2025_glommed_asv_table <- data.frame(otu_table(ps_co1_2025_total_glommed))
+write.csv(co1_2025_glommed_asv_table,"filtered_data/co1_2025_glommed_asv_table_total.csv", row.names = TRUE)
+
+co1_2025_glommed_tax_table <- rownames_to_column(data.frame(tax_table(ps_co1_2025_total_glommed)), var = "1stRepresentative_ASV")
+write.csv(co1_2025_glommed_tax_table,"filtered_data/co1_2025_glommed_tax_table_total.csv", row.names = FALSE)
+
+```
+
+
+
 

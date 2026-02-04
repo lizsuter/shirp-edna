@@ -24,7 +24,10 @@ library(paletteer)
 library(pals)
 library(compositions)
 library(hms)
+library(vegan)
 library(ggvegan)
+library(sf)
+library(patchwork)
 ```
 
 # Global vars
@@ -149,8 +152,8 @@ phylo_elas <- setNames(
 )
 ```
 
-## CO1
-Keep in mind this is filtered to only those species expected to be caughy by trawl (eg. pelagic/ swimming species plus all fish. removed many planktonic and benthic invertebrates)
+## CO1 - trawl only
+Keep in mind this is filtered to only those species expected to be caught by trawl (eg. pelagic/ swimming species plus all fish. removed many planktonic and benthic invertebrates)
 ```{r}
 make_phyloseq_co1 <- function(year, data_dir = "filtered_data") {
 
@@ -158,7 +161,7 @@ make_phyloseq_co1 <- function(year, data_dir = "filtered_data") {
   tax_path  <- file.path(data_dir, sprintf("co1_%d_glommed_tax_table_fortrawlcomparisononly.csv", year))
   samp_path <- file.path(data_dir, sprintf("co1_%d_sample_data_fortrawlcomparisononly.csv", year))
 
-  # ASV table (robust to X / ...1 / blank header)
+  # ASV table
   asv_mat <- read_matrix_first_col_as_rownames(asv_path)
 
   # Tax table (prefer REVAMP column name; otherwise fall back to first col)
@@ -173,7 +176,7 @@ make_phyloseq_co1 <- function(year, data_dir = "filtered_data") {
   }
   tax_mat <- as.matrix(tax_df)
 
-  # Sample metadata (robust)
+  # Sample metadata
   samp_df <- read_sampledata_first_col_as_rownames(samp_path)
 
   phyloseq(
@@ -185,6 +188,32 @@ make_phyloseq_co1 <- function(year, data_dir = "filtered_data") {
 
 ```
 
+Add Taxon.CommonName rank if missing (for CO1_TOTAL, use Species as display label)
+```{r}
+add_taxon_commonname_from_species <- function(ps) {
+  if (is.null(ps) || ntaxa(ps) == 0) return(ps)
+
+  tt <- as.data.frame(tax_table(ps), stringsAsFactors = FALSE)
+
+  # If Taxon.CommonName already exists, do nothing
+  if ("Taxon.CommonName" %in% colnames(tt)) return(ps)
+
+  # If Species exists, copy it over
+  if ("Species" %in% colnames(tt)) {
+    tt$`Taxon.CommonName` <- as.character(tt$Species)
+    tax_table(ps) <- tax_table(as.matrix(tt))
+    return(ps)
+  }
+
+  # Make something usable so plotting doesn't break
+  tt$`Taxon.CommonName` <- rownames(tt)
+  tax_table(ps) <- tax_table(as.matrix(tt))
+  ps
+}
+
+```
+
+
 Run
 ```{r}
 phylo_co1 <- setNames(
@@ -194,14 +223,211 @@ phylo_co1 <- setNames(
 ```
 
 
+
+## CO1 - everything else
+
+```{r}
+make_phyloseq_co1_total <- function(year, data_dir = "filtered_data") {
+
+  asv_path  <- file.path(data_dir, sprintf("co1_%d_glommed_asv_table_total.csv", year))
+  tax_path  <- file.path(data_dir, sprintf("co1_%d_glommed_tax_table_total.csv", year))
+  samp_path <- file.path(data_dir, sprintf("co1_%d_sample_data_total.csv", year))
+
+  # ASV table
+  asv_mat <- read_matrix_first_col_as_rownames(asv_path)
+
+  # Tax table (prefer REVAMP column name; otherwise fall back to first col)
+  tax_df <- read.csv(tax_path, header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+
+  if ("X1stRepresentative_ASV" %in% names(tax_df)) {
+    rownames(tax_df) <- tax_df$X1stRepresentative_ASV
+    tax_df <- tax_df[, setdiff(names(tax_df), "X1stRepresentative_ASV"), drop = FALSE]
+  } else {
+    rn <- tax_df[[1]]
+    tax_df <- tax_df[, -1, drop = FALSE]
+    rownames(tax_df) <- rn
+  }
+
+    # ---- FORCE a usable label column for plotting/pruning ----
+  # For TOTAL COI, many taxa lack CommonName; use Species as fallback.
+  # Create/overwrite Taxon.CommonName so the rest of your script can stay unchanged.
+  if (!"Taxon.CommonName" %in% names(tax_df)) {
+    tax_df$`Taxon.CommonName` <- NA_character_
+  }
+
+  # Start with whatever is already there
+  lab <- as.character(tax_df$`Taxon.CommonName`)
+  lab[lab == ""] <- NA_character_
+
+  # Fill from CommonName if it exists
+  if ("CommonName" %in% names(tax_df)) {
+    cn <- as.character(tax_df$CommonName)
+    cn[cn == ""] <- NA_character_
+    lab[is.na(lab) & !is.na(cn)] <- cn[is.na(lab) & !is.na(cn)]
+  }
+
+  # Fill from Species if it exists
+  if ("Species" %in% names(tax_df)) {
+    sp <- as.character(tax_df$Species)
+    sp[sp == ""] <- NA_character_
+    lab[is.na(lab) & !is.na(sp)] <- sp[is.na(lab) & !is.na(sp)]
+  }
+
+  tax_df$`Taxon.CommonName` <- lab
+
+
+  tax_mat <- as.matrix(tax_df)
+
+  # Sample metadata
+  samp_df <- read_sampledata_first_col_as_rownames(samp_path)
+
+  phyloseq(
+    otu_table(asv_mat, taxa_are_rows = TRUE),
+    tax_table(tax_mat),
+    sample_data(samp_df)
+  )
+}
+
+
+# CO1_TOTAL phyloseq list (same years vector unless you change it)
+phylo_co1_total <- setNames(
+  lapply(co1_years, make_phyloseq_co1_total),
+  as.character(co1_years)
+)
+
+# helper: prune phyloseq to a set of Taxon.CommonName values (robust even if some missing)
+# IMPORTANT: returns NULL if the prune would leave 0 taxa (phyloseq can't hold 0-dim otu_table)
+prune_ps_to_taxon_commonname <- function(ps, taxa_keep, tax_rank = "Taxon.CommonName") {
+  if (is.null(ps)) return(NULL)
+  if (ntaxa(ps) == 0 || nsamples(ps) == 0) return(ps)
+
+  tt <- as.data.frame(tax_table(ps))
+  if (!tax_rank %in% names(tt)) return(ps)
+
+  taxa_keep <- unique(as.character(taxa_keep))
+  taxa_keep <- taxa_keep[!is.na(taxa_keep) & taxa_keep != ""]
+
+  keep_taxa_ids <- rownames(tt)[as.character(tt[[tax_rank]]) %in% taxa_keep]
+  keep_taxa_ids <- keep_taxa_ids[!is.na(keep_taxa_ids)]
+
+  if (length(keep_taxa_ids) == 0) {
+    return(NULL)  # <- avoids invalid 0-dimension otu_table
+  }
+
+  prune_taxa(keep_taxa_ids, ps)
+}
+
+prune_ps_to_species <- function(ps, species_keep, tax_rank = "Species") {
+  if (is.null(ps)) return(NULL)
+  if (ntaxa(ps) == 0 || nsamples(ps) == 0) return(ps)
+
+  tt <- as.data.frame(tax_table(ps))
+  if (!tax_rank %in% names(tt)) return(ps)
+
+  species_keep <- unique(as.character(species_keep))
+  species_keep <- species_keep[!is.na(species_keep) & species_keep != ""]
+
+  keep_taxa_ids <- rownames(tt)[as.character(tt[[tax_rank]]) %in% species_keep]
+  keep_taxa_ids <- keep_taxa_ids[!is.na(keep_taxa_ids)]
+
+  if (length(keep_taxa_ids) == 0) return(NULL)
+
+  prune_taxa(keep_taxa_ids, ps)
+}
+
+
+
+
+```
+
+
+
 ## Common names
 Import common names database to set consistent color scheme
 ```{r}
 commonnames <- read_csv(file = "../eDNA-databases/commonnames.csv")
 
+# Species -> "Taxon.CommonName" display label (e.g. "Species (Common)")
+display_lookup <- setNames(commonnames$Taxon.CommonName, commonnames$Taxon)
+
+make_taxon_display <- function(taxon_commonname, species, commonname) {
+  tc <- as.character(taxon_commonname); tc[tc == ""] <- NA_character_
+  sp <- as.character(species);          sp[sp == ""] <- NA_character_
+  cn <- as.character(commonname);       cn[cn == ""] <- NA_character_
+
+  # Prefer the Taxon.CommonName label when it exists,
+  # else fall back to CommonName, else Species
+  dplyr::coalesce(tc, cn, sp)
+}
+
+
 myColors_sciname <- setNames(commonnames$Color, commonnames$Taxon)
 myColors_comname <- setNames(commonnames$Color, commonnames$CommonName)
 myColors_Sci_comname <- setNames(commonnames$Color, commonnames$Taxon.CommonName)
+
+# helper
+get_db_color <- function(x, default = "grey60") {
+  if (length(x) == 0) return(default)
+
+  x <- as.character(x)
+  x[x == ""] <- NA_character_
+
+  out <- rep(default, length(x))
+
+  # prefer Taxon.CommonName mapping (already includes "Sci (Common)" style 
+  hit1 <- myColors_Sci_comname[x]
+  ok1  <- !is.na(hit1)
+  out[ok1] <- unname(hit1[ok1])
+
+  # then scientific name
+  need <- !ok1 & !is.na(x)
+  if (any(need)) {
+    hit2 <- myColors_sciname[x[need]]
+    ok2  <- !is.na(hit2)
+    out[need][ok2] <- unname(hit2[ok2])
+  }
+
+  # then common name
+  need2 <- (out == default) & !is.na(x)
+  if (any(need2)) {
+    hit3 <- myColors_comname[x[need2]]
+    ok3  <- !is.na(hit3)
+    out[need2][ok3] <- unname(hit3[ok3])
+  }
+
+  out
+}
+
+make_fill_values <- function(labels, default = "grey60") {
+  labels <- unique(as.character(labels))
+  labels <- labels[!is.na(labels) & labels != ""]
+  setNames(get_db_color(labels, default = default), labels)
+}
+
+make_taxon_display <- function(tc = NULL, sp = NULL, cn = NULL) {
+  # tc = Taxon.CommonName (may already be "Sci (Common)")
+  # sp = Species (scientific)
+  # cn = CommonName (common)
+  tc <- as.character(tc); sp <- as.character(sp); cn <- as.character(cn)
+
+  tc[tc == ""] <- NA_character_
+  sp[sp == ""] <- NA_character_
+  cn[cn == ""] <- NA_character_
+
+  out <- tc
+
+  # If tc already looks like "Sci (Common)", keep it
+  has_combo <- !is.na(out) & grepl("\\(.+\\)", out)
+
+  # Otherwise, if we have Species + CommonName, build "Species (CommonName)"
+  need_combo <- !has_combo & !is.na(sp) & !is.na(cn)
+  out[need_combo] <- paste0(sp[need_combo], " (", cn[need_combo], ")")
+
+  # Fallbacks
+  out[is.na(out) | out == ""] <- dplyr::coalesce(sp, cn, out)
+
+  out
+}
 
 
 head(myColors_sciname)
@@ -253,11 +479,15 @@ make_posctl_objects <- function(ps, control_col = "controls", control_value = "p
 
 Function to plot pos control plots
 ```{r}
-make_posctl_barplot <- function(ps_obj, ylab_txt, colors) {
+make_posctl_barplot <- function(ps_obj, ylab_txt) {
+
+  d <- psmelt(ps_obj)
+  fill_vals <- make_fill_values(d$Taxon.CommonName)
+
   plot_bar(ps_obj, fill = "Taxon.CommonName", x = "replicates") +
     scale_y_continuous(name = ylab_txt) +
     theme_minimal() +
-    scale_fill_manual(values = colors) +
+    scale_fill_manual(values = fill_vals) +
     guides(fill = guide_legend(nrow = 7, byrow = TRUE)) +
     theme(
       legend.position   = "bottom",
@@ -301,8 +531,8 @@ for (yr_chr in names(mifish_posctl)) {
 
   yr <- as.integer(yr_chr)
 
-  p_reads <- make_posctl_barplot(ps_pos, "Read Abundance", myColors_Sci_comname)
-  p_ra    <- make_posctl_barplot(ps_pos_ra, "Relative Abundance", myColors_Sci_comname)
+  p_reads <- make_posctl_barplot(ps_pos, "Read Abundance")
+  p_ra    <- make_posctl_barplot(ps_pos_ra, "Relative Abundance")
 
 
   mifish_posctl_plots[[yr_chr]] <- list(reads = p_reads, ra = p_ra)
@@ -355,8 +585,8 @@ for (yr_chr in names(elas_posctl)) {
 
   yr <- as.integer(yr_chr)
 
-  p_reads <- make_posctl_barplot(ps_pos, "Read Abundance", myColors_Sci_comname)
-  p_ra    <- make_posctl_barplot(ps_pos_ra, "Relative Abundance", myColors_Sci_comname)
+  p_reads <- make_posctl_barplot(ps_pos, "Read Abundance")
+  p_ra    <- make_posctl_barplot(ps_pos_ra, "Relative Abundance")
 
 
   elas_posctl_plots[[yr_chr]] <- list(reads = p_reads, ra = p_ra)
@@ -402,8 +632,8 @@ for (yr_chr in names(co1_posctl)) {
 
   yr <- as.integer(yr_chr)
 
-  p_reads <- make_posctl_barplot(ps_pos, "Read Abundance", myColors_Sci_comname)
-  p_ra    <- make_posctl_barplot(ps_pos_ra, "Relative Abundance", myColors_Sci_comname)
+  p_reads <- make_posctl_barplot(ps_pos, "Read Abundance")
+  p_ra    <- make_posctl_barplot(ps_pos_ra, "Relative Abundance")
 
   co1_posctl_plots[[yr_chr]] <- list(reads = p_reads, ra = p_ra)
 
@@ -418,20 +648,83 @@ for (yr_chr in names(co1_posctl)) {
 
 ```
 
+```{r}
+co1_total_posctl <- setNames(vector("list", length(co1_years)), as.character(co1_years))
+
+for (yr in co1_years) {
+  ps <- phylo_co1_total[[as.character(yr)]]
+  if (is.null(ps)) next
+  co1_total_posctl[[as.character(yr)]] <- make_posctl_objects(ps)
+}
+
+co1_total_posctl_plots <- list()
+
+for (yr_chr in names(co1_total_posctl)) {
+  ps_pos    <- co1_total_posctl[[yr_chr]]$ps_pos
+  ps_pos_ra <- co1_total_posctl[[yr_chr]]$ps_pos_ra
+
+  if (is.null(ps_pos) || is.null(ps_pos_ra) || nsamples(ps_pos) == 0) next
+
+  yr <- as.integer(yr_chr)
+
+  p_reads <- make_posctl_barplot(ps_pos, "Read Abundance")
+  p_ra    <- make_posctl_barplot(ps_pos_ra, "Relative Abundance")
+
+  co1_total_posctl_plots[[yr_chr]] <- list(reads = p_reads, ra = p_ra)
+
+  ggsave(plot = p_reads,
+         filename = file.path(out_dir, sprintf("co1_total_posctl_barplot_%d.jpg", yr)),
+         width = 7, height = 4, units = "in", dpi = 300)
+
+  ggsave(plot = p_ra,
+         filename = file.path(out_dir, sprintf("co1_total_posctl_barplot_ra_%d.jpg", yr)),
+         width = 7, height = 4, units = "in", dpi = 300)
+}
+
+# co1_nottrawl_posctl_plots <- list()
+# 
+# for (yr_chr in names(co1_nottrawl_sample_dfs)) {
+# 
+#   ps_pos_obj <- try(make_posctl_objects(co1_nottrawl_sample_dfs[[yr_chr]]$ps_raw), silent = TRUE)
+#   if (inherits(ps_pos_obj, "try-error") || is.null(ps_pos_obj)) next
+# 
+#   ps_pos    <- ps_pos_obj$ps_pos
+#   ps_pos_ra <- ps_pos_obj$ps_pos_ra
+# 
+#   if (is.null(ps_pos) || is.null(ps_pos_ra) || nsamples(ps_pos) == 0) next
+# 
+#   yr <- as.integer(yr_chr)
+# 
+#   p_reads <- make_posctl_barplot(ps_pos, "Read Abundance")
+#   p_ra    <- make_posctl_barplot(ps_pos_ra, "Relative Abundance")
+# 
+#   co1_nottrawl_posctl_plots[[yr_chr]] <- list(reads = p_reads, ra = p_ra)
+# 
+#   ggsave(plot = p_reads,
+#          filename = file.path(out_dir, sprintf("co1_nottrawl_posctl_barplot_%d.jpg", yr)),
+#          width = 7, height = 4, units = "in", dpi = 300)
+# 
+#   ggsave(plot = p_ra,
+#          filename = file.path(out_dir, sprintf("co1_nottrawl_posctl_barplot_ra_%d.jpg", yr)),
+#          width = 7, height = 4, units = "in", dpi = 300)
+# }
+
+```
 
 
-# Plot Samples
-## Prepare functions
+# Bubble Plots
+## Prepare functions and make dfs
 Function to remove controls, sort by station number in sites, order Bayside by West/ East (instead of alphabetically East/West), and order the months in a sensible order, and convert to dataframe
 ```{r}
 prep_psmelt_raw_and_ra <- function(ps,
                                   tax_rank   = "Taxon.CommonName",
+                                  order_rank = tax_rank,
                                   control_col = "controls",
                                   site_col    = "sites",
                                   bayside_col = "Bayside",
                                   month_col   = "Month") {
 
-  # --- helpers ---
+  # helpers
   make_site_levels <- function(x) {
     x_chr <- as.character(x)
     x_num <- suppressWarnings(as.numeric(x_chr))
@@ -471,31 +764,38 @@ prep_psmelt_raw_and_ra <- function(ps,
   }
 
   apply_ordering <- function(df) {
-    # sites factor + ordering
+
+    # 1) Taxon ordering 
+    if (!is.null(order_rank) && order_rank %in% names(df)) {
+      df <- df %>%
+        mutate(.tax_order = as.character(.data[[order_rank]])) %>%
+        arrange(.tax_order)
+    }
+
+    # 2) Sites factor
     if (site_col %in% names(df)) {
       site_levels <- make_site_levels(df[[site_col]])
       df <- df %>%
         mutate(
           sites_f = factor(as.character(.data[[site_col]]), levels = site_levels)
         ) %>%
-        arrange(sites_f)
+        arrange(sites_f, .by_group = FALSE)
     }
 
-    # Bayside WEST/EAST factor (handle E/W too)
-  if (bayside_col %in% names(df)) {
-    df <- df %>%
-      mutate(
-        Bayside_std = case_when(
-          toupper(as.character(.data[[bayside_col]])) %in% c("W", "WEST") ~ "WEST",
-          toupper(as.character(.data[[bayside_col]])) %in% c("E", "EAST") ~ "EAST",
-          TRUE ~ NA_character_
-        ),
-        Bayside_f = factor(Bayside_std, levels = c("WEST", "EAST"))
-      )
-  }
+    # 3) Bayside factor
+    if (bayside_col %in% names(df)) {
+      df <- df %>%
+        mutate(
+          Bayside_std = case_when(
+            toupper(as.character(.data[[bayside_col]])) %in% c("W","WEST") ~ "WEST",
+            toupper(as.character(.data[[bayside_col]])) %in% c("E","EAST") ~ "EAST",
+            TRUE ~ NA_character_
+          ),
+          Bayside_f = factor(Bayside_std, levels = c("WEST","EAST"))
+        )
+    }
 
-
-    # Month factor in sensible order
+    # 4) Month factor
     if (month_col %in% names(df)) {
       month_levels <- make_month_levels(df[[month_col]])
       df <- df %>%
@@ -504,10 +804,16 @@ prep_psmelt_raw_and_ra <- function(ps,
         )
     }
 
+    # optional: drop helper column so it doesn't leak into plots
+    if (".tax_order" %in% names(df)) {
+      df <- df %>% select(-.tax_order)
+    }
+
     df
   }
 
-  # --- remove controls (keep only NA) ---
+
+  # remove controls (keep only NA)
   md <- as.data.frame(sample_data(ps))
   has_controls <- control_col %in% names(md)
 
@@ -517,13 +823,21 @@ prep_psmelt_raw_and_ra <- function(ps,
     ps_raw <- prune_samples(keep_ids, ps_raw)
   }
 
-  # --- melt raw ---
+  # melt raw
   df_raw <- psmelt(ps_raw)
   df_raw[df_raw == 0] <- NA
   df_raw <- df_raw %>% filter(!is.na(Abundance))
   df_raw <- apply_ordering(df_raw)
 
-  # --- rel abun (tax_glom + compositional) ---
+  # ---- FIX: match your current make_taxon_display(tc, sp, cn) signature ----
+  df_raw$Taxon.Display <- make_taxon_display(
+    tc = if ("Taxon.CommonName" %in% names(df_raw)) df_raw$Taxon.CommonName else NA_character_,
+    sp = if ("Species" %in% names(df_raw))          df_raw$Species          else NA_character_,
+    cn = if ("CommonName" %in% names(df_raw))       df_raw$CommonName       else NA_character_
+  )
+
+
+  # rel abun (tax_glom + compositional)
   if (!tax_rank %in% rank_names(ps)) {
     stop(
       "Tax rank '", tax_rank, "' not found in tax_table(ps). Available: ",
@@ -546,6 +860,13 @@ prep_psmelt_raw_and_ra <- function(ps,
   df_ra <- df_ra %>% filter(!is.na(Abundance))
   df_ra <- apply_ordering(df_ra)
 
+  # ---- FIX: match your current make_taxon_display(tc, sp, cn) signature ----
+  df_ra$Taxon.Display <- make_taxon_display(
+    tc = if ("Taxon.CommonName" %in% names(df_ra)) df_ra$Taxon.CommonName else NA_character_,
+    sp = if ("Species" %in% names(df_ra))          df_ra$Species          else NA_character_,
+    cn = if ("CommonName" %in% names(df_ra))       df_ra$CommonName       else NA_character_
+  )
+
   list(
     ps_raw = ps_raw,
     df_raw = df_raw,
@@ -554,13 +875,80 @@ prep_psmelt_raw_and_ra <- function(ps,
   )
 }
 
+
+# force the "display" column to be Species if Taxon.CommonName is missing
+force_taxlabel_species <- function(x) {
+  # x is the list returned by prep_psmelt_raw_and_ra()
+  if (!is.null(x$df_raw) && nrow(x$df_raw) > 0 && "Species" %in% names(x$df_raw)) {
+    x$df_raw$`Taxon.CommonName` <- as.character(x$df_raw$Species)
+  }
+  if (!is.null(x$df_ra) && nrow(x$df_ra) > 0 && "Species" %in% names(x$df_ra)) {
+    x$df_ra$`Taxon.CommonName` <- as.character(x$df_ra$Species)
+  }
+  x
+}
+
+# glom/RA at Species, then set Taxon.CommonName=Species
+prep_psmelt_raw_and_ra_co1_species <- function(ps, ...) {
+  x <- prep_psmelt_raw_and_ra(ps, tax_rank = "Species", ...)
+  force_taxlabel_species(x)
+}
+
 ```
 
-Run
+Generate tables
 ```{r}
 mifish_sample_dfs <- lapply(phylo_mifish, prep_psmelt_raw_and_ra)
-elas_sample_dfs <- lapply(phylo_elas, prep_psmelt_raw_and_ra)
-co1_sample_dfs <- lapply(phylo_co1, prep_psmelt_raw_and_ra)
+elas_sample_dfs   <- lapply(phylo_elas,   prep_psmelt_raw_and_ra)
+
+# CO1 trawl-only (uses Taxon.CommonName)
+co1_sample_dfs <- lapply(
+  phylo_co1,
+  prep_psmelt_raw_and_ra,
+  tax_rank   = "Taxon.CommonName",
+  order_rank = "Taxon.CommonName"
+)
+
+# CO1_TOTAL (glom at Species, THEN copy Species -> Taxon.CommonName)
+co1_total_sample_dfs <- lapply(
+  phylo_co1_total,
+  prep_psmelt_raw_and_ra_co1_species,
+  order_rank = "Species"
+)
+
+# CO1_NOTTRAWL = CO1_TOTAL taxa minus taxa present in CO1 trawl-only dataset (per year)
+co1_nottrawl_sample_dfs <- purrr::imap(co1_total_sample_dfs, function(x_total, yr_chr) {
+
+  if (is.null(x_total) || is.null(x_total$df_raw) || nrow(x_total$df_raw) == 0) return(x_total)
+
+  x_trawl <- co1_sample_dfs[[yr_chr]]
+  if (is.null(x_trawl) || is.null(x_trawl$df_raw) || nrow(x_trawl$df_raw) == 0) {
+    return(x_total)  # nothing to subtract
+  }
+
+  # ---- Use Taxon.CommonName as the subtraction key (exists in both) ----
+  if (!("Taxon.CommonName" %in% names(x_total$df_raw)) || !("Taxon.CommonName" %in% names(x_trawl$df_raw))) {
+    stop("Taxon.CommonName missing in one of the CO1 dfs for year ", yr_chr)
+  }
+
+  trawl_taxa <- unique(as.character(x_trawl$df_raw$Taxon.CommonName))
+  trawl_taxa <- trawl_taxa[!is.na(trawl_taxa) & trawl_taxa != ""]
+
+  # Filter dfs (NOTTRAWL = TOTAL minus trawl taxa)
+  x_total$df_raw <- dplyr::filter(x_total$df_raw, !(.data$Taxon.CommonName %in% trawl_taxa))
+  x_total$df_ra  <- dplyr::filter(x_total$df_ra,  !(.data$Taxon.CommonName %in% trawl_taxa))
+
+  # Prune phyloseq by Taxon.CommonName (safe; returns NULL if would go to 0 taxa)
+  keep_taxa <- unique(as.character(x_total$df_raw$Taxon.CommonName))
+  keep_taxa <- keep_taxa[!is.na(keep_taxa) & keep_taxa != ""]
+
+  x_total$ps_raw <- prune_ps_to_taxon_commonname(x_total$ps_raw, keep_taxa, tax_rank = "Taxon.CommonName")
+  x_total$ps_ra  <- prune_ps_to_taxon_commonname(x_total$ps_ra,  keep_taxa, tax_rank = "Taxon.CommonName")
+
+  x_total
+})
+
+
 ```
 
 
@@ -611,7 +999,10 @@ drop_posctl_taxa_df <- function(df, patterns = posctl_patterns,
 
 mifish_sample_dfs <- lapply(mifish_sample_dfs, \(x) { x$df_raw <- drop_posctl_taxa_df(x$df_raw); x$df_ra <- drop_posctl_taxa_df(x$df_ra); x })
 elas_sample_dfs   <- lapply(elas_sample_dfs,   \(x) { x$df_raw <- drop_posctl_taxa_df(x$df_raw); x$df_ra <- drop_posctl_taxa_df(x$df_ra); x })
-co1_sample_dfs    <- lapply(co1_sample_dfs,    \(x) { x$df_raw <- drop_posctl_taxa_df(x$df_raw); x$df_ra <- drop_posctl_taxa_df(x$df_ra); x })
+
+co1_sample_dfs        <- lapply(co1_sample_dfs,        \(x) { x$df_raw <- drop_posctl_taxa_df(x$df_raw); x$df_ra <- drop_posctl_taxa_df(x$df_ra); x })
+co1_total_sample_dfs  <- lapply(co1_total_sample_dfs,  \(x) { x$df_raw <- drop_posctl_taxa_df(x$df_raw); x$df_ra <- drop_posctl_taxa_df(x$df_ra); x })
+co1_nottrawl_sample_dfs <- lapply(co1_nottrawl_sample_dfs, \(x) { x$df_raw <- drop_posctl_taxa_df(x$df_raw); x$df_ra <- drop_posctl_taxa_df(x$df_ra); x })
 
 # ensure sitelevels are in numeric order for x axis
 get_sitelevels <- function(df, site_col = "sites") {
@@ -627,7 +1018,7 @@ get_sitelevels <- function(df, site_col = "sites") {
 
 # average replicates
 average_replicates <- function(df, facet_col) {
-  grp_cols <- c("sites", facet_col, "CommonName", "Taxon.CommonName")
+  grp_cols <- c("sites", facet_col, "CommonName", "Taxon.CommonName", "Taxon.Display")
   grp_cols <- grp_cols[grp_cols %in% names(df)]
 
   df %>%
@@ -638,10 +1029,8 @@ average_replicates <- function(df, facet_col) {
 
 Single bubble plot function
 ```{r}
-# Make a bubble plot faceted by one variable
 make_bubbleplot <- function(df,
                             facet_col,
-                            colors,
                             title = NULL,
                             sitelevels = NULL,
                             size_breaks = c(1000, 10000, 100000, 1000000, 10000000),
@@ -649,22 +1038,23 @@ make_bubbleplot <- function(df,
                             nrow_wrap = 1) {
 
   facet_type <- match.arg(facet_type)
-
   if (is.null(sitelevels)) sitelevels <- get_sitelevels(df)
+
+  fill_vals <- make_fill_values(df$Taxon.Display)
 
   p <- ggplot(
     df,
     aes(x = factor(sites, levels = sitelevels),
-        y = fct_rev(`Taxon.CommonName`))
+        y = fct_rev(`Taxon.Display`))
   ) +
     geom_point(
       aes(size = ifelse(Abundance == 0, NA, Abundance),
-          fill = `Taxon.CommonName`),
+          fill = `Taxon.Display`),
       color = "black", pch = 21
     ) +
     scale_size_area(breaks = size_breaks) +
     theme_bw() +
-    scale_fill_manual(values = colors) +
+    scale_fill_manual(values = fill_vals) +
     labs(x = "", y = "", size = "Read Abundance", fill = "", title = title) +
     theme(
       axis.title.x = element_blank(),
@@ -685,6 +1075,7 @@ make_bubbleplot <- function(df,
   p
 }
 
+
 ```
 
 Function to make all bubble plots for one year (by bayside, by month, by habitat and month, using above)
@@ -693,7 +1084,6 @@ make_bubbleplots_for_year <- function(df_raw,
                                       lib = "mifish",
                                       year = 2024,
                                       out_dir = "figures-timeseries",
-                                      colors = myColors_Sci_comname,
                                       trawl_sites = 1:13,
                                       habitats_to_plot = c("EELGRASS", "CLAM SANCTUARY", "OYSTER REEF")) {
 
@@ -704,14 +1094,13 @@ make_bubbleplots_for_year <- function(df_raw,
 
   plots <- list()
 
-  # ---- 1) By Bayside ----
+  # 1) By Bayside
   if ("Bayside_f" %in% names(df_raw)) {
     df_bayside <- average_replicates(df_raw, facet_col = "Bayside_f")
 
     plots$bayside <- make_bubbleplot(
       df_bayside,
       facet_col = "Bayside_f",
-      colors = colors,
       sitelevels = sitelevels,
       facet_type = "grid"
     )
@@ -723,14 +1112,13 @@ make_bubbleplots_for_year <- function(df_raw,
     )
   }
 
-  # ---- 2) By Month (all sites) ----
+  # 2) By Month (all sites)
   if ("Month_f" %in% names(df_raw)) {
     df_month <- average_replicates(df_raw, facet_col = "Month_f")
 
     plots$month <- make_bubbleplot(
       df_month,
       facet_col = "Month_f",
-      colors = colors,
       sitelevels = sitelevels,
       facet_type = "wrap",
       nrow_wrap = 1
@@ -742,15 +1130,15 @@ make_bubbleplots_for_year <- function(df_raw,
       width = 22, height = 8, units = "in", dpi = 300
     )
 
-    # ---- 3) By Month (trawl sites only) ----
+    # 3) By Month (trawl sites only)
     df_month_trawl <- df_raw %>%
-      filter(sites %in% trawl_sites) %>%
+      mutate(.site_num = suppressWarnings(as.integer(as.character(sites)))) %>%
+      filter(.site_num %in% trawl_sites) %>%
       average_replicates(facet_col = "Month_f")
 
     plots$month_trawl <- make_bubbleplot(
       df_month_trawl,
       facet_col = "Month_f",
-      colors = colors,
       sitelevels = sitelevels,
       facet_type = "wrap",
       nrow_wrap = 1
@@ -762,7 +1150,7 @@ make_bubbleplots_for_year <- function(df_raw,
       width = 12, height = 8, units = "in", dpi = 300
     )
 
-    # ---- 4) By Month within each habitat ----
+    # 4) By Month within each habitat
     if ("Habitat" %in% names(df_raw)) {
       for (hab in habitats_to_plot) {
         df_hab <- df_raw %>%
@@ -775,7 +1163,6 @@ make_bubbleplots_for_year <- function(df_raw,
         plots[[paste0("month_hab_", gsub(" ", "", tolower(hab)))]] <- make_bubbleplot(
           df_hab,
           facet_col = "Month_f",
-          colors = colors,
           sitelevels = sitelevels,
           facet_type = "grid"
         )
@@ -795,7 +1182,7 @@ make_bubbleplots_for_year <- function(df_raw,
 ```
 
 
-Run for all years and libraries
+## Make plots
 ```{r}
 bubbleplots_all <- list()
 
@@ -803,7 +1190,7 @@ bubbleplots_all <- list()
 bubbleplots_all$mifish <- lapply(names(mifish_sample_dfs), function(yr_chr) {
   yr <- as.integer(yr_chr)
   df <- mifish_sample_dfs[[yr_chr]]$df_raw
-  make_bubbleplots_for_year(df, lib = "mifish", year = yr, out_dir = out_dir, colors = myColors_Sci_comname)
+  make_bubbleplots_for_year(df, lib = "mifish", year = yr, out_dir = out_dir)
 })
 names(bubbleplots_all$mifish) <- names(mifish_sample_dfs)
 
@@ -811,7 +1198,7 @@ names(bubbleplots_all$mifish) <- names(mifish_sample_dfs)
 bubbleplots_all$elas <- lapply(names(elas_sample_dfs), function(yr_chr) {
   yr <- as.integer(yr_chr)
   df <- elas_sample_dfs[[yr_chr]]$df_raw
-  make_bubbleplots_for_year(df, lib = "elas", year = yr, out_dir = out_dir, colors = myColors_Sci_comname)
+  make_bubbleplots_for_year(df, lib = "elas", year = yr, out_dir = out_dir)
 })
 names(bubbleplots_all$elas) <- names(elas_sample_dfs)
 
@@ -819,436 +1206,1628 @@ names(bubbleplots_all$elas) <- names(elas_sample_dfs)
 bubbleplots_all$co1 <- lapply(names(co1_sample_dfs), function(yr_chr) {
   yr <- as.integer(yr_chr)
   df <- co1_sample_dfs[[yr_chr]]$df_raw
-  make_bubbleplots_for_year(df, lib = "co1", year = yr, out_dir = out_dir, colors = myColors_Sci_comname)
+  make_bubbleplots_for_year(df, lib = "co1", year = yr, out_dir = out_dir)
 })
 names(bubbleplots_all$co1) <- names(co1_sample_dfs)
 
+# CO1_NOTTRAWL
+bubbleplots_all$co1_nottrawl <- lapply(names(co1_nottrawl_sample_dfs), function(yr_chr) {
+  yr <- as.integer(yr_chr)
+  df <- co1_nottrawl_sample_dfs[[yr_chr]]$df_raw
+  make_bubbleplots_for_year(df, lib = "co1_nottrawl", year = yr, out_dir = out_dir)
+})
+
+
 ```
 
 
-## 1/8/25 STOPPED HERE- ALL FILTERING LOOKS GOOD. CONTINUE BELOW
 
 
 
 
 
+# Seasonality - Time Series
+Pull top species, generate a seasonal time series plot, then plot each year on top of each other to assess interannual variability in seasonality
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### MiFish- Species Time Series
-
-#### Trawl sites
-
+Function to grab top species
 ```{r}
-# First average replicates from same month and across all trawl sites
-mifish_df_month_trawls <- mifish_df %>%
-  filter(site_altname %in% c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)) %>%
-  group_by(Month_f, CommonName, `Taxon.CommonName`) %>%
-  dplyr::summarize(MeanAbundance = mean(Abundance)) %>%
-  mutate(Month_f = factor(Month_f, levels = 6:9, labels = c("Jun", "Jul", "Aug", "Sep"), ordered = TRUE))
-mifish_df_month_trawls
+make_seasonal_overlay_df <- function(df_list,
+                                     trawl_sites = as.character(1:13),
+                                     site_col = c("site_altname", "sites"),
+                                     month_col = "Month_f",
+                                     tax_col = "Taxon.CommonName",
+                                     abund_col = "Abundance",
+                                     top_n = 5,
+                                     use_ra = TRUE,
+                                     keep_months = NULL) {
 
-# take only top species
-top20_species <- mifish_df_month_trawls %>%
-  group_by(`Taxon.CommonName`) %>%
-  summarise(TotalAbundance = sum(MeanAbundance, na.rm = TRUE)) %>%
-  arrange(desc(TotalAbundance)) %>%
-  slice_head(n = 20) %>%
-  pull(`Taxon.CommonName`)
+  if (is.character(use_ra)) {
+    use_ra <- tolower(use_ra) %in% c("true", "t", "ra", "df_ra", "relative", "relabund")
+  }
+  use_ra <- isTRUE(use_ra)
 
+  df_key <- if (use_ra) "df_ra" else "df_raw"
+  ps_key <- if (use_ra) "ps_ra" else "ps_raw"
 
-mifish_df_month_top20 <- mifish_df_month_trawls %>%
-  filter(`Taxon.CommonName` %in% top20_species) %>%
-  ungroup() %>%  
-  complete(
-    Month_f,
-    nesting(`Taxon.CommonName`, CommonName),
-    fill = list(MeanAbundance = 0)
+  # pick a site column from first df that exists
+  first_df <- df_list[[1]][[df_key]]
+  site_col <- site_col[site_col %in% names(first_df)][1] %||% "sites"
+  trawl_sites_key <- as.character(as.integer(trawl_sites))
+
+  # sampled months from SAMPLE METADATA (not psmelt df) ----
+  sampled_ym <- purrr::imap_dfr(df_list, function(x, yr) {
+    ps <- x[[ps_key]]
+    if (is.null(ps) || phyloseq::nsamples(ps) == 0) return(NULL)
+
+    md <- data.frame(phyloseq::sample_data(ps), check.names = FALSE, stringsAsFactors = FALSE)
+
+    # choose site column in metadata too (try same, else fallback)
+    site_md_col <- if (site_col %in% names(md)) site_col else {
+      c("site_altname", "sites")[c("site_altname", "sites") %in% names(md)][1]
+    }
+
+    # choose month column in metadata:
+    month_md_col <- if (month_col %in% names(md)) month_col else if ("Month" %in% names(md)) "Month" else month_col
+
+    out <- md %>%
+      mutate(
+        Year = as.integer(yr),
+        .site = as.character(.data[[site_md_col]]),
+        .month = as.character(.data[[month_md_col]])
+      ) %>%
+      filter(.site %in% trawl_sites_key) %>%
+      distinct(Year, .month) %>%
+      mutate(.sampled = TRUE)
+
+    if (!is.null(keep_months)) out <- out %>% filter(.month %in% keep_months)
+    out
+  })
+
+  if (is.null(sampled_ym) || nrow(sampled_ym) == 0) {
+    return(list(df = tibble::tibble(), top_taxa = character()))
+  }
+
+  # abundances from psmelt df (df_ra or df_raw) ----
+  all_df <- purrr::imap_dfr(df_list, function(x, yr) {
+    d <- x[[df_key]]
+    if (is.null(d) || nrow(d) == 0) return(NULL)
+
+    d <- d %>%
+      mutate(
+        Year = as.integer(yr),
+        "{site_col}" := as.character(.data[[site_col]]),
+        "{month_col}" := as.character(.data[[month_col]])
+      )
+
+    if (!is.null(keep_months)) d <- d %>% filter(.data[[month_col]] %in% keep_months)
+    d
+  })
+
+  all_df <- all_df %>%
+    filter(.data[[site_col]] %in% trawl_sites_key)
+
+  # number of samples per Year-Month
+  n_samp <- all_df %>%
+    distinct(Year, .month = .data[[month_col]], Sample) %>%
+    count(Year, .month, name = "n_samples")
+  
+  # sum of RA per Year-Month-Taxon (absent taxa contribute 0)
+  sum_tax <- all_df %>%
+    group_by(Year, .month = .data[[month_col]], .data[[tax_col]]) %>%
+    summarize(sum_abund = sum(.data[[abund_col]], na.rm = TRUE), .groups = "drop")
+  
+  # mean across ALL samples in that Year-Month (including zeros for non-detections)
+  df_month <- sum_tax %>%
+    left_join(n_samp, by = c("Year", ".month")) %>%
+    mutate(MeanAbundance = sum_abund / n_samples) %>%
+    select(Year, .month, !!rlang::sym(tax_col), MeanAbundance)
+
+  top_taxa <- df_month %>%
+    group_by(.data[[tax_col]]) %>%
+    summarize(TotalAbundance = sum(MeanAbundance, na.rm = TRUE), .groups = "drop") %>%
+    arrange(desc(TotalAbundance)) %>%
+    slice_head(n = top_n) %>%
+    pull(.data[[tax_col]])
+
+  years <- sort(unique(sampled_ym$Year))
+  month_levels <- if (!is.null(keep_months)) unique(as.character(keep_months)) else sort(unique(sampled_ym$.month))
+
+  grid <- tidyr::expand_grid(
+    Year = years,
+    .month = month_levels,
+    !!rlang::sym(tax_col) := top_taxa
   ) %>%
-  mutate(FacetLabel = str_wrap(`Taxon.CommonName`, width = 20))
+    left_join(sampled_ym, by = c("Year", ".month")) %>%
+    left_join(df_month,  by = c("Year", ".month", tax_col)) %>%
+    mutate(
+      MeanAbundance = dplyr::if_else(
+        !is.na(.sampled),
+        dplyr::coalesce(MeanAbundance, 0),
+        NA_real_
+      ),
+      Year = factor(Year),
+      FacetLabel = stringr::str_wrap(.data[[tax_col]], width = 20)
+    )
 
-timeseries_mifish_Month <- 
-ggplot(mifish_df_month_top20) + 
-  geom_area(aes(x = Month_f, y = MeanAbundance, fill = `Taxon.CommonName`, group = 1), alpha = 0.7) +
-  facet_wrap(~FacetLabel, scales = "free_y") +
-  xlab("") +
-  scale_fill_manual(values = myColors_Sci_comname) +
-  theme_minimal() +
-  theme(axis.title.x=element_blank(), 
-        axis.text.x = element_text(size = 12), 
-        axis.text.y = element_text(size = 10),
-        legend.position = "none") 
+  list(df = grid, top_taxa = top_taxa)
+}
 
-timeseries_mifish_Month
-  
-# save
-ggsave(plot = timeseries_mifish_Month, filename = "figures-2024eDNA/mifish_topspecies_timeseries.jpg", width = 11, height = 8, units = "in")
 ```
 
-#### Clam Sites
+Plot function
+- keeps species colors and overlays years
 ```{r}
-# First average replicates from same month and across all trawl sites
-mifish_df_month_clamsites <- mifish_df %>%
-  filter(sites %in% c(23, 24)) %>%
-  group_by(Month_f, CommonName, `Taxon.CommonName`) %>%
-  dplyr::summarize(MeanAbundance = mean(Abundance)) %>%
-  mutate(Month_f = factor(Month_f, levels = 6:9, labels = c("Jun", "Jul", "Aug", "Sep"), ordered = TRUE))
-mifish_df_month_clamsites
+plot_seasonal_overlay <- function(df_top,
+                                  month_col = ".month",
+                                  tax_col = "Taxon.CommonName",
+                                  colors = myColors_Sci_comname,
+                                  title = NULL) {
 
-# take only top species
-top12_species <- mifish_df_month_clamsites %>%
-  group_by(`Taxon.CommonName`) %>%
-  summarise(TotalAbundance = sum(MeanAbundance, na.rm = TRUE)) %>%
-  arrange(desc(TotalAbundance)) %>%
-  slice_head(n = 12) %>%
-  pull(`Taxon.CommonName`)
+  year_levels <- sort(unique(as.integer(as.character(df_top$Year))))
+  alpha_vals  <- seq(0.25, 1, length.out = length(year_levels))
+  names(alpha_vals) <- as.character(year_levels)
+
+  month_levels <- if (is.factor(df_top[[month_col]])) levels(df_top[[month_col]]) else unique(as.character(df_top[[month_col]]))
+
+  df_top <- df_top %>%
+    mutate(
+  .tax_color = get_db_color(.data[[tax_col]], default = "grey60"),
+      Year = factor(as.character(Year), levels = as.character(year_levels)),
+      .month = factor(as.character(.data[[month_col]]), levels = month_levels, ordered = TRUE)
+    )
+
+  # keep only non-NA points for line drawing, and only groups with >=2 points
+  df_lines <- df_top %>%
+    filter(!is.na(MeanAbundance)) %>%
+    group_by(FacetLabel, Year) %>%
+    filter(n() >= 2) %>%
+    ungroup()
 
 
-mifish_df_month_top12 <- mifish_df_month_clamsites %>%
-  filter(`Taxon.CommonName` %in% top12_species) %>%
-  ungroup() %>%  
-  complete(
-    Month_f,
-    nesting(`Taxon.CommonName`, CommonName),
-    fill = list(MeanAbundance = 0)
+  ggplot(df_top, aes(
+    x = .month,
+    y = MeanAbundance,
+    group = Year,
+    alpha = Year
+  )) +
+    geom_line(
+      data = df_lines,
+      aes(color = .tax_color),
+      linewidth = 1
+    ) +
+    geom_point(
+      aes(color = .tax_color),
+      size = 1.6,
+      na.rm = TRUE
+    ) +
+    facet_wrap(~FacetLabel, scales = "free_y") +
+    scale_color_identity() +
+    scale_alpha_manual(
+      name = "Year\n(lighter = earlier)",
+      values = alpha_vals,
+      drop = FALSE
+    ) +
+    labs(x = "", y = "Relative abundance (avg across trawl sites)", title = title) +
+    theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      legend.box = "vertical",
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 10)
+    ) +
+    guides(
+      alpha = guide_legend(
+        override.aes = list(color = "black", linewidth = 1.2),
+        nrow = 1
+      )
+    )
+}
+
+```
+
+Generate
+```{r}
+# modify for which months should be plotted (numeric codes only)
+keep_months <- c("5","6","7","8","9","10")
+
+run_library_overlay <- function(df_list, lib_name, top_n = 5, use_ra = TRUE, keep_months = NULL) {
+
+  tmp <- make_seasonal_overlay_df(
+    df_list,
+    top_n = top_n,
+    use_ra = use_ra,
+    keep_months = keep_months
+  )
+
+  # if nothing comes back, return a placeholder 
+  if (is.null(tmp$df) || !is.data.frame(tmp$df) || nrow(tmp$df) == 0 || !(".month" %in% names(tmp$df))) {
+    p_empty <- ggplot() +
+      theme_void() +
+      labs(title = paste0(lib_name, " top ", top_n, " taxa: seasonal overlay")) +
+      annotate("text", x = 0, y = 0,
+               label = "No data after filtering (check trawl sites / keep_months / Month column).",
+               size = 4)
+
+    return(list(
+      plot = p_empty,
+      df = tmp$df,
+      top_taxa = tmp$top_taxa %||% character(),
+      filename = sprintf("%s_seasonal_overlay_top%d.jpg", lib_name, top_n)
+    ))
+  }
+
+  df_top <- tmp$df %>%
+    mutate(.month = as.character(.month))
+
+  # provided keep_months, enforce them (recommended: numeric only)
+  if (!is.null(keep_months)) {
+    keep_months <- as.character(keep_months)
+
+    df_top <- df_top %>%
+      filter(.month %in% keep_months)
+
+    # Relabel numeric month codes to names if they are exactly 5-10
+    if (all(keep_months %in% c("5","6","7","8","9","10"))) {
+      df_top <- df_top %>%
+        mutate(.month = factor(
+          .month,
+          levels = c("5","6","7","8","9","10"),
+          labels = c("May","Jun","Jul","Aug","Sep","Oct"),
+          ordered = TRUE
+        ))
+    } else {
+      # Otherwise just keep the provided order
+      df_top <- df_top %>%
+        mutate(.month = factor(.month, levels = keep_months, ordered = TRUE))
+    }
+  } else {
+    # If keep_months is NULL, just preserve whatever order appears
+    df_top <- df_top %>%
+      mutate(.month = factor(.month, levels = unique(.month), ordered = TRUE))
+  }
+
+  p <- plot_seasonal_overlay(
+    df_top,
+    month_col = ".month",
+    title = paste0(lib_name, " top ", top_n, " taxa: seasonal overlay")
+  )
+
+  list(
+    plot = p,
+    df = df_top,
+    top_taxa = tmp$top_taxa,
+    filename = sprintf("%s_seasonal_overlay_top%d.jpg", lib_name, top_n)
+  )
+}
+
+
+
+```
+
+Visualize
+```{r}
+# run all three
+mifish_overlay_top10 <- run_library_overlay(mifish_sample_dfs, "MiFish", top_n = 10, use_ra = TRUE, keep_months = keep_months)
+elas_overlay_top5    <- run_library_overlay(elas_sample_dfs,   "Elas02", top_n = 5,  use_ra = TRUE, keep_months = keep_months)
+co1_overlay_top10    <- run_library_overlay(co1_sample_dfs,    "CO1",    top_n = 10, use_ra = TRUE, keep_months = keep_months)
+co1_nottrawl_overlay_top10 <- run_library_overlay(co1_nottrawl_sample_dfs, "CO1_NOTTRAWL", top_n = 10, use_ra = TRUE, keep_months = keep_months)
+
+
+mifish_overlay_top10$top_taxa
+elas_overlay_top5$top_taxa
+co1_overlay_top10$top_taxa
+co1_nottrawl_overlay_top10$top_taxa
+
+# show plot in notebook
+mifish_overlay_top10$plot
+elas_overlay_top5$plot
+co1_overlay_top10$plot
+co1_nottrawl_overlay_top10$plot # not working but move on for now
+
+```
+
+Export
+```{r}
+save_overlay <- function(obj, out_dir, width = 11, height = 8, units = "in", dpi = 300) {
+  dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+  ggsave(
+    filename = file.path(out_dir, obj$filename),
+    plot = obj$plot,
+    width = width,
+    height = height,
+    units = units,
+    dpi = dpi
+  )
+}
+
+# Export
+save_overlay(mifish_overlay_top10, out_dir, width = 11, height = 8)
+save_overlay(elas_overlay_top5,    out_dir, width = 11, height = 8)
+save_overlay(co1_overlay_top10,    out_dir, width = 11, height = 8)
+save_overlay(co1_nottrawl_overlay_top10, out_dir, width = 11, height = 8)
+
+```
+
+# Seasonality- Maps
+## First remake map of Shinnecock Bay
+[GSHHG map from NOAA](https://www.soest.hawaii.edu/pwessel/gshhg/).  
+Following [tutorial](https://rpubs.com/MRufino/coastlines).   
+Also had to add in [fix](https://gis.stackexchange.com/questions/404385/r-sf-some-edges-are-crossing-in-a-multipolygon-how-to-make-it-valid-when-using).  
+```{r}
+# lets get a box to make a smaller sized objects and facilitate the examples:
+geo.box <- c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9)
+
+sf_use_s2(FALSE)
+
+# Shoreline data for us detail
+gshhg.l1 <- sf::read_sf("raw_data/gshhg-shp-2.3.7/GSHHS_shp/f/GSHHS_f_L1.shp") %>% st_crop(geo.box)
+plot(gshhg.l1["id"])
+
+# make ggplot object
+shinnbay_map <- ggplot(data = gshhg.l1) +
+  geom_sf(aes(geometry = geometry)) +
+    scale_x_continuous(breaks = seq(-72.6, -72.4, 0.1)) +
+    scale_y_continuous(breaks = seq(40.80, 40.9, 0.05))
+
+shinnbay_map
+
+```
+
+## Species Maps
+
+Functions to map a given species for a given library/year over season (every sampling event) 
+```{r}
+# choose the first column name that exists
+pick_col <- function(df, candidates, required = TRUE) {
+  out <- candidates[candidates %in% names(df)][1]
+  if (length(out) == 0 || is.na(out)) {
+    if (required) stop("None of these columns exist: ", paste(candidates, collapse = ", "))
+    return(NULL)
+  }
+  out
+}
+
+
+
+# 1) Display candidate taxa for a given library + year (df_ra only)
+candidate_taxa <- function(df_list,
+                           year,
+                           tax_col = "Taxon.CommonName",
+                           sample_col = "Sample",
+                           ra_col = "Abundance",
+                           top_n = 30,
+                           min_prevalence = 0) {
+
+  year <- as.character(year)
+  if (!year %in% names(df_list)) stop("Year not found in df_list: ", year)
+
+  d <- df_list[[year]]$df_ra
+  if (is.null(d) || nrow(d) == 0) stop("df_ra is empty for year ", year)
+
+  tax_col    <- pick_col(d, c(tax_col, "Taxon.CommonName", "Taxon", "taxon"))
+  sample_col <- pick_col(d, c(sample_col, "Sample", "sample", "SampleID"))
+  ra_col     <- pick_col(d, c(ra_col, "Abundance", "RelAbundance", "RA"))
+
+  # collapse multiple ASVs per sample->taxon (sum RA within sample)
+  d_sum <- d %>%
+    mutate(
+      .tax   = as.character(.data[[tax_col]]),
+      .samp  = as.character(.data[[sample_col]]),
+      .ra    = as.numeric(.data[[ra_col]])
+    ) %>%
+    group_by(.samp, .tax) %>%
+    summarize(ra = sum(.ra, na.rm = TRUE), .groups = "drop")
+
+  n_samples_total <- d_sum %>% distinct(.samp) %>% nrow()
+
+  out <- d_sum %>%
+    group_by(.tax) %>%
+    summarize(
+      n_samples_present = sum(ra > 0, na.rm = TRUE),
+      prevalence = n_samples_present / n_samples_total,
+      mean_ra = mean(ra, na.rm = TRUE),
+      median_ra = median(ra, na.rm = TRUE),
+      max_ra = max(ra, na.rm = TRUE),
+      total_ra = sum(ra, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    filter(prevalence >= min_prevalence) %>%
+    arrange(desc(total_ra)) %>%
+    mutate(rank = row_number()) %>%
+    select(rank, taxon = .tax, everything()) %>%
+    slice_head(n = top_n)
+
+  out
+}
+
+# 2) Map one chosen taxon’s per-sample RA across all timepoints in a year
+map_taxon_year <- function(df_list,
+                           year,
+                           taxon,
+                           base_map,                 # your shinnbay_map
+                           bbox = c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9),
+                           colors = myColors_Sci_comname,
+                           tax_col = "Taxon.CommonName",
+                           sample_col = "Sample",
+                           ra_col = "Abundance",
+                           lat_col = c("lat", "Latitude", "Lat"),
+                           lon_col = c("long", "lon", "Longitude", "Long"),
+                           datecode_col = c("Datecode", "datecode"),
+                           date_label_col = c("Date", "date"),
+                           facet_ncol = 2,
+                           point_size_range = c(1.2, 6),
+                           alpha_points = 0.85) {
+
+  year <- as.character(year)
+  if (!year %in% names(df_list)) stop("Year not found in df_list: ", year)
+
+  d <- df_list[[year]]$df_ra
+  if (is.null(d) || nrow(d) == 0) stop("df_ra is empty for year ", year)
+
+  pick_col <- function(df, candidates, required = TRUE) {
+    out <- candidates[candidates %in% names(df)][1]
+    if (length(out) == 0 || is.na(out)) {
+      if (required) stop("None of these columns exist: ", paste(candidates, collapse = ", "))
+      return(NULL)
+    }
+    out
+  }
+
+  tax_col        <- pick_col(d, c(tax_col, "Taxon.CommonName", "Taxon", "taxon"))
+  sample_col     <- pick_col(d, c(sample_col, "Sample", "sample", "SampleID"))
+  ra_col         <- pick_col(d, c(ra_col, "Abundance", "RelAbundance", "RA"))
+  lat_col        <- pick_col(d, lat_col)
+  lon_col        <- pick_col(d, lon_col)
+  datecode_col   <- pick_col(d, datecode_col)
+  date_label_col <- pick_col(d, date_label_col, required = FALSE)
+
+  # per-sample RA for this taxon (sum within sample in case multiple OTUs map to same taxon)
+  d_tax <- d %>%
+    transmute(
+      .tax  = as.character(.data[[tax_col]]),
+      .samp = as.character(.data[[sample_col]]),
+      .ra   = as.numeric(.data[[ra_col]]),
+      .lat  = as.numeric(.data[[lat_col]]),
+      .lon  = as.numeric(.data[[lon_col]]),
+      .dc   = as.integer(.data[[datecode_col]]),
+      .date = if (!is.null(date_label_col) && date_label_col %in% names(d)) as.character(.data[[date_label_col]]) else NA_character_
+    ) %>%
+    filter(.tax == taxon) %>%
+    group_by(.samp, .dc, .lat, .lon, .tax) %>%
+    summarize(ra = sum(.ra, na.rm = TRUE), .date = dplyr::first(.date), .groups = "drop")
+
+  if (nrow(d_tax) == 0) stop("No rows found for taxon = '", taxon, "' in year ", year)
+
+  # facet VARIABLE is Datecode
+  dc_levels <- sort(unique(d_tax$.dc))
+  d_tax <- d_tax %>%
+    mutate(.dc_f = factor(.dc, levels = dc_levels))
+
+  # build labels (Date if present, else YYYY-MM-DD from Datecode)
+  dc_to_label <- setNames(
+    ifelse(
+      is.na(tapply(d_tax$.date, d_tax$.dc, function(x) x[!is.na(x)][1] %||% NA_character_)),
+      paste0(substr(dc_levels, 1, 4), "-", substr(dc_levels, 5, 6), "-", substr(dc_levels, 7, 8)),
+      as.character(tapply(d_tax$.date, d_tax$.dc, function(x) x[!is.na(x)][1] %||% NA_character_))
+    ),
+    as.character(dc_levels)
+  )
+
+  # bbox filter (catches accidental +72 longitudes etc.)
+  before_n <- nrow(d_tax)
+  d_tax <- d_tax %>%
+    filter(
+      .lon >= bbox["xmin"], .lon <= bbox["xmax"],
+      .lat >= bbox["ymin"], .lat <= bbox["ymax"]
+    )
+  after_n <- nrow(d_tax)
+  if (after_n == 0) {
+    stop("All points fell outside bbox. Check longitude/latitude sign/values in df_ra for ", year)
+  }
+  if (after_n < before_n) {
+    message("Dropped ", before_n - after_n, " rows outside bbox (check lon/lat sign issues).")
+  }
+
+  # constant color per taxon
+  tax_color <- get_db_color(taxon, default = "grey60")
+
+
+  base_map +
+    geom_point(
+      data = d_tax,
+      aes(x = .lon, y = .lat, size = ra),
+      color = tax_color,
+      alpha = alpha_points
+    ) +
+    facet_wrap(
+      ~ .dc_f,
+      ncol = facet_ncol,
+      labeller = as_labeller(function(x) dc_to_label[as.character(x)])
+    ) +
+    scale_size_continuous(range = point_size_range) +
+    coord_sf(
+      xlim = c(bbox["xmin"], bbox["xmax"]),
+      ylim = c(bbox["ymin"], bbox["ymax"]),
+      expand = FALSE
+    ) +
+    labs(
+      title = paste0("Relative abundance: ", taxon, " (", year, ")"),
+      size = "Rel. abundance"
+    ) +
+    theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      strip.text = element_text(size = 10),
+      panel.spacing = unit(0.9, "lines"),
+      plot.title = element_text(face = "bold"),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank()
+    )
+}
+
+```
+
+Make dfs of candidate species
+```{r}
+make_candidate_list <- function(df_list,
+                                lib_name = "LIB",
+                                top_n = 30,
+                                min_prevalence = 0,
+                                tax_col = "Taxon.CommonName",
+                                sample_col = "Sample",
+                                ra_col = "Abundance") {
+
+  yrs <- names(df_list)
+  if (is.null(yrs) || length(yrs) == 0) stop("df_list has no names (years).")
+
+  # ensure years are in chronological order when possible
+  yrs_num <- suppressWarnings(as.integer(yrs))
+  if (!all(is.na(yrs_num))) yrs <- yrs[order(yrs_num)]
+
+  cand_list <- purrr::map(yrs, function(y) {
+    message("Candidate taxa: ", lib_name, " ", y)
+    candidate_taxa(
+      df_list = df_list,
+      year = y,
+      top_n = top_n,
+      min_prevalence = min_prevalence,
+      tax_col = tax_col,
+      sample_col = sample_col,
+      ra_col = ra_col
+    )
+  })
+  names(cand_list) <- paste0("cand_", yrs, "_", lib_name)
+
+  cand_list
+}
+```
+
+Build them for each library in one go 
+```{r}
+cand_mifish <- make_candidate_list(mifish_sample_dfs, lib_name = "mifish", top_n = 100)
+cand_elas   <- make_candidate_list(elas_sample_dfs,   lib_name = "elas",   top_n = 100)
+cand_co1    <- make_candidate_list(co1_sample_dfs,    lib_name = "co1",    top_n = 100,  tax_col = "Taxon.Display")
+cand_co1_nottrawl <- make_candidate_list(co1_nottrawl_sample_dfs, lib_name = "co1_nottrawl", top_n = 1000, tax_col = "Taxon.Display")
+
+```
+
+Map a candidate to test
+```{r}
+chosen <-cand_co1$cand_2024_co1$taxon[5]
+
+hc_map_2024 <- map_taxon_year(
+  co1_sample_dfs,
+  year = 2024,
+  taxon = chosen,
+  base_map = shinnbay_map,
+  tax_col = "Taxon.Display",
+  bbox = c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9),
+  facet_ncol = 2
+)
+
+
+hc_map_2024
+
+chosen <- cand_co1$cand_2025_co1$taxon[7]
+
+hc_map_2025 <- map_taxon_year(
+  co1_sample_dfs,
+  year = 2025,
+  taxon = chosen,
+  base_map = shinnbay_map,
+  bbox = c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9),
+  facet_ncol = 2
+)
+
+hc_map_2025
+
+chosen_nt <- cand_co1_nottrawl$cand_2024_co1_nottrawl$taxon[81]
+
+nt_map_2024 <- map_taxon_year(
+  co1_nottrawl_sample_dfs,
+  year = 2024,
+  taxon = chosen_nt,
+  base_map = shinnbay_map,
+  bbox = c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9),
+  facet_ncol = 2
+)
+
+nt_map_2024
+
+
+```
+Save all species from a single library/year as one pdf
+Function:
+```{r}
+save_species_maps_pdf <- function(df_list,
+                                  cand_df,
+                                  year,
+                                  lib_name,
+                                  base_map,
+                                  facet_ncol = 2,
+                                  out_dir,
+                                  width = 11,
+                                  height = 8.5) {
+
+  stopifnot("taxon" %in% names(cand_df))
+
+  dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+  pdf_file <- file.path(
+    out_dir,
+    paste0(lib_name, "_", year, "_species_maps.pdf")
+  )
+
+  taxa <- unique(as.character(cand_df$taxon))
+  taxa <- taxa[!is.na(taxa) & taxa != ""]
+
+  pdf(pdf_file, width = width, height = height, onefile = TRUE)
+  on.exit(dev.off(), add = TRUE)
+
+  for (tx in taxa) {
+    message("Plotting: ", lib_name, " ", year, " | ", tx)
+
+    p <- map_taxon_year(
+      df_list  = df_list,
+      year     = year,
+      taxon    = tx,
+      base_map = base_map,
+      facet_ncol = facet_ncol
+    )
+
+    print(p)
+  }
+
+  message("Saved: ", pdf_file)
+  invisible(pdf_file)
+}
+
+```
+
+Run across all years/libraries
+
+Function-
+```{r}
+# helpers to standardize names
+normalize_cand_names <- function(cand_list, lib_label) {
+  out <- cand_list
+
+  names(out) <- gsub(
+    pattern = paste0("^cand_(\\d{4})_", lib_label, "$"),
+    replacement = paste0(lib_label, "_\\1"),
+    x = names(out)
+  )
+
+  out
+}
+
+cand_mifish_norm <- normalize_cand_names(cand_mifish, "mifish")
+cand_elas_norm   <- normalize_cand_names(cand_elas,   "elas")
+cand_co1_norm    <- normalize_cand_names(cand_co1,    "co1")
+cand_co1_nottrawl_norm <- normalize_cand_names(cand_co1_nottrawl, "co1_nottrawl")
+
+names(cand_mifish_norm) <- sub("^mifish_", "MiFish_", names(cand_mifish_norm))
+names(cand_elas_norm)   <- sub("^elas_",   "Elas02_", names(cand_elas_norm))
+names(cand_co1_norm)    <- sub("^co1_",    "CO1_",    names(cand_co1_norm))
+names(cand_co1_nottrawl_norm) <- sub("^co1_nottrawl_", "CO1_NOTTRAWL_", names(cand_co1_nottrawl_norm))
+
+cand_list <- c(
+  cand_co1_norm,
+  cand_co1_nottrawl_norm,
+  cand_mifish_norm,
+  cand_elas_norm
+)
+
+lib_lists <- list(
+  CO1         = co1_sample_dfs,
+  CO1_NOTTRAWL = co1_nottrawl_sample_dfs,
+  MiFish      = mifish_sample_dfs,
+  Elas02      = elas_sample_dfs
+)
+
+
+# helper
+parse_lib_year <- function(nm) {
+  parts <- strsplit(nm, "_")[[1]]
+  if (length(parts) < 2) return(NULL)
+
+  year <- tail(parts, 1)
+  lib  <- paste(parts[-length(parts)], collapse = "_")
+
+  list(lib = lib, year = year)
+}
+
+
+# function
+run_all_species_pdfs <- function(lib_lists, cand_list, base_map, out_dir, facet_ncol = 2,
+                                 width = 11, height = 8.5) {
+
+  for (nm in names(cand_list)) {
+    py <- parse_lib_year(nm)
+    if (is.null(py)) {
+      message("Skipping cand_list item with bad name: ", nm)
+      next
+      }
+    
+    lib  <- py$lib
+    year <- py$year
+
+    if (!lib %in% names(lib_lists)) {
+      message("Skipping (no df_list for lib): ", lib, " [", nm, "]")
+      next
+    }
+
+    df_list <- lib_lists[[lib]]
+
+    if (!as.character(year) %in% names(df_list)) {
+      message("Skipping (year missing in df_list): ", lib, " ", year)
+      next
+    }
+
+    cand_df <- cand_list[[nm]]
+    if (!is.data.frame(cand_df) || !"taxon" %in% names(cand_df)) {
+      message("Skipping (cand_df missing taxon column): ", nm)
+      next
+    }
+
+    message("=== Exporting PDF: ", lib, " ", year, " (", nrow(cand_df), " taxa) ===")
+
+    try(
+      save_species_maps_pdf(
+        df_list   = df_list,
+        cand_df   = cand_df,
+        year      = year,
+        lib_name  = lib,
+        base_map  = base_map,
+        facet_ncol = facet_ncol,
+        out_dir   = out_dir,
+        width     = width,
+        height    = height
+      ),
+      silent = FALSE
+    )
+  }
+
+  invisible(TRUE)
+}
+```
+
+Run-
+```{r}
+run_all_species_pdfs(
+  lib_lists = lib_lists,
+  cand_list = cand_list,
+  base_map  = shinnbay_map,
+  out_dir   = out_dir,
+  facet_ncol = 2,
+  width = 11,
+  height = 8.5
+)
+
+
+```
+**Getting some plotting errors bc don't have coordinates for Canal and Sedge sites from 2021/ 2022**
+
+
+
+# Avg temporal and avg spatial trend
+For each species, the average abund in time for whole bay alongside a map of avg abund at all stations
+Functions:
+```{r}
+# helper
+to_num <- function(x) as.numeric(as.character(x))
+
+# 1) Extract per-sample-per-date-per-station RA
+get_taxon_year_points <- function(df_list,
+                                  year,
+                                  taxon,
+                                  tax_col = "Taxon.CommonName",
+                                  sample_col = "Sample",
+                                  ra_col = "Abundance",
+                                  lat_col = c("lat", "Latitude", "Lat"),
+                                  lon_col = c("long", "lon", "Longitude", "Long"),
+                                  datecode_col = c("Datecode", "datecode"),
+                                  date_label_col = c("Date", "date")) {
+
+  year <- as.character(year)
+  if (!year %in% names(df_list)) stop("Year not found in df_list: ", year)
+
+  d <- df_list[[year]]$df_ra
+  if (is.null(d) || nrow(d) == 0) stop("df_ra is empty for year ", year)
+
+  tax_col        <- pick_col(d, c(tax_col, "Taxon.CommonName", "Taxon", "taxon"))
+  sample_col     <- pick_col(d, c(sample_col, "Sample", "sample", "SampleID"))
+  ra_col         <- pick_col(d, c(ra_col, "Abundance", "RelAbundance", "RA"))
+  lat_col        <- pick_col(d, lat_col)
+  lon_col        <- pick_col(d, lon_col)
+  datecode_col   <- pick_col(d, datecode_col)
+  date_label_col <- pick_col(d, date_label_col, required = FALSE)
+
+  # (A) Universe of ALL samples (one row per Sample x Datecode x Station)
+  d_samples <- d %>%
+    transmute(
+      .samp = as.character(.data[[sample_col]]),
+      .dc   = as.integer(.data[[datecode_col]]),
+      .lat  = to_num(.data[[lat_col]]),
+      .lon  = to_num(.data[[lon_col]]),
+      .date = if (!is.null(date_label_col) && date_label_col %in% names(d)) {
+        as.character(.data[[date_label_col]])
+      } else {
+        NA_character_
+      }
+    ) %>%
+    distinct(.samp, .dc, .lat, .lon, .date)
+
+  # (B) Taxon RA per sample/date/station (sum across OTUs mapping to same taxon)
+  d_tax_present <- d %>%
+    transmute(
+      .tax  = as.character(.data[[tax_col]]),
+      .samp = as.character(.data[[sample_col]]),
+      .dc   = as.integer(.data[[datecode_col]]),
+      ra    = to_num(.data[[ra_col]])
+    ) %>%
+    filter(.tax == taxon) %>%
+    group_by(.samp, .dc, .tax) %>%
+    summarize(ra = sum(ra, na.rm = TRUE), .groups = "drop")
+
+  # (C) Left join onto the sample universe; missing taxon rows become 0
+  d_tax <- d_samples %>%
+    left_join(d_tax_present, by = c(".samp", ".dc")) %>%
+    mutate(
+      .tax = taxon,
+      ra   = dplyr::coalesce(ra, 0)
+    )
+
+  # If taxon truly never appears in the entire year, keep zeros but warn
+  if (all(d_tax$ra == 0, na.rm = TRUE)) {
+    message("Note: taxon '", taxon, "' has RA=0 for all samples in year ", year, ".")
+  }
+
+  # real Date from Datecode (correct ordering)
+  d_tax <- d_tax %>%
+    mutate(
+      .datecode_str = sprintf("%08d", .dc),
+      .date_real    = as.Date(.datecode_str, format = "%Y%m%d")
+    )
+
+  d_tax
+}
+
+# 2) Left panel: average RA across ALL samples for each sampling date
+#    (includes zeros because d_tax has one row per sample/date)
+plot_taxon_time_trend <- function(d_tax,
+                                  taxon,
+                                  year,
+                                  colors = myColors_Sci_comname,
+                                  aspect_ratio = 1) {
+
+  tax_color <- get_db_color(taxon, default = "grey60")
+
+  d_time <- d_tax %>%
+    group_by(.date_real, .dc) %>%
+    summarize(
+      mean_ra = mean(ra, na.rm = TRUE),     # zeros included
+      n_samples = dplyr::n(),
+      .groups = "drop"
+    ) %>%
+    arrange(.date_real)
+
+  ggplot(d_time, aes(x = .date_real, y = mean_ra)) +
+    geom_line(color = tax_color, linewidth = 1) +
+    geom_point(color = tax_color, size = 2) +
+    scale_x_date(date_breaks = "1 month", date_labels = "%b") +
+    labs(
+      title = "Mean relative abundance per sampling date",
+      x = NULL,
+      y = "Mean RA"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title   = element_text(face = "bold", size = 12),
+      axis.text.x  = element_text(vjust = 0.5),
+      aspect.ratio = aspect_ratio
+    )
+}
+
+# 3) Right panel: annual mean RA per station (lon/lat)
+plot_taxon_annual_map <- function(d_tax,
+                                  taxon,
+                                  year,
+                                  base_map,
+                                  bbox = c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9),
+                                  colors = myColors_Sci_comname,
+                                  point_size_range = c(1.5, 7),
+                                  alpha_points = 0.9,
+                                  map_min_ra = 1e-6) {  # <- threshold to hide zeros
+
+  tax_color <- get_db_color(taxon, default = "grey60")
+
+
+  d_station <- d_tax %>%
+    filter(!is.na(.lon), !is.na(.lat)) %>%
+    group_by(.lon, .lat) %>%
+    summarize(
+      mean_ra = mean(ra, na.rm = TRUE),  # includes zeros across samples (correct)
+      n = dplyr::n(),
+      .groups = "drop"
+    ) %>%
+    # clip to bbox
+    filter(
+      .lon >= bbox["xmin"], .lon <= bbox["xmax"],
+      .lat >= bbox["ymin"], .lat <= bbox["ymax"]
+    ) %>%
+    filter(!is.na(mean_ra), mean_ra > map_min_ra)
+
+  base_map +
+    geom_point(
+      data = d_station,
+      aes(x = .lon, y = .lat, size = mean_ra),
+      color = tax_color,
+      alpha = alpha_points
+    ) +
+    scale_size_continuous(range = point_size_range, name = "Mean RA") +
+    coord_sf(
+      xlim = c(bbox["xmin"], bbox["xmax"]),
+      ylim = c(bbox["ymin"], bbox["ymax"]),
+      expand = FALSE
+    ) +
+    labs(title = "Mean relative abundance per station") +
+    guides(
+      size = guide_legend(
+        title.position = "top",
+        title.hjust = 0.5,
+        override.aes = list(color = "black", alpha = 1)
+      )
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 12),
+      legend.position = "bottom",
+      axis.title = element_blank(),
+      axis.text  = element_blank(),
+      axis.ticks = element_blank(),
+      panel.grid = element_blank()
+    )
+}
+
+
+# 4) Dual panel: time trend | annual map
+plot_species_year_dual <- function(df_list,
+                                   year,
+                                   taxon,
+                                   base_map,
+                                   bbox = c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9),
+                                   colors = myColors_Sci_comname,
+                                   tax_col = "Taxon.Display") {
+
+  d_tax <- get_taxon_year_points(df_list, year, taxon, tax_col = tax_col)
+  
+  p_left <- plot_taxon_time_trend(
+    d_tax, taxon, year,
+    colors = colors,
+    aspect_ratio = 0.5
+  )
+
+  p_right <- plot_taxon_annual_map(
+    d_tax, taxon, year, base_map,
+    bbox = bbox, colors = colors
+  )
+
+  p_right_wrapped <- patchwork::wrap_elements(full = p_right)
+
+  (p_left | p_right_wrapped) +
+    patchwork::plot_layout(widths = c(1.4, 1)) +
+    patchwork::plot_annotation(
+      title = paste0(taxon, " — ", year),
+      theme = theme(plot.title = element_text(face = "bold", size = 14))
+    )
+}
+
+```
+
+Run example
+```{r, fig.width=16, fig.height=9}
+plot_species_year_dual(
+  df_list  = co1_sample_dfs,
+  year     = 2024,
+  taxon    = cand_co1$cand_2024_co1$taxon[1],
+  base_map = shinnbay_map,
+  tax_col="Taxon.Display"
+)
+
+```
+
+
+
+Generate pdfs for all years/libraries with a species on every page
+Function-
+```{r}
+# 1) Build candidate taxa tables automatically for each library/year
+make_all_candidate_lists <- function(lib_lists,
+                                     top_n_by_lib = list(MiFish = 100, Elas02 = 15, CO1 = 15),
+                                     min_prev_by_lib = list(MiFish = 0, Elas02 = 0, CO1 = 0)) {
+
+  cand_list <- list()
+
+  for (lib in names(lib_lists)) {
+    df_list <- lib_lists[[lib]]
+    yrs <- names(df_list)
+
+    top_n <- top_n_by_lib[[lib]] %||% 50
+    min_prev <- min_prev_by_lib[[lib]] %||% 0
+
+    for (yr in yrs) {
+      message("Candidates: ", lib, " ", yr)
+      cand_df <- try(
+        candidate_taxa(df_list, year = yr, top_n = top_n, min_prevalence = min_prev),
+        silent = TRUE
+      )
+      if (inherits(cand_df, "try-error")) {
+        message("  -> skipped (candidate_taxa failed): ", lib, " ", yr)
+        next
+      }
+      cand_list[[paste0(lib, "_", yr)]] <- cand_df
+    }
+  }
+
+  cand_list
+}
+
+
+# 2) Save ONE PDF for one library/year: one species per page 
+save_dual_species_pdf <- function(df_list,
+                                  cand_df,
+                                  year,
+                                  lib_name,
+                                  base_map,
+                                  out_dir,
+                                  bbox = c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9),
+                                  width = 16,
+                                  height = 9,
+                                  max_taxa = Inf) {
+
+  stopifnot(is.data.frame(cand_df), "taxon" %in% names(cand_df))
+  dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+  year_chr <- as.character(year)
+  pdf_file <- file.path(out_dir, paste0(lib_name, "_", year_chr, "_dualpanel_species.pdf"))
+
+  taxa <- unique(as.character(cand_df$taxon))
+  taxa <- taxa[!is.na(taxa) & taxa != ""]
+  if (is.finite(max_taxa)) taxa <- head(taxa, max_taxa)
+
+  pdf(pdf_file, width = width, height = height, onefile = TRUE)
+  on.exit(dev.off(), add = TRUE)
+
+  for (tx in taxa) {
+    message("Plotting: ", lib_name, " ", year_chr, " | ", tx)
+
+    p <- try(
+      plot_species_year_dual(
+        df_list  = df_list,
+        year     = year_chr,
+        taxon    = tx,
+        base_map = base_map,
+        bbox     = bbox
+      ),
+      silent = TRUE
+    )
+
+    if (inherits(p, "try-error")) {
+      # Don't fail the whole PDF—write a simple page explaining what broke
+      plot.new()
+      title(main = paste0("FAILED: ", lib_name, " ", year_chr, "\n", tx),
+            sub = as.character(p))
+      next
+    }
+
+    print(p)
+  }
+
+  message("Saved: ", pdf_file)
+  invisible(pdf_file)
+}
+
+
+# 3) Run across ALL libraries/years -
+run_all_dual_species_pdfs <- function(lib_lists,
+                                      cand_list,
+                                      base_map,
+                                      out_dir,
+                                      bbox = c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9),
+                                      width = 16,
+                                      height = 9,
+                                      max_taxa = Inf) {
+
+  dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+  for (nm in names(cand_list)) {
+    py <- parse_lib_year(nm)
+    if (is.null(py)) {
+      message("Skipping cand_list item with bad name: ", nm)
+      next
+      }
+    
+    lib  <- py$lib
+    year <- py$year
+
+    if (!lib %in% names(lib_lists)) {
+      message("Skipping (no df_list for lib): ", lib, " [", nm, "]")
+      next
+    }
+
+    df_list <- lib_lists[[lib]]
+    if (!as.character(year) %in% names(df_list)) {
+      message("Skipping (year missing in df_list): ", lib, " ", year)
+      next
+    }
+
+    cand_df <- cand_list[[nm]]
+    if (!is.data.frame(cand_df) || !"taxon" %in% names(cand_df)) {
+      message("Skipping (cand_df missing taxon column): ", nm)
+      next
+    }
+
+    message("=== Exporting DUAL PDF: ", lib, " ", year, " (", nrow(cand_df), " taxa) ===")
+
+    save_dual_species_pdf(
+      df_list   = df_list,
+      cand_df   = cand_df,
+      year      = year,
+      lib_name  = lib,
+      base_map  = base_map,
+      out_dir   = out_dir,
+      bbox      = bbox,
+      width     = width,
+      height    = height,
+      max_taxa  = max_taxa
+    )
+  }
+
+  invisible(TRUE)
+}
+```
+
+Run
+```{r}
+# set up library lists
+
+lib_lists <- list(
+  MiFish       = mifish_sample_dfs,
+  Elas02       = elas_sample_dfs,
+  CO1          = co1_sample_dfs,
+  CO1_NOTTRAWL = co1_nottrawl_sample_dfs
+)
+
+
+# Build candidate lists automatically (uses years embedded in each df_list)
+cand_list <- make_all_candidate_lists(
+  lib_lists = lib_lists,
+  top_n_by_lib = list(MiFish = 1e9, Elas02 = 1e9, CO1 = 1e9, CO1_NOTTRAWL = 1e9)
+)
+
+# Export PDFs (one per library-year), one species per page
+run_all_dual_species_pdfs(
+  lib_lists = lib_lists,
+  cand_list = cand_list,
+  base_map  = shinnbay_map,
+  out_dir   = out_dir,
+  bbox      = c(xmin=-72.61, xmax=-72.4, ymin=40.79, ymax=40.9),
+  width     = 16,
+  height    = 9,
+  max_taxa  = Inf
+)
+
+```
+
+# Diversity
+## Richness
+First re-generate plot (from Jia) showing species richness vs # of reads
+```{r}
+# helper: remove controls (keeps only samples where controls is NA)
+drop_controls <- function(ps, control_col = "controls") {
+  if (is.null(ps) || nsamples(ps) == 0) return(ps)
+  md <- as.data.frame(sample_data(ps))
+  if (!control_col %in% names(md)) return(ps)
+
+  keep_ids <- rownames(md)[is.na(md[[control_col]])]
+  prune_samples(keep_ids, ps)
+}
+
+# helper: per-sample summary (reads + richness)
+summarize_reads_taxa_by_sample <- function(ps,
+                                          year = NA,
+                                          drop_ctrl = TRUE,
+                                          control_col = "controls") {
+  if (is.null(ps) || nsamples(ps) == 0 || ntaxa(ps) == 0) {
+    return(tibble(
+      year = as.character(year),
+      Sample = character(0),
+      total_reads = numeric(0),
+      n_taxa = integer(0)
+    ))
+  }
+
+  if (drop_ctrl) ps <- drop_controls(ps, control_col = control_col)
+  if (is.null(ps) || nsamples(ps) == 0 || ntaxa(ps) == 0) {
+    return(tibble(
+      year = as.character(year),
+      Sample = character(0),
+      total_reads = numeric(0),
+      n_taxa = integer(0)
+    ))
+  }
+
+  otu <- as(otu_table(ps), "matrix")
+  if (!taxa_are_rows(ps)) otu <- t(otu)   # taxa x samples
+
+  reads_by_sample <- colSums(otu, na.rm = TRUE)
+  taxa_by_sample  <- colSums(otu > 0, na.rm = TRUE)
+
+  tibble(
+    year = as.character(year),
+    Sample = names(reads_by_sample),
+    total_reads = as.numeric(reads_by_sample),
+    n_taxa = as.integer(taxa_by_sample)
+  )
+}
+
+# make a per-library per-sample table from a named list of phyloseq objects
+summarize_library_by_sample <- function(phylo_list,
+                                        library_name = "library",
+                                        drop_ctrl = TRUE,
+                                        control_col = "controls") {
+  yrs <- names(phylo_list)
+
+  purrr::map_dfr(yrs, function(yr) {
+    summarize_reads_taxa_by_sample(
+      ps = phylo_list[[yr]],
+      year = yr,
+      drop_ctrl = drop_ctrl,
+      control_col = control_col
+    )
+  }) %>%
+    mutate(
+      library = library_name,
+      year = factor(year, levels = sort(unique(year)))
+    ) %>%
+    filter(!is.na(total_reads), !is.na(n_taxa))
+}
+
+# plotting: one plot per library, points = samples, color = year
+plot_reads_vs_taxa_by_sample <- function(df,
+                                        title = NULL,
+                                        log_x = TRUE,
+                                        alpha = 0.8) {
+  p <- ggplot(df, aes(x = total_reads, y = n_taxa, color = year)) +
+    geom_point(size = 2.4, alpha = alpha) +
+    theme_minimal() +
+    labs(
+      title = title %||% unique(df$library),
+      x = "Total sequence reads per sample",
+      y = "Species richness (unique taxa per sample)",
+      color = "Year"
+    )
+
+  if (log_x) p <- p + scale_x_log10()
+  p
+}
+
+`%||%` <- function(a, b) if (!is.null(a)) a else b
+
+# Provide year levels explicitly so ggplot's default palette maps consistently.
+year_levels_all <- function(...) {
+  yrs <- sort(unique(unlist(list(...))))
+  as.character(yrs[!is.na(yrs)])
+}
+
+set_year_factor <- function(df, year_levels) {
+  df %>%
+    dplyr::mutate(
+      year = as.character(year),
+      year = factor(year, levels = year_levels)
+    )
+}
+
+```
+
+Plot
+```{r}
+# build per-sample tables
+df_mifish <- summarize_library_by_sample(phylo_mifish, "MiFish", drop_ctrl = TRUE)
+df_elas   <- summarize_library_by_sample(phylo_elas,   "Elas02", drop_ctrl = TRUE)
+df_co1    <- summarize_library_by_sample(phylo_co1,    "CO1 trawl-only", drop_ctrl = TRUE)
+df_co1tot <- summarize_library_by_sample(phylo_co1_total, "CO1 total", drop_ctrl = TRUE)
+
+# plots (one per library; points are samples; color is year)
+p_mifish <- plot_reads_vs_taxa_by_sample(df_mifish, title = "MiFish: richness vs reads (by sample)")
+p_elas   <- plot_reads_vs_taxa_by_sample(df_elas,   title = "Elas02: richness vs reads (by sample)")
+p_co1    <- plot_reads_vs_taxa_by_sample(df_co1,    title = "CO1 (trawl-only): richness vs reads (by sample)")
+p_co1tot <- plot_reads_vs_taxa_by_sample(df_co1tot, title = "CO1 (total): richness vs reads (by sample)")
+
+p_mifish
+p_elas
+p_co1
+p_co1tot
+
+
+```
+
+--> Correlation between read depth and richness HOWEVER at the same sequencing depth, there does seem to be more richness in later years...
+
+
+Save
+```{r}
+ggsave(file.path(out_dir, "reads_vs_taxa_mifish.jpg"), p_mifish, width = 6.5, height = 4.5, dpi = 300)
+ggsave(file.path(out_dir, "reads_vs_taxa_elas02.jpg"), p_elas,   width = 6.5, height = 4.5, dpi = 300)
+ggsave(file.path(out_dir, "reads_vs_taxa_co1_trawl.jpg"), p_co1, width = 6.5, height = 4.5, dpi = 300)
+ggsave(file.path(out_dir, "reads_vs_taxa_co1_total.jpg"), p_co1tot, width = 6.5, height = 4.5, dpi = 300)
+
+```
+
+
+
+### Richness after rarefy correction
+
+Function to implement rrarefy in vegan
+```{r}
+rarefy_richness_montecarlo <- function(mat,
+                                       depth,
+                                       n_iter = 1000,
+                                       seed = 123,
+                                       drop_ctrl = FALSE) {
+  # mat: samples × taxa raw count matrix
+  # depth: rarefaction depth
+  # n_iter: number of Monte Carlo draws
+  # seed: random seed
+
+  if (is.null(mat) || nrow(mat) == 0) return(NULL)
+  
+  # original (unrarefied) metrics
+  orig_depth    <- rowSums(mat)
+  orig_richness <- rowSums(mat > 0)
+
+  # ensure we have enough reads to rarefy
+  keep_samples <- orig_depth >= depth
+  mat <- mat[keep_samples, , drop = FALSE]
+  if (nrow(mat) == 0) return(NULL)
+
+  set.seed(seed)
+
+  # Container for richness results
+  richness_mat <- matrix(
+    NA_integer_,
+    nrow = nrow(mat),
+    ncol = n_iter,
+    dimnames = list(rownames(mat), NULL)
+  )
+
+  # Rarefy once per iteration for all samples
+  for (i in seq_len(n_iter)) {
+    # vegan::rrarefy rarefies all rows at once
+    rar_mat <- vegan::rrarefy(mat, sample = depth)  
+    richness_mat[, i] <- rowSums(rar_mat > 0)
+  }
+
+  # Summaries
+  tibble(
+    Sample              = rownames(richness_mat),
+    orig_depth          = orig_depth[keep_samples],
+    orig_richness       = orig_richness[keep_samples],
+    richness_rarefied   = rowMeans(richness_mat),
+    richness_sd         = apply(richness_mat, 1, sd),
+    richness_q025       = apply(richness_mat, 1, quantile, probs = 0.025),
+    richness_q975       = apply(richness_mat, 1, quantile, probs = 0.975)
+    )
+
+}
+
+
+iterate_library_year <- function(phylo_list,
+                                 library_name,
+                                 depth = 1e5,
+                                 n_iter = 1000,
+                                 seed = 123,
+                                 control_col = "controls") {
+
+  out <- list()
+
+  for (yr in names(phylo_list)) {
+
+    ps <- phylo_list[[yr]]
+    if (is.null(ps)) next
+
+    # drop controls
+    ps_clean <- drop_controls(ps, control_col = control_col)
+    if (is.null(ps_clean) || nsamples(ps_clean) == 0) next
+
+    # extract sample x taxa matrix
+    mat <- get_sample_taxa_matrix(ps_clean)
+    if (is.null(mat) || nrow(mat) == 0) next
+
+    # rarefy
+    df_rich <- rarefy_richness_montecarlo(
+      mat,
+      depth  = depth,
+      n_iter = n_iter,
+      seed   = seed
+    )
+
+    if (is.null(df_rich) || nrow(df_rich) == 0) next
+
+    # minimal, safe metadata
+    md <- as.data.frame(sample_data(ps_clean))
+    md$Sample <- rownames(md)
+    keep_cols <- intersect(
+      colnames(md),
+      c("Sample", "sites", "Station", "Month", "Bayside")
+      )
+    
+    md <- md[, keep_cols, drop = FALSE]
+    md <- tibble::as_tibble(md)
+
+
+    # join + annotate
+    df_rich <- df_rich %>%
+      dplyr::left_join(md, by = "Sample") %>%
+      dplyr::mutate(
+        library = library_name,
+        year    = as.integer(yr)
+      )
+
+    out[[yr]] <- df_rich
+  }
+
+  dplyr::bind_rows(out)
+}
+
+
+
+
+
+```
+
+
+
+
+Run
+(Skipping the filtered CO1/ trawl species only dataset bc those reads are all less than 500 each since they were dominated by phytoplankton etc and those all were filted out)
+
+
+```{r}
+# Run for your libraries
+df_mifish_rarefied <- iterate_library_year(
+  phylo_mifish, "MiFish",
+  depth = 1e5, n_iter = 100, seed = 123
+)
+
+df_elas_rarefied <- iterate_library_year(
+  phylo_elas, "Elas02",
+  depth = 1e5, n_iter = 100, seed = 123
+)
+
+df_co1tot_rarefied <- iterate_library_year(
+  phylo_co1_total, "CO1 total",
+  depth = 1e5, n_iter = 100, seed = 123
+)
+
+df_rarefied_all <- bind_rows(
+  df_mifish_rarefied,
+  df_elas_rarefied,
+  df_co1tot_rarefied
+)
+```
+
+Warning is ok- this is just vegan flagging that the min abundance (greater than 0) was not 1, but 500, 1300, etc. That's because these are pre-filtered datasets
+
+
+Plot raw seq depth richness vs rarefaction correction fichness
+```{r}
+#single year order across ALL libraries (to matcfh earlier plot)
+year_levels <- year_levels_all(df_mifish$year, df_elas$year, df_co1tot$year)
+
+# prep rarefied df with consistent year factor
+df_rarefied_all2 <- df_rarefied_all %>%
+  dplyr::mutate(
+    library = as.character(library),
+    year    = as.character(year)
   ) %>%
-  mutate(FacetLabel = str_wrap(`Taxon.CommonName`, width = 20))
+  set_year_factor(year_levels)
 
-timeseries_mifish_Month_clamsites <- 
-ggplot(mifish_df_month_top12) + 
-  geom_area(aes(x = Month_f, y = MeanAbundance, fill = `Taxon.CommonName`, group = 1), alpha = 0.7) +
-  facet_wrap(~FacetLabel, scales = "free_y") +
-  xlab("") +
-  scale_fill_manual(values = myColors_Sci_comname) +
-  theme_minimal() +
-  theme(axis.title.x=element_blank(), 
-        axis.text.x = element_text(size = 12), 
-        axis.text.y = element_text(size = 10),
-        legend.position = "none") 
+# plotting function: old vs rarefied richness
+plot_old_vs_rarefied <- function(df, title = NULL, alpha = 0.65) {
+  ggplot(df, aes(x = orig_richness, y = richness_rarefied, color = year)) +
+    geom_point(alpha = alpha, size = 2.2) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+    theme_minimal() +
+    labs(
+      title = title %||% unique(df$library),
+      x = "Original richness (unrarefied)",
+      y = "Rarefied richness (mean over iterations)",
+      color = "Year"
+    )
+}
 
-timeseries_mifish_Month_clamsites
-  
-# save
-ggsave(plot = timeseries_mifish_Month_clamsites, filename = "figures-2024eDNA/mifish_topspecies_timeseries_clamsites.jpg", width = 8.8, height = 6, units = "in")
+# make 3 separate plots
+p_oldnew_mifish <- df_rarefied_all2 %>%
+  dplyr::filter(library == "MiFish") %>%
+  plot_old_vs_rarefied(title = "MiFish: original vs rarefied richness")
+
+p_oldnew_elas <- df_rarefied_all2 %>%
+  dplyr::filter(library == "Elas02") %>%
+  plot_old_vs_rarefied(title = "Elas02: original vs rarefied richness")
+
+p_oldnew_co1tot <- df_rarefied_all2 %>%
+  dplyr::filter(library == "CO1 total") %>%
+  plot_old_vs_rarefied(title = "CO1 total: original vs rarefied richness")
+
+p_oldnew_mifish
+p_oldnew_elas
+p_oldnew_co1tot
+
 ```
 
-#### Oyster Sites
+Export plots
 ```{r}
-# First average replicates from same month and across all trawl sites
-mifish_df_month_oystersites <- mifish_df %>%
-  filter(sites %in% c(25, 26, 31, 32, 33, 34)) %>%
-  group_by(Month_f, CommonName, `Taxon.CommonName`) %>%
-  dplyr::summarize(MeanAbundance = mean(Abundance)) %>%
-  mutate(Month_f = factor(Month_f, levels = 6:9, labels = c("Jun", "Jul", "Aug", "Sep"), ordered = TRUE))
-mifish_df_month_oystersites
+# rarefaction comparison plots
+ggsave(
+  filename = file.path(out_dir, "richness_original_vs_rarefied_mifish.jpg"),
+  plot = p_oldnew_mifish,
+  width = 6.5, height = 4.5, units = "in", dpi = 300
+)
 
-# take only top species
-top12_species <- mifish_df_month_oystersites %>%
-  group_by(`Taxon.CommonName`) %>%
-  summarise(TotalAbundance = sum(MeanAbundance, na.rm = TRUE)) %>%
-  arrange(desc(TotalAbundance)) %>%
-  slice_head(n = 12) %>%
-  pull(`Taxon.CommonName`)
+ggsave(
+  filename = file.path(out_dir, "richness_original_vs_rarefied_elas02.jpg"),
+  plot = p_oldnew_elas,
+  width = 6.5, height = 4.5, units = "in", dpi = 300
+)
 
+ggsave(
+  filename = file.path(out_dir, "richness_original_vs_rarefied_co1_total.jpg"),
+  plot = p_oldnew_co1tot,
+  width = 6.5, height = 4.5, units = "in", dpi = 300
+)
 
-mifish_df_month_top12 <- mifish_df_month_oystersites %>%
-  filter(`Taxon.CommonName` %in% top12_species) %>%
-  ungroup() %>%  
-  complete(
-    Month_f,
-    nesting(`Taxon.CommonName`, CommonName),
-    fill = list(MeanAbundance = 0)
-  ) %>%
-  mutate(FacetLabel = str_wrap(`Taxon.CommonName`, width = 20))
-
-timeseries_mifish_Month_oystersites <- 
-ggplot(mifish_df_month_top12) + 
-  geom_area(aes(x = Month_f, y = MeanAbundance, fill = `Taxon.CommonName`, group = 1), alpha = 0.7) +
-  facet_wrap(~FacetLabel, scales = "free_y") +
-  xlab("") +
-  scale_fill_manual(values = myColors_Sci_comname) +
-  theme_minimal() +
-  theme(axis.title.x=element_blank(), 
-        axis.text.x = element_text(size = 12), 
-        axis.text.y = element_text(size = 10),
-        legend.position = "none") 
-
-timeseries_mifish_Month_oystersites
-  
-# save
-ggsave(plot = timeseries_mifish_Month_oystersites, filename = "figures-2024eDNA/mifish_topspecies_timeseries_oystersites.jpg", width = 8.8, height = 6, units = "in")
 ```
 
-#### Eelgrass Sites
+Export table
 ```{r}
-# First average replicates from same month and across all trawl sites
-mifish_df_month_eelgrasssites <- mifish_df %>%
-  filter(sites %in% c(27, 28, 29, 30)) %>%
-  group_by(Month_f, CommonName, `Taxon.CommonName`) %>%
-  dplyr::summarize(MeanAbundance = mean(Abundance)) %>%
-  mutate(Month_f = factor(Month_f, levels = 6:9, labels = c("Jun", "Jul", "Aug", "Sep"), ordered = TRUE))
-mifish_df_month_eelgrasssites
+readr::write_csv(
+  df_rarefied_all2,
+  file.path(out_dir, "rarefied_richness_per_sample.csv")
+)
 
-# take only top species
-top12_species <- mifish_df_month_eelgrasssites %>%
-  group_by(`Taxon.CommonName`) %>%
-  summarise(TotalAbundance = sum(MeanAbundance, na.rm = TRUE)) %>%
-  arrange(desc(TotalAbundance)) %>%
-  slice_head(n = 12) %>%
-  pull(`Taxon.CommonName`)
-
-
-mifish_df_month_top12 <- mifish_df_month_eelgrasssites %>%
-  filter(`Taxon.CommonName` %in% top12_species) %>%
-  ungroup() %>%  
-  complete(
-    Month_f,
-    nesting(`Taxon.CommonName`, CommonName),
-    fill = list(MeanAbundance = 0)
-  ) %>%
-  mutate(FacetLabel = str_wrap(`Taxon.CommonName`, width = 20))
-
-timeseries_mifish_Month_eelgrasssites <- 
-ggplot(mifish_df_month_top12) + 
-  geom_area(aes(x = Month_f, y = MeanAbundance, fill = `Taxon.CommonName`, group = 1), alpha = 0.7) +
-  facet_wrap(~FacetLabel, scales = "free_y") +
-  xlab("") +
-  scale_fill_manual(values = myColors_Sci_comname) +
-  theme_minimal() +
-  theme(axis.title.x=element_blank(), 
-        axis.text.x = element_text(size = 12), 
-        axis.text.y = element_text(size = 10),
-        legend.position = "none") 
-
-timeseries_mifish_Month_eelgrasssites
-  
-# save
-ggsave(plot = timeseries_mifish_Month_eelgrasssites, filename = "figures-2024eDNA/mifish_topspecies_timeseries_eelgrasssites.jpg", width = 8.8, height = 6, units = "in")
-```
-
-### Elas02 Bubble Plots
-#### By bayside
-```{r}
-# First average replicates at same sites
-elas_df_bayside <- elas_df %>%
-    group_by(sites, Bayside_f, CommonName, `Taxon.CommonName`) %>%
-    dplyr::summarize(Abundance = mean(Abundance))
-elas_df_bayside
-
-
-bubbleplot_elas_Bayside <- ggplot(elas_df_bayside, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
-  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
-  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
-  xlab("")+
-  ylab("")+
-  labs(size="Read Abundance", fill = "")+
-  theme_bw() +
-  scale_fill_manual(values = myColors_Sci_comname)+
-  theme(axis.title.x=element_blank(), 
-        axis.text.x = element_text(size = 12), 
-        axis.text.y = element_text(size = 9), 
-        legend.position = "bottom") +
-  guides(fill="none") +
-  facet_grid(~Bayside_f, scales = "free", space = "free", drop= TRUE)
-bubbleplot_elas_Bayside
-  
-# save
-ggsave(plot = bubbleplot_elas_Bayside, filename = "figures-2024eDNA/bubbleplot_elas_Bayside.jpg", width = 10, height = 3, units = "in")
 ```
 
 
-#### By month
-```{r}
-# First average replicates from same month
-elas_df_month <- elas_df %>%
-    group_by(sites, Month_f, CommonName, `Taxon.CommonName`) %>%
-    dplyr::summarize(Abundance = mean(Abundance))
-elas_df_month
-
-
-bubbleplot_elas_Month <- ggplot(elas_df_month, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
-  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
-  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
-  xlab("")+
-  ylab("")+
-  labs(size="Read Abundance", fill = "")+
-  theme_bw() +
-  scale_fill_manual(values = myColors_Sci_comname)+
-  theme(axis.title.x=element_blank(), 
-        axis.text.x = element_text(size = 12), 
-        axis.text.y = element_text(size = 10), 
-        legend.position = "bottom") +
-  guides(fill="none") +
-  facet_wrap(~Month_f, drop= TRUE, nrow = 1)  
-bubbleplot_elas_Month
-  
-# save
-ggsave(plot = bubbleplot_elas_Month, filename = "figures-2024eDNA/bubbleplot_elas_Month.jpg", width = 22, height = 3, units = "in")
-```
-
-#### By month, trawl sites only
-
-```{r}
-# First average replicates from same month
-elas_df_month_trawl <- elas_df %>%
-  filter(sites %in% c(1,2,3,4,5,6,7,8,9,10,11,12,13)) %>%
-    group_by(sites, Month_f, CommonName, `Taxon.CommonName`) %>%
-    dplyr::summarize(Abundance = mean(Abundance))
-elas_df_month_trawl
-
-
-bubbleplot_elas_Month_trawlonly <- ggplot(elas_df_month_trawl, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
-  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
-  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
-  xlab("")+
-  ylab("")+
-  labs(size="Read Abundance", fill = "")+
-  theme_bw() +
-  scale_fill_manual(values = myColors_Sci_comname)+
-  theme(axis.title.x=element_blank(), 
-        axis.text.x = element_text(size = 12), 
-        axis.text.y = element_text(size = 10), 
-        legend.position = "bottom") +
-  guides(fill="none") +
-  facet_wrap(~Month_f, drop= TRUE, nrow = 1)  
-bubbleplot_elas_Month_trawlonly
-  
-# save
-ggsave(plot = bubbleplot_elas_Month_trawlonly, filename = "figures-2024eDNA/bubbleplot_elas_Month_trawlonly.jpg", width = 11, height = 2.5, units = "in")
-```
+## CONTINUE HERE 1/21/26
+# NEED TO DO RAREFACTION CORRECTION BEFORE DIVERSITY BELOW. WHAT ABOUT ABOVE?
+make plots explaining rarefaction correction too, comparing diversity before and after
+# FIGURE OUT CRANGON- phylo trees?
 
 
 
-#### By month, other sites
 
-First checked labels and "SEA GRASS" AND "EEL GRASS" should be the same. Fix
-```{r}
-#check before
-unique(elas_df$Habitat)
-
-elas_df <- elas_df %>%
-  mutate(Habitat = case_when(
-    Habitat == "SEAGRASS" ~ "EELGRASS",
-    TRUE ~ Habitat  # Keep all other values unchanged
-  ))
-
-#and after
-unique(elas_df$Habitat)
-```
-
-Plot by othet habitat types:
-Eelgrass
-```{r}
-# First average replicates from same month
-elas_df_month_eelgrass <- elas_df %>%
-  filter(Habitat == "EELGRASS") %>%
-    group_by(sites, Month_f, CommonName, `Taxon.CommonName`) %>%
-    dplyr::summarize(Abundance = mean(Abundance))
-elas_df_month_eelgrass
-
-
-bubbleplot_elas_Month_eelgrass <- ggplot(elas_df_month_eelgrass, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
-  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
-  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
-  xlab("")+
-  ylab("")+
-  labs(size="Read Abundance", fill = "")+
-  theme_bw() +
-  scale_fill_manual(values = myColors_Sci_comname)+
-  theme(axis.title.x=element_blank(),
-        axis.text.x = element_text(size = 12), 
-        axis.text.y = element_text(size = 10), 
-        legend.position = "bottom") +
-  guides(fill="none") +
-  facet_grid(~Month_f, drop = TRUE, scales = "free", space = "free")
-bubbleplot_elas_Month_eelgrass
-
-# save
-ggsave(plot = bubbleplot_elas_Month_eelgrass, filename = "figures-2024eDNA/bubbleplot_elas_Month_eelgrass.jpg", width = 9, height = 2.5, units = "in")
-```
-
-
-Clam Sanctuary
-```{r}
-# First average replicates from same month
-elas_df_month_clamsanct <- elas_df %>%
-  filter(Habitat == "CLAM SANCTUARY") %>%
-    group_by(sites, Month_f, CommonName, `Taxon.CommonName`) %>%
-    dplyr::summarize(Abundance = mean(Abundance))
-elas_df_month_clamsanct
-
-
-bubbleplot_elas_Month_clamsanct <- ggplot(elas_df_month_clamsanct, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
-  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
-  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
-  xlab("")+
-  ylab("")+
-  labs(size="Read Abundance", fill = "")+
-  theme_bw() +
-  scale_fill_manual(values = myColors_Sci_comname)+
-  theme(axis.title.x=element_blank(),
-        axis.text.x = element_text(size = 12), 
-        axis.text.y = element_text(size = 10), 
-        legend.position = "bottom") +
-  guides(fill="none") +
-  facet_grid(~Month_f, drop = TRUE, scales = "free", space = "free")
-bubbleplot_elas_Month_clamsanct
-
-# save
-ggsave(plot = bubbleplot_elas_Month_clamsanct, filename = "figures-2024eDNA/bubbleplot_elas_Month_clamsanct.jpg", width = 7, height = 2.5, units = "in")
-```
-
-
-Oyster reef
-```{r}
-# First average replicates from same month
-elas_df_month_oysterreef <- elas_df %>%
-  filter(Habitat == "OYSTER REEF") %>%
-    group_by(sites, Month_f, CommonName, `Taxon.CommonName`) %>%
-    dplyr::summarize(Abundance = mean(Abundance))
-elas_df_month_oysterreef
-
-
-bubbleplot_elas_Month_oysterreef <- ggplot(elas_df_month_oysterreef, aes(x = factor(sites, levels = sitelevels), y = fct_rev(`Taxon.CommonName`))) + 
-  geom_point(aes(size=ifelse(Abundance==0, NA, Abundance), fill = `Taxon.CommonName`), color = "black", pch = 21) +
-  scale_size_area(breaks = c(1000,10000,100000,1000000,10000000))+
-  xlab("")+
-  ylab("")+
-  labs(size="Read Abundance", fill = "")+
-  theme_bw() +
-  scale_fill_manual(values = myColors_Sci_comname)+
-  theme(axis.title.x=element_blank(),
-        axis.text.x = element_text(size = 12), 
-        axis.text.y = element_text(size = 10), 
-        legend.position = "bottom") +
-  guides(fill="none") +
-  facet_grid(~Month_f, drop = TRUE, scales = "free", space = "free")
-bubbleplot_elas_Month_oysterreef
-
-# save
-ggsave(plot = bubbleplot_elas_Month_oysterreef, filename = "figures-2024eDNA/bubbleplot_elas_Month_oysterreef.jpg", width = 9, height = 3, units = "in")
-```
-
-
-
-### Elas- Species Time Series - TBD
-
-### Diversity
 
 Species richness by month and habitat types
 - In June, eel grass stations were not sampled but all other habitat types were. So any zeroes in June are real for all habitat types except eel grass---
